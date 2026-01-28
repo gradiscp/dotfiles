@@ -1,0 +1,8 @@
+hyprland
+kitty
+rofi-wayland
+waybar
+thorium-browser-bin
+xdg-desktop-portal-hyprland
+polkit-kde-agent
+ttf-jetbrains-mono-nerd
