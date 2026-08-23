@@ -42,5 +42,9 @@ o.window("foot", { opacity = "0.85 0.80" })
 o.window("org.gnome.Nautilus", { opacity = "0.85 0.75" })
 
 -- Firefox is a real GTK/Wayland client-side-decorated window (unlike
--- Chromium's own Aura toolkit), so the same opacity trick actually works.
-o.window("firefox", { opacity = "0.90 0.80" })
+-- Chromium's own Aura toolkit), so the opacity trick actually works here -
+-- but Omarchy's own default/hypr/apps/browser.lua explicitly forces
+-- "firefox-based-browser"-tagged windows back to opacity 1.0/0.985
+-- (loaded before this file). Overriding the class directly isn't enough to
+-- win against that; target the same tag it uses so this applies after it.
+o.window({ tag = "firefox-based-browser" }, { opacity = "0.80 0.70" })
