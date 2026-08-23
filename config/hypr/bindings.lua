@@ -58,5 +58,6 @@ hl.unbind("PRINT")
 hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot")
 
--- Note: SUPER+SHIFT+L isn't bound to anything, by default or here - that's
--- not a bug, there's just nothing on that key.
+-- SUPER+SHIFT+L: full lock, display blanks after 5s (same as SUPER+CTRL+L,
+-- kept both since you asked for shift specifically).
+o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
