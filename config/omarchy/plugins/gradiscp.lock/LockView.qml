@@ -125,7 +125,7 @@ Item {
       anchors.bottom: inputField.top
       anchors.bottomMargin: 32
       text: Qt.formatTime(new Date(), "HH:mm")
-      color: Color.lock.text
+      color: Color.lock.placeholder
       font.family: Style.font.family
       font.pixelSize: Math.round(root.fieldFontSize * 2.2)
 

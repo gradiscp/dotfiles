@@ -159,7 +159,9 @@ Item {
     idleBlankTimer.stop()
     sessionLock.locked = false
     logEvent("unlocked")
+    clearNoBlankFlagProcess.running = false
     clearNoBlankFlagProcess.running = true
+    noBlank = false
     runWake()
   }
 
@@ -426,7 +428,10 @@ Item {
     id: noBlankCheckProc
     command: ["bash", "-c", "[[ -f '" + root.noBlankFlagPath + "' ]] && echo yes || echo no"]
     stdout: StdioCollector { id: noBlankCheckStdout; waitForEnd: true }
-    onExited: root.noBlank = String(noBlankCheckStdout.text || "").trim() === "yes"
+    onExited: {
+      root.noBlank = String(noBlankCheckStdout.text || "").trim() === "yes"
+      root.logEvent("noBlank=" + root.noBlank)
+    }
   }
 
   Process {
@@ -450,6 +455,7 @@ Item {
       // Only a password check in flight should hold the display up. The
       // fingerprint PAM stays armed for the whole lock, so gating on
       // `authenticating` here would keep the panel lit until unlock.
+      root.logEvent("idleBlankTimer fired: lockRequested=" + root.lockRequested + " authenticating=" + root.authenticatingPassword + " noBlank=" + root.noBlank)
       if (root.lockRequested && !root.authenticatingPassword && !root.noBlank) root.runBlank()
     }
   }
