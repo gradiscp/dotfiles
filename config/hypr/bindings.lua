@@ -61,3 +61,11 @@ o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot")
 -- SUPER+CTRL+L for this - that one's unbound now, only SHIFT+L is used.
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
+
+-- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
+-- shortcut, not used by anything on Linux).
+o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")
+
+-- Reboot on SUPER+CTRL+SHIFT+R, not bare CTRL+SHIFT+R - that's hard-refresh
+-- in every browser, a global bind there would break it everywhere.
+o.bind("SUPER + CTRL + SHIFT + R", "Reboot", "omarchy-system-reboot")
