@@ -49,6 +49,13 @@
 --   },
 -- })
 
+-- Niri-like side-scrolling layout instead of dwindle.
+hl.config({
+  general = {
+    layout = "scrolling",
+  },
+})
+
 -- Round window corners instead of sharp ones, and enable blur so
 -- translucent windows/bar look good instead of just murky.
 hl.config({
