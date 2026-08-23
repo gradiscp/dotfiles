@@ -4,8 +4,8 @@
 
 [bar]
 # Alpha companions (where present) range from 0 (invisible) to 1 (opaque).
-background       = "#1a1b26"
-background-alpha = 0.78
+background       = "#000000"
+background-alpha = 1.0
 text             = "#a9b1d6"
 # Modules calling attention to themselves (recording, voxtype, alerts, updates)
 active           = "#f7768e"
