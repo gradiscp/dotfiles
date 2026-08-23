@@ -53,18 +53,23 @@
   },
   "idle": {
     "lock": 300,
-    "screensaver": 150
+    "screensaver": 120
   },
   "plugins": [
     {
       "id": "gradiscp.lock"
+    },
+    {
+      "id": "gradiscp.idle"
     }
   ],
   "version": 1,
   "disabledPlugins": [
-    "omarchy.lock"
+    "omarchy.lock",
+    "omarchy.idle"
   ],
   "cloneSourceRestores": [
-    "gradiscp.lock"
+    "gradiscp.lock",
+    "gradiscp.idle"
   ]
 }

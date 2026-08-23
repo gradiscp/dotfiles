@@ -39,11 +39,10 @@ hl.workspace_rule({ workspace = "6", persistent = true })
 hl.workspace_rule({ workspace = "7", persistent = true })
 hl.workspace_rule({ workspace = "8", persistent = true })
 
--- SUPER+L: light lock - blurred lock screen, but the display never blanks
--- (background processes like Docker etc. are never affected by locking
--- either way - locking only blocks input/shows the overlay, nothing is
--- suspended). Was: SUPER+L -> Toggle workspace layout (dwindle/master).
--- SUPER+CTRL+L stays the regular full lock (blanks the display after 5s).
+-- SUPER+L: real lock - password required, display never blanks (the
+-- omarchy.lock clone below suppresses the usual 5s auto-blank via a flag
+-- file this script sets). Was: SUPER+L -> Toggle workspace layout.
+-- For a lock that blanks the display after 5s, use SUPER+SHIFT+L below.
 hl.unbind("SUPER + L")
 o.bind("SUPER + L", "Lock (screen stays on)", "omarchy-lock-light")
 

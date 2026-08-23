@@ -90,21 +90,79 @@ after the force-push, but their local copy still has the old commits.
 
 - **Bare tap of `SUPER`** (not `SUPER+SPACE` anymore) opens the Omarchy
   menu, via `SUPER + SUPER_L` with `{ release = true }`.
-- **`SUPER+L`** = light lock: blurred lock screen (`omarchy-lock-light`,
-  installed to `~/.local/bin/`), display **never blanks**. Was previously
-  "Toggle workspace layout" (dwindle/master) - that binding is gone.
-- **`SUPER+CTRL+L`** = unchanged default full lock, display blanks after 5s.
-- Both locks are handled by a clone of the `omarchy.lock` service plugin at
-  `config/omarchy/plugins/gradiscp.lock/` - it adds a `noBlank` flag
-  (backed by a `~/.local/state/omarchy/toggles/lock-no-blank` file that
-  `omarchy-lock-light` touches before locking, and that Service.qml clears
-  on every unlock) and a live clock on the lock screen itself. Locking
-  never affects background processes (Docker etc.) either way - Wayland
-  session lock only blocks input/shows the overlay, it doesn't suspend
-  anything, so that half of the ask was already true by default.
-- Workspaces 6-8 are marked `persistent` in `hyprland.lua` so they always
-  show in the bar's workspace indicator instead of only appearing once
-  visited.
+- **`SUPER+L`** = "light" lock via `~/.local/bin/omarchy-lock-light`:
+  real password-gated session lock, display **never blanks**. Was
+  previously "Toggle workspace layout" (dwindle/master) - moved to
+  `SUPER+H`.
+- **`SUPER+SHIFT+L`** = full lock (`omarchy-system-lock`, stock), display
+  blanks after 5s. The default `SUPER+CTRL+L` bind for this is unbound -
+  only SHIFT+L is used.
+- **`SUPER+SHIFT+S`** = screenshot (was `PRINT`, now unbound).
+
+### Lock screen design (`config/omarchy/plugins/gradiscp.lock/`)
+
+A clone of the `omarchy.lock` service plugin, deliberately minimal:
+- **Background is a live screenshot of the desktop at the moment of
+  locking** (`grim`, captured in `Service.qml`'s `beginLock()` before the
+  session-lock surface takes over rendering - can't screenshot after that
+  point, app content is no longer composited), lightly blurred - not the
+  static theme wallpaper Omarchy uses by default.
+- **No visible chrome at all**: no password field box, no placeholder
+  text, no clock. Just a circle with a lock icon (`lock-icon.svg`,
+  inline-drawn, not an emoji/nerd-font glyph - both were explicitly
+  rejected in favor of a plain line-art padlock) centered on screen.
+- **Typing is blind** - no password dots, like a terminal `sudo` prompt.
+  The circle blips invisible for ~120ms per keystroke as the only typing
+  feedback, then on Enter: green border + 350ms flash on correct password
+  (via `Service.qml`'s `unlockSucceeded` property, which delays the actual
+  `finishUnlock()` so the flash is visible at all - PAM auth completing
+  would otherwise tear down the overlay in the same frame), red border on
+  wrong password.
+- `noBlank` flag (`~/.local/state/omarchy/toggles/lock-no-blank`, set by
+  `omarchy-lock-light` before locking, cleared by `Service.qml` on every
+  unlock) suppresses the plugin's own 5-second post-lock display-blank
+  timer for SUPER+L specifically.
+- **Dead end, don't repeat:** a passwordless "privacy cover" panel
+  (`gradiscp.privacycover`, since deleted/disabled) was built first,
+  showing the same blurred screenshot+icon but dismissible by any
+  key/click with zero authentication. This was based on a
+  misreading - "not like here 'type password'" meant hide the *visible
+  label*, not remove the *actual password requirement*. If asked for a
+  passwordless screen again, confirm explicitly first; it's a real,
+  security-relevant distinction, not a styling detail.
+- Locking never affects background processes (Docker etc.) either way -
+  Wayland session lock only blocks input/shows the overlay, it doesn't
+  suspend anything.
+
+### Idle behavior (`config/omarchy/plugins/gradiscp.idle/`)
+
+Clone of `omarchy.idle`. One change: `lockSystem()` now checks
+`omarchy-shell lock isLocked` before calling `omarchy-system-lock` again -
+without this, being idle past the 5-minute `idle.lock` mark while already
+light-locked (`SUPER+L`) would trigger a second, full lock call that
+*does* blank the display, defeating the whole point of the light lock.
+Mirrors the guard the stock screensaver path already had.
+
+`idle.screensaver` in `shell.json` is 120s (2 min) - triggers Omarchy's
+built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
+above. `idle.lock` stays at 300s (5 min, stock default).
+
+### Plugin hot-reload gotcha (cost real debugging time)
+
+**`service` and `panel` kind plugins do NOT hot-reload on file save**,
+unlike `bar-widget` plugins (which `plugins.md` correctly says do).
+`omarchy-shell shell rescanPlugins` only updates the plugin *registry*
+(new/removed plugins), not the compiled QML of an already-running
+instance. After editing anything in `gradiscp.lock/` or `gradiscp.idle/`,
+**`omarchy restart shell` is required** - skipping this silently runs the
+stale pre-edit code with no error, which looks exactly like the edit
+having no effect.
+
+### Workspaces
+
+Workspaces 6-8 are marked `persistent` in `hyprland.lua` so they always
+show in the bar's workspace indicator instead of only appearing once
+visited.
 
 ## Removed from the stock Omarchy app set
 
