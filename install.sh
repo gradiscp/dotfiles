@@ -35,6 +35,7 @@ done
 echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.lock" "$CONFIG_DIR/omarchy/plugins/gradiscp.lock"
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.idle" "$CONFIG_DIR/omarchy/plugins/gradiscp.idle"
 link "$REPO_DIR/config/omarchy/themes/tokyo-night/shell.toml" "$CONFIG_DIR/omarchy/themes/tokyo-night/shell.toml"
 
 echo "== Foot terminal =="

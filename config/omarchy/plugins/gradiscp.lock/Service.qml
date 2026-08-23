@@ -35,6 +35,9 @@ Item {
   property bool strandedLockResolved: false
   property bool noBlank: false
   readonly property string noBlankFlagPath: stateHome + "/omarchy/toggles/lock-no-blank"
+  property bool unlockSucceeded: false
+  readonly property string screenshotPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/omarchy-lock-screenshot.png"
+  property int screenshotVersion: 0
 
   readonly property bool locked: lockRequested || sessionLock.locked || sessionLock.secure
   readonly property bool authenticating: authenticatingPassword || fingerprintAuthenticating
@@ -122,6 +125,8 @@ Item {
     failedAttempts = 0
     authenticatingPassword = false
     fingerprintAuthenticating = false
+    unlockSucceeded = false
+    unlockSuccessTimer.stop()
     fingerprintRetryTimer.stop()
     if (passwordPam.active) passwordPam.abort()
     if (fingerprintPam.active) fingerprintPam.abort()
@@ -138,6 +143,9 @@ Item {
     refreshNoBlank()
     armBlankTimer()
     logEvent("lock-requested")
+    // Grab the live desktop now, before the session lock surface takes over
+    // rendering (after which windows are no longer composited/capturable).
+    lockScreenshotProc.running = true
     queueSessionLock()
 
     Qt.callLater(function() {
@@ -278,11 +286,12 @@ Item {
       LockView {
         id: lockView
         anchors.fill: parent
-        backgroundPath: root.backgroundPath
-        backgroundVersion: root.backgroundVersion
+        backgroundPath: root.screenshotPath
+        backgroundVersion: root.screenshotVersion
         fingerprintConfigured: root.fingerprintConfigured
         authenticatingPassword: root.authenticatingPassword
         failureMessage: root.failureMessage
+        unlockSucceeded: root.unlockSucceeded
         failedAttempts: root.failedAttempts
         inputEnabled: root.lockRequested
         loadBackground: root.locked
@@ -339,8 +348,14 @@ Item {
       root.pendingPassword = ""
 
       if (!root.lockRequested) return
-      if (result === PamResult.Success) root.finishUnlock()
-      else root.handlePasswordFailure()
+      if (result === PamResult.Success) {
+        // Brief green flash on the lock icon before the overlay actually
+        // tears down, so correct-password feedback is visible at all.
+        root.unlockSucceeded = true
+        unlockSuccessTimer.restart()
+      } else {
+        root.handlePasswordFailure()
+      }
     }
 
     onError: function(error) {
@@ -363,11 +378,24 @@ Item {
     }
   }
 
+  Process {
+    id: lockScreenshotProc
+    command: ["grim", root.screenshotPath]
+    onExited: root.screenshotVersion += 1
+  }
+
   Timer {
     id: fingerprintRetryTimer
     interval: 250
     repeat: false
     onTriggered: root.startFingerprint()
+  }
+
+  Timer {
+    id: unlockSuccessTimer
+    interval: 350
+    repeat: false
+    onTriggered: root.finishUnlock()
   }
 
   Process {
