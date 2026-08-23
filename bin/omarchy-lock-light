@@ -1,0 +1,22 @@
+#!/bin/bash
+# Light lock: same as SUPER+CTRL+L, but the display is never blanked/turned
+# off - just the blurred lock overlay (see omarchy-system-lock for the
+# regular full lock, which does blank after 5s).
+
+mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles"
+touch "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles/lock-no-blank"
+
+omarchy-shell lock lock >/dev/null
+
+hyprctl switchxkblayout all 0 > /dev/null 2>&1
+
+if pgrep -x "1password" >/dev/null && omarchy-cmd-present 1password; then
+  (
+    flock -n 9 || exit 0
+    timeout --kill-after=1s 3s 1password --lock >/dev/null 2>&1 || true
+  ) 9>"${XDG_RUNTIME_DIR:-/tmp}/omarchy-1password-lock.lock" &
+fi
+
+pkill -x ttfx 2>/dev/null || true
+timeout 1s pidwait -x ttfx 2>/dev/null || true
+pkill -f '[o]rg.omarchy.screensaver' 2>/dev/null || true

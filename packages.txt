@@ -1,0 +1,16 @@
+# Extra packages beyond a stock Omarchy install.
+# Official repos (pacman):
+firefox
+
+# AUR (yay):
+bibata-cursor-theme-bin
+
+# NOTE: fingerprint (libfprint/fprintd/usbutils) was tried and reverted -
+# this laptop's EgisTec EH57E sensor has no Linux driver, not worth installing.
+
+# Removed from the stock Omarchy app set (not needed):
+#   aether, cliamp, omacut, kdenlive, localsend, moonlight-qt, obs-studio,
+#   pinta, xournalpp, plus their now-orphaned KDE/Qt dependencies.
+# Removed webapp shortcuts: Basecamp, HEY, Zoom, Google Contacts/Maps/
+#   Messages/Photos, X - these were just ~/.local/share/applications/*.desktop
+#   files, not packages.
