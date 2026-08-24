@@ -50,9 +50,13 @@ overview; that one is the debugging notes.
 
 ## What's customized
 
-- **Look:** Bibata-Modern-Ice cursor (size 14), rounded window corners,
-  JetBrains Mono Nerd Font everywhere fontconfig reaches, native 1.0
-  monitor scale (not Omarchy's 1.25 default), solid black bar.
+- **Layout:** `scrolling` (niri-like side-scrolling) instead of dwindle,
+  with `column_width = 1.0` so a single window fills the screen. Thin gaps
+  (3 inner / 6 outer).
+- **Look:** Bibata-Modern-Ice cursor (size 14), rounded corners (10),
+  JetBrains Mono Nerd Font everywhere fontconfig reaches - synthetically
+  emboldened for a slightly heavier weight - monitor scale 1.25, solid
+  black bar.
 - **Transparency:** foot terminal, Nautilus (even while focused), Firefox
   window chrome - all via Hyprland `opacity` window rules, not app config.
   Fullscreen windows (`SUPER+F`) also stay translucent
@@ -61,14 +65,16 @@ overview; that one is the debugging notes.
   background, no visible password field or clock, just a lock-in-a-circle
   that goes red/green on wrong/right password. Two lock keybinds with
   different display-blank behavior (see below).
-- **Browser:** Firefox only - Chromium was removed. Note: this breaks
-  Omarchy's built-in webapp shortcuts (WhatsApp, Discord, YouTube, Docker
-  panel), which hardcode a Chromium-family browser. See CLAUDE.md if that
-  becomes a problem.
+- **Screenshots:** clipboard only by default, no file spam in `~/Pictures`.
+- **Browser:** Firefox only - Chromium was removed. This broke Omarchy's
+  Chromium-backed webapp shortcuts (WhatsApp, Discord, YouTube), so those
+  were removed too. `Docker.desktop` was kept - it runs `lazydocker` in a
+  terminal and never needed Chromium.
 - **Apps:** trimmed down from the stock Omarchy set - see `packages.txt`
   and `remove-unwanted-apps.sh` for exactly what's gone and why.
-- **No fingerprint setup** - this laptop's sensor has no Linux driver.
-  Don't retry it without checking `libfprint`'s supported-device list first.
+- **No fingerprint setup** - this laptop's EgisTec EH57E has no
+  production-ready Linux driver (only an experimental one-machine
+  proof of concept). See CLAUDE.md before retrying.
 
 ## Keybinds changed from Omarchy defaults
 
@@ -80,13 +86,18 @@ overview; that one is the debugging notes.
 | `SUPER+SHIFT+L` | Lock, screen off after 5s | — |
 | `SUPER+CTRL+L` | *(unbound)* | Lock (screen off) |
 | `SUPER+H` | Toggle workspace layout (dwindle/master) | — |
-| `SUPER+SHIFT+S` | Screenshot | Google Maps webapp |
+| `SUPER+SHIFT+S` | Screenshot → clipboard only | Google Maps webapp |
 | `PRINT` | *(unbound)* | Screenshot |
 | `CTRL+SHIFT+ESC` | Shutdown | — |
 | `SUPER+CTRL+SHIFT+R` | Reboot | — (plain `CTRL+SHIFT+R` deliberately avoided - that's browser hard-refresh) |
 
 Workspaces 6-8 are pinned as `persistent` so they always show in the bar,
 not just once visited. Full list: `omarchy menu keybindings --print`.
+
+⚠️ **`SUPER+H` has a side effect worth knowing:** it saves a *per-workspace*
+layout override that silently overrides the global `scrolling` setting for
+that workspace only. If tiling suddenly behaves differently on one
+workspace, that's why - see CLAUDE.md for the one-line fix.
 
 ## Structure
 
@@ -98,8 +109,9 @@ config/
     plugins/gradiscp.lock/  Custom lock screen (clone of omarchy.lock)
     plugins/gradiscp.idle/  Idle service (clone of omarchy.idle) - one
                              fix: doesn't re-lock over an active light lock
-    themes/tokyo-night/     Bar background-alpha override
+    themes/tokyo-night/     Bar color/alpha override
   foot/         Terminal config (font, alpha)
+  fontconfig/   Synthetic embolden for JetBrains Mono
   nvim/         Transparent background autocmd
 bin/
   omarchy-lock-light   The SUPER+L script (real lock, no display blank)

@@ -88,9 +88,14 @@ after the force-push, but their local copy still has the old commits.
   the default browser via `xdg-settings`, but only recognizes
   `google-chrome|brave|microsoft-edge|opera|vivaldi|helium` - anything else
   (including Firefox) falls through to `chromium.desktop`. **Chromium has
-  been uninstalled here**, so any remaining webapp shortcut
-  (WhatsApp/Discord/YouTube/Docker) is currently broken until either
-  Chromium comes back or Omarchy adds Firefox SSB support.
+  been uninstalled here**, so every webapp shortcut that went through it
+  (WhatsApp/Discord/YouTube) errored out with `Path "--app=..." does not
+  exist!` - those three `.desktop` files were deleted rather than
+  reinstalling Chromium. **`Docker.desktop` was deliberately kept**: it
+  runs `lazydocker` in a terminal, never touches `omarchy-launch-webapp`,
+  so it was never affected. If a webapp shortcut is ever wanted again,
+  either reinstall Chromium as a silent runtime or just use a normal
+  Firefox tab/bookmark.
 - **Firefox's window opacity actually works via a plain Hyprland
   `o.window(..., {opacity=...})` rule** - unlike Chromium (own Aura
   toolkit, no real Wayland CSD transparency support), Firefox is a real
@@ -111,7 +116,16 @@ after the force-push, but their local copy still has the old commits.
 - **`SUPER+SHIFT+L`** = full lock (`omarchy-system-lock`, stock), display
   blanks after 5s. The default `SUPER+CTRL+L` bind for this is unbound -
   only SHIFT+L is used.
-- **`SUPER+SHIFT+S`** = screenshot (was `PRINT`, now unbound).
+- **`SUPER+SHIFT+S`** = screenshot (was `PRINT`, now unbound). Runs
+  `omarchy-capture-screenshot smart copy` - **`copy` mode on purpose**:
+  clipboard only, no file written to `~/Pictures` on every capture. Use
+  `omarchy capture screenshot smart save` by hand when a file is actually
+  wanted.
+- **`SUPER+H`** = toggle workspace layout (the old `SUPER+L` action).
+  Careful, this has a side effect - see the Workspaces section below.
+- **`CTRL+SHIFT+ESCAPE`** = shutdown, **`SUPER+CTRL+SHIFT+R`** = reboot.
+  Reboot deliberately is *not* on bare `CTRL+SHIFT+R` - that's hard-refresh
+  in every browser and a global bind would shadow it everywhere.
 
 ### Lock screen design (`config/omarchy/plugins/gradiscp.lock/`)
 
@@ -178,13 +192,71 @@ Workspaces 6-8 are marked `persistent` in `hyprland.lua` so they always
 show in the bar's workspace indicator instead of only appearing once
 visited.
 
+**`SUPER+H` (toggle dwindle/master) writes a PER-WORKSPACE layout override**
+to `~/.local/state/omarchy/workspace-layouts/<N>.lua`, which silently beats
+the global `layout = "scrolling"` in `looknfeel.lua` for that workspace
+only. Symptom: "scrolling isn't applying" / "this window is tiled wrong"
+on some workspaces but not others, surviving reboots. Fix:
+`rm ~/.local/state/omarchy/workspace-layouts/*.lua && hyprctl reload`.
+This bit twice - check that directory first whenever layout behavior looks
+inconsistent between workspaces.
+
+### Scaling gotchas (both cost real debugging time)
+
+- **Monitor scale resets to a stale value when external monitors are
+  plugged in.** `monitors.lua` uses one catch-all `hl.monitor({ output =
+  "" ... })` rule for every output, so a newly connected display can pull
+  the whole config back to whatever value was last persisted. Always
+  re-set it with `omarchy hyprland monitor scaling 1.25` (the CLI, which
+  persists correctly) rather than hand-editing the file. Current intended
+  value: **1.25**.
+- **Firefox scaling is NOT controlled by the system scale if a `user.js`
+  exists.** A `layout.css.devPixelsPerPx` entry in
+  `~/.config/mozilla/firefox/<profile>/user.js` is re-applied on *every*
+  launch and overwrites whatever is in `prefs.js`, so deleting the
+  `prefs.js` line alone does nothing - the value comes back on restart.
+  Firefox must be fully closed (`pkill firefox`) before editing either
+  file, or it rewrites `prefs.js` on exit. Note the profile lives under
+  `~/.config/mozilla/` here, not the usual `~/.mozilla/`.
+  Currently: no `user.js`, no `devPixelsPerPx` - Firefox follows the
+  system scale like everything else, which is what's wanted.
+
+## Appearance settings and where they live
+
+Scattered across several files, so listing them in one place:
+
+| What | Where | Current value |
+|---|---|---|
+| Window layout | `hypr/looknfeel.lua` | `scrolling` (niri-like) |
+| Scrolling column width | `hypr/looknfeel.lua` | `1.0` - 0.97 still left a visibly-not-full-screen margin |
+| Window gaps | `hypr/looknfeel.lua` | `gaps_in = 3`, `gaps_out = 6` |
+| Corner rounding | `hypr/looknfeel.lua` | `10` |
+| Fullscreen opacity | `hypr/looknfeel.lua` | `0.9` - Hyprland forces 1.0 by default, ignoring per-window opacity rules |
+| Cursor | `hypr/looknfeel.lua` + `gsettings.sh` | Bibata-Modern-Ice, size 14 (both places, they must agree) |
+| Monitor scale | `hypr/monitors.lua` | `1.25` - set via CLI only, see Scaling gotchas |
+| Terminal font | `foot/foot.ini` | JetBrainsMono Nerd Font size 8 |
+| Terminal transparency | `foot/foot.ini` | `alpha=0.85` under `[colors-dark]`, NOT `[main]` |
+| Font weight (global) | `fontconfig/conf.d/51-embolden-jetbrains.conf` | synthetic embolden - only Regular/Bold faces are installed, no Medium/SemiBold to switch to |
+| Bar background | `omarchy/themes/tokyo-night/shell.toml` `[bar]` | `#000000`, alpha `1.0` (solid black) |
+| Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
+| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70` |
+| Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 300s |
+
+Firefox opacity has to target the **`firefox-based-browser` tag**, not the
+`firefox` class - Omarchy's own `default/hypr/apps/browser.lua` forces
+tagged windows back to opacity 1.0 and loads before user config, so a
+class-based rule loses. Firefox's own New Tab page with a custom background
+image still renders opaque regardless (the page declares itself opaque to
+the GPU); that's a Firefox-side thing, not fixable from the compositor.
+
 ## Removed from the stock Omarchy app set
 
 Real packages: `aether`, `cliamp`, `omacut`, `kdenlive`, `localsend`,
 `moonlight-qt`, `obs-studio`, `pinta`, `xournalpp`, `chromium` (+ ~18
 packages that became orphaned afterward, also removed). Webapp shortcuts
 (just `.desktop` files, never real packages): Basecamp, HEY, Zoom, the 4
-Google webapps, X/Twitter.
+Google webapps, X/Twitter, plus Discord/WhatsApp/YouTube (removed later,
+when they broke from Chromium being gone - see the webapp note above).
 
 ## Planned: repurpose the second NVMe (ex-Windows, ~477GB) drive
 
