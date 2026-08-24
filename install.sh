@@ -41,6 +41,10 @@ link "$REPO_DIR/config/omarchy/themes/tokyo-night/shell.toml" "$CONFIG_DIR/omarc
 echo "== Foot terminal =="
 link "$REPO_DIR/config/foot/foot.ini" "$CONFIG_DIR/foot/foot.ini"
 
+echo "== Fontconfig (embolden JetBrains Mono) =="
+link "$REPO_DIR/config/fontconfig/conf.d/51-embolden-jetbrains.conf" "$CONFIG_DIR/fontconfig/conf.d/51-embolden-jetbrains.conf"
+fc-cache -f >/dev/null 2>&1 || true
+
 echo "== Neovim =="
 link "$REPO_DIR/config/nvim/lua/config/autocmds.lua" "$CONFIG_DIR/nvim/lua/config/autocmds.lua"
 

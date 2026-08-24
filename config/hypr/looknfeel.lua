@@ -49,10 +49,22 @@
 --   },
 -- })
 
--- Niri-like side-scrolling layout instead of dwindle.
+-- Niri-like side-scrolling layout instead of dwindle. Thinner gaps too.
 hl.config({
   general = {
     layout = "scrolling",
+    gaps_in = 3,
+    gaps_out = 6,
+  },
+})
+
+-- Default column_width (0.49) makes a single window look "too small" -
+-- half the screen, with a gap of bare desktop next to it. 0.97 fills the
+-- screen for one window, still leaves room to see a sliver of the next
+-- column when there's more than one.
+hl.config({
+  scrolling = {
+    column_width = 0.97,
   },
 })
 

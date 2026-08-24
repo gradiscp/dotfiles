@@ -53,9 +53,12 @@ o.bind("SUPER + H", "Toggle workspace layout", "omarchy-hyprland-workspace-layou
 -- Screenshot on SUPER+SHIFT+S instead of the PRINT key.
 -- Was: PRINT -> Screenshot, SUPER+SHIFT+S -> Google Maps (that webapp
 -- shortcut was removed earlier anyway, so nothing lost there).
+-- "copy" mode: clipboard only, no file written to ~/Pictures every time.
+-- Default "slurp" mode does both - use `omarchy capture screenshot smart save`
+-- manually on the rare occasion a file is actually wanted.
 hl.unbind("PRINT")
 hl.unbind("SUPER + SHIFT + S")
-o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot")
+o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy")
 
 -- SUPER+SHIFT+L: full lock, display blanks after 5s. Replaces the default
 -- SUPER+CTRL+L for this - that one's unbound now, only SHIFT+L is used.
