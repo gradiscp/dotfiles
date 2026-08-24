@@ -65,6 +65,19 @@ after the force-push, but their local copy still has the old commits.
     `background-alpha` there, then `omarchy theme set <theme>` again to
     re-apply. (The template comment literally says "Themes can ship
     themes/<name>/shell.toml to replace this generated file.")
+- **`shell.json` does not stay a symlink.** `install.sh` links
+  `~/.config/omarchy/shell.json` into this repo, but the live file was found
+  as a plain `-rw-------` regular file with content the repo copy never had
+  (a changed `clock.format`), i.e. something rewrote the path rather than
+  writing through the link - the `omarchy bar` commands and the shell's own
+  settings UI both persist to this file. So **after changing anything in the
+  bar/idle config, copy the live file back into the repo** rather than
+  assuming the symlink carried it:
+  `cp ~/.config/omarchy/shell.json config/omarchy/shell.json`.
+- **There is no `omarchy bar remove`.** `omarchy bar --help` lists
+  `use/reset/defaults/position/transparent/put/move/set` only - taking a
+  widget *out* of the bar means deleting its entry from `bar.layout` in
+  `shell.json` by hand. It hot-reloads on save, no restart needed.
 - **Cloning a `kind: bar` plugin is broken** in this Omarchy version.
   `omarchy plugin clone omarchy.bar` + switching `shell.json`'s `bar.id` to
   the clone makes the entire bar disappear (confirmed even with a
@@ -239,6 +252,7 @@ Scattered across several files, so listing them in one place:
 | Font weight (global) | `fontconfig/conf.d/51-embolden-jetbrains.conf` | synthetic embolden - only Regular/Bold faces are installed, no Medium/SemiBold to switch to |
 | Bar background | `omarchy/themes/tokyo-night/shell.toml` `[bar]` | `#000000`, alpha `1.0` (solid black) |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
+| Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70` |
 | Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 300s |
 
