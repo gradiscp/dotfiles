@@ -19,11 +19,25 @@ after the force-push, but their local copy still has the old commits.
 
 ## Hardware / dead ends
 
-- Fingerprint sensor is an **EgisTec EH57E**. No libfprint driver exists
-  (checked upstream libfprint and every AUR `libfprint-2-tod1-*` package -
-  Goodix/Elan/Synaptics/Broadcom all have one, EgisTec doesn't). Don't
-  reinstall `libfprint`/`fprintd`/`usbutils` expecting it to suddenly work.
+- Fingerprint sensor is an **EgisTec EH57E, USB ID `1c7a:057e`**. No
+  packaged/mainline libfprint driver exists (checked upstream libfprint and
+  the AUR `libfprint-2-tod1-*` / `libfprint-egismoc-sdcp-git` packages -
+  those cover *different* EgisTec USB IDs, `0583`/`0584`/`0587`, not this
+  one). There IS an experimental driver for this exact chip:
+  [Cruise42/eh57e-linux-driver](https://github.com/Cruise42/eh57e-linux-driver)
+  - explicitly "not production-ready", tested on exactly one machine
+  (Linux Mint, not Arch/Omarchy), no AUR package, requires manually
+  patching and rebuilding libfprint from source. Decided not worth the
+  risk/effort for a password-based login that already works fine - if
+  revisiting this, build it isolated under `/opt` per its own docs, don't
+  replace the system libfprint.
 - Panel is 1920x1080 on the built-in eDP-1.
+- **Git identity: global config (`gradiscp` / `fortnitepro06@yahoo.com`)
+  is correct and intentional** - don't set a local `user.name`/`user.email`
+  override in this repo "fixing" it to something else. That happened once
+  during setup (an assistant used a different name/email from elsewhere in
+  its context) and looked like the config "kept reverting" when it was
+  actually the local override fighting the correct global value.
 
 ## Gotchas found the hard way
 
