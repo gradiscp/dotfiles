@@ -59,12 +59,11 @@ hl.config({
 })
 
 -- Default column_width (0.49) makes a single window look "too small" -
--- half the screen, with a gap of bare desktop next to it. 0.97 fills the
--- screen for one window, still leaves room to see a sliver of the next
--- column when there's more than one.
+-- half the screen, with a gap of bare desktop next to it. 1.0 = fill the
+-- screen exactly like dwindle would for one window.
 hl.config({
   scrolling = {
-    column_width = 0.97,
+    column_width = 1.0,
   },
 })
 
