@@ -106,6 +106,8 @@ config/
   hypr/         Hyprland: bindings, monitors, looknfeel, etc.
   omarchy/
     shell.json              Bar layout, idle timing, plugin toggles
+                             (no weather widget; not reliably a symlink,
+                              see CLAUDE.md - copy it back after changes)
     plugins/gradiscp.lock/  Custom lock screen (clone of omarchy.lock)
     plugins/gradiscp.idle/  Idle service (clone of omarchy.idle) - one
                              fix: doesn't re-lock over an active light lock
