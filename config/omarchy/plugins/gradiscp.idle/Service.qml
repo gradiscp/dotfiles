@@ -76,12 +76,20 @@ Item {
     root.idledThisCycle = false
     root.screensaverStartedThisCycle = false
     resetScreensaverWindows()
-    // Don't re-lock (and with it, restart the full-lock's 5s display-blank
-    // timer) if a light lock (SUPER+L) is already active and idle continues
-    // past the 5-minute mark - that would blank a screen that was
-    // deliberately kept on. Mirrors the isLocked guard already used for the
-    // screensaver above.
-    runProcess(lockProcess, "lock", "[[ $(omarchy-shell lock isLocked 2>/dev/null) == \"true\" ]] || omarchy-system-lock")
+    // The idle auto-lock uses the *light* lock, same as SUPER+L: it locks
+    // for real (password required) but never blanks the panel. Stock is
+    // omarchy-system-lock, which blanks after 5s - that was the actual
+    // source of "I only pressed SUPER+L and the screen went dark anyway",
+    // because walking away re-armed this timer. It also avoids the
+    // disabled-connector state that the Hyprland/Aquamarine DRM crash needs
+    // (see the crash section in CLAUDE.md). Trade-off accepted knowingly:
+    // the panel now stays lit while idle-locked, which costs battery.
+    //
+    // The isLocked guard stays regardless - without it, being idle past the
+    // 5-minute mark while already locked fires a second lock call.
+    // omarchy-lock-light lives in ~/.local/bin; runProcess uses `bash -lc`,
+    // so the login shell's PATH picks it up.
+    runProcess(lockProcess, "lock", "[[ $(omarchy-shell lock isLocked 2>/dev/null) == \"true\" ]] || omarchy-lock-light")
   }
 
   function startIdleCycle() {
