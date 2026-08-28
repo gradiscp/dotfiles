@@ -17,6 +17,16 @@ should be changed) and several large `.knsv` files that had bloated
 needs to re-clone rather than pull - the old history is gone from `origin`
 after the force-push, but their local copy still has the old commits.
 
+**History was rewritten a second time on 2026-08-28**, this time to put
+every commit under one author (the GitHub noreply address - see the Git
+identity note below). Same consequence: re-clone, don't pull. What was
+observed rather than inferred: every pre-existing commit hash changed (e.g.
+`5fc833a` -> `3293d81`), `git reflog` was left with a single entry, and
+`git log --format=%ae | sort -u` now returns exactly one address across all
+28 commits. A `LICENSE` (MIT) was added through the GitHub web UI around the
+same time. If a future session finds hashes it does not recognise, this is
+why - the content was verified intact afterwards, nothing was lost.
+
 ## Hardware / dead ends
 
 - Fingerprint sensor is an **EgisTec EH57E, USB ID `1c7a:057e`**. No
@@ -32,12 +42,22 @@ after the force-push, but their local copy still has the old commits.
   revisiting this, build it isolated under `/opt` per its own docs, don't
   replace the system libfprint.
 - Panel is 1920x1080 on the built-in eDP-1.
-- **Git identity: global config (`gradiscp` / `fortnitepro06@yahoo.com`)
-  is correct and intentional** - don't set a local `user.name`/`user.email`
-  override in this repo "fixing" it to something else. That happened once
+- **Git identity: global config (`Paul Gradischnig` /
+  `92756104+gradiscp@users.noreply.github.com`) is correct and
+  intentional** - don't set a local `user.name`/`user.email` override in
+  this repo, and don't "fix" the global one either. There is no local
+  override right now, and there should not be one: that happened once
   during setup (an assistant used a different name/email from elsewhere in
   its context) and looked like the config "kept reverting" when it was
   actually the local override fighting the correct global value.
+
+  **This note used to name `gradiscp` / `fortnitepro06@yahoo.com` as the
+  correct identity. That is outdated** - as of 2026-08-28 all 28 commits in
+  the history are authored by the GitHub noreply address above, and the
+  global config matches. The old address appears nowhere in the history any
+  more. If you are reading a stale copy of this file and are tempted to
+  change the identity back, don't - check `git log --format=%ae | sort -u`
+  first, which is the actual source of truth.
 
 ## Session crash 2026-08-28 11:56 - Hyprland, not the lock screen
 
