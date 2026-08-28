@@ -28,9 +28,14 @@
 -- o.bind("SUPER + H", nil, "voxtype record toggle")
 -- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
 
--- Open the Omarchy menu on a bare tap of the Super key itself, not
--- SUPER+SPACE. Was: SUPER + SPACE -> Omarchy menu.
-hl.unbind("SUPER + SPACE")
+-- Open the Omarchy menu on a bare tap of the Super key itself, *in addition
+-- to* the stock SUPER+SPACE - both work. SUPER+SPACE was unbound here at one
+-- point; it isn't anymore, the default in
+-- default/hypr/bindings/utilities.lua stands.
+-- The bare-tap bind is a release bind on the modifier itself; Hyprland only
+-- fires it when no other bind ran while Super was held, which is why
+-- SUPER+SPACE (or SUPER+1, SUPER+L, ...) doesn't also pop the menu on
+-- release.
 o.bind("SUPER + SUPER_L", "Omarchy menu", "omarchy-menu toggle", { release = true })
 
 -- Persistent workspaces 6-8 so they always show in the bar's workspace

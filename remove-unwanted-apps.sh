@@ -25,4 +25,16 @@ rm -f ~/.local/share/applications/Basecamp.desktop \
 # for every *other* webapp shortcut - they'd just error out otherwise.
 
 update-desktop-database ~/.local/share/applications 2>/dev/null || true
+
+# Stock themes: only crimson-core is used here, so the 22 shipped ones (~119MB)
+# go too. There is no supported way to *hide* a theme - omarchy-theme-list globs
+# $OMARCHY_PATH/themes unconditionally - so they have to be deleted, and pacman's
+# NoExtract is what keeps `omarchy update` from putting them back. Undo both by
+# deleting the NoExtract line and running `sudo pacman -S omarchy`.
+if ! grep -qF 'usr/share/omarchy/themes/*' /etc/pacman.conf; then
+  sudo cp -a /etc/pacman.conf "/etc/pacman.conf.bak.$(date +%s)"
+  sudo sed -i '/^\[options\]/a\\n# Stock Omarchy themes are deleted here; keep updates from restoring them.\nNoExtract   = usr/share/omarchy/themes/*' /etc/pacman.conf
+fi
+sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + 2>/dev/null || true
+
 echo "Done. Run 'pacman -Qtdq' afterwards to check for newly-orphaned deps."
