@@ -75,9 +75,11 @@ resolved past the function name; the log ordering is the evidence.
 
 Practical consequence: the race needs a **blanked** panel plus a lid/hotplug
 event. `SUPER+L` (light lock) never blanks, so it cannot get into this
-state; `SUPER+SHIFT+L` and the 5-minute idle auto-lock can. That is a second
-argument for the "make the idle auto-lock use `omarchy-lock-light`" change
-noted in the idle section - not just about the screen staying on.
+state; `SUPER+SHIFT+L` and the 5-minute idle auto-lock could. That was the
+second argument for switching the idle auto-lock to `omarchy-lock-light`,
+**done 2026-08-28** (see the idle section) - so the only remaining way to
+reach the state this crash needs is `SUPER+SHIFT+L`, or closing the lid.
+This narrows the exposure; it does not fix the upstream bug.
 
 To read a future one of these:
 `coredumpctl list`, then `coredumpctl info <pid>`, and above all
@@ -274,9 +276,9 @@ A clone of the `omarchy.lock` service plugin, deliberately minimal:
   unlock) suppresses the plugin's own 5-second post-lock display-blank
   timer for SUPER+L specifically.
 - **Dead end, don't repeat:** a passwordless "privacy cover" panel
-  (`gradiscp.privacycover`, disabled - but note the directory is still
-  present in `~/.config/omarchy/plugins/`, just absent from `shell.json`'s
-  `plugins` list, so it loads nothing) was built first,
+  (`gradiscp.privacycover`, deleted from disk 2026-08-28 - it had been
+  merely disabled, still sitting in `~/.config/omarchy/plugins/` but absent
+  from `shell.json`'s `plugins` list) was built first,
   showing the same blurred screenshot+icon but dismissible by any
   key/click with zero authentication. This was based on a
   misreading - "not like here 'type password'" meant hide the *visible
@@ -289,12 +291,24 @@ A clone of the `omarchy.lock` service plugin, deliberately minimal:
 
 ### Idle behavior (`config/omarchy/plugins/gradiscp.idle/`)
 
-Clone of `omarchy.idle`. One change: `lockSystem()` now checks
-`omarchy-shell lock isLocked` before calling `omarchy-system-lock` again -
-without this, being idle past the 5-minute `idle.lock` mark while already
-light-locked (`SUPER+L`) would trigger a second, full lock call that
-*does* blank the display, defeating the whole point of the light lock.
-Mirrors the guard the stock screensaver path already had.
+Clone of `omarchy.idle`, with two changes to `lockSystem()`:
+
+1. It checks `omarchy-shell lock isLocked` before locking again - without
+   this, being idle past the 5-minute `idle.lock` mark while already locked
+   fires a second lock call. Mirrors the guard the stock screensaver path
+   already had.
+2. **It calls `omarchy-lock-light`, not the stock `omarchy-system-lock`**
+   (changed 2026-08-28). The idle auto-lock therefore locks for real -
+   password required - but never blanks the panel, exactly like `SUPER+L`.
+   Stock behaviour blanked after 5s, and since walking away re-arms this
+   timer, that was the real answer to "I only pressed SUPER+L and the screen
+   went dark anyway". It also keeps the machine out of the disabled-connector
+   state the Hyprland/Aquamarine DRM crash needs (see the crash section
+   above). **Known trade-off: the panel now stays lit for as long as the
+   session sits idle-locked, which costs battery.** That was accepted
+   deliberately - don't "fix" it back without asking.
+   `omarchy-lock-light` lives in `~/.local/bin`; `runProcess` uses
+   `bash -lc`, so the login shell's PATH finds it.
 
 `idle.screensaver` in `shell.json` is 120s (2 min) - triggers Omarchy's
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
@@ -308,12 +322,14 @@ log, because it is genuinely confusing from the outside:
 | `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | **stays on** |
 | `SUPER+SHIFT+L` | `omarchy-system-lock` | off after 5s |
 | 2 min idle | `ttfx` screensaver | stays on |
-| **5 min idle** | `omarchy-system-lock` - a **full** lock | **off after 5s** |
+| 5 min idle | `omarchy-lock-light` (was `omarchy-system-lock`) | **stays on** |
 
-The last row is the one that surprises. The idle auto-lock is *not* the
-light lock; it blanks like `SUPER+SHIFT+L` does. So "I only pressed SUPER+L
-and the screen went dark anyway" is almost always: SUPER+L, then walking
-away, then something re-armed the idle cycle.
+Only `SUPER+SHIFT+L` blanks the panel now. Before 2026-08-28 the 5-minute
+row read "`omarchy-system-lock` - **off after 5s**", and that was the
+surprise: the idle auto-lock was *not* the light lock, so "I only pressed
+SUPER+L and the screen went dark anyway" was really SUPER+L, then walking
+away, then the idle cycle blanking it. If a blanking idle-lock is ever
+wanted back, that is the one line to change in `gradiscp.idle/Service.qml`.
 
 To check rather than guess:
 `journalctl --user --since -3d | grep -E 'idleBlankTimer|lock-system'`.
@@ -323,11 +339,8 @@ Both appear in this machine's log, which is how the table above was
 confirmed rather than assumed.
 
 Locking is orthogonal to the display either way - see the "never affects
-background processes" note above. If the 5-minute blank is unwanted, the
-knobs are: raise `idle.lock` in `shell.json`, or change `lockSystem()` in
-`gradiscp.idle/Service.qml` to call `omarchy-lock-light` instead of
-`omarchy-system-lock`. The second one costs battery on a laptop, which is
-why it was left alone.
+background processes" note above. The remaining knob is `idle.lock` in
+`shell.json` (how long until it locks at all), currently 300s.
 
 ### Plugin hot-reload gotcha (cost real debugging time)
 
