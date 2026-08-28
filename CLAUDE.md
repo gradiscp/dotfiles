@@ -65,6 +65,28 @@ after the force-push, but their local copy still has the old commits.
     `background-alpha` there, then `omarchy theme set <theme>` again to
     re-apply. (The template comment literally says "Themes can ship
     themes/<name>/shell.toml to replace this generated file.")
+    **Note the word *replace*** - it is not merged into the generated file,
+    so an overlay means owning all ~200 lines forever. `crimson-core`
+    deliberately ships none; the previous `tokyo-night/shell.toml` overlay
+    was deleted along with that theme.
+
+    A `shell.<section>.toml` file (e.g. `shell.bar.toml`) *is* merged into
+    just that one section - see `apply_shell_section_overrides` in
+    `omarchy-theme-set-templates`. That is the cheap way to change one knob
+    like `background-alpha` without owning the whole file.
+- **Nothing in `~/.config/hypr/` is a symlink either** - all six `.lua`
+  files are plain copies (checked 2026-08-28: not one is a link, i.e.
+  `install.sh` has never actually run on this machine, or something replaced
+  them since). Their content still matched the repo byte-for-byte, so
+  nothing had been lost - but **editing the repo file alone changes
+  nothing live**, and `hyprctl reload` will happily report success while
+  running the old config. That cost real debugging time once: a binding
+  edited in the repo simply never appeared in `hyprctl binds`. Until this is
+  converted to real symlinks, treat it like `shell.json` below and copy in
+  both directions: `cp config/hypr/<f>.lua ~/.config/hypr/` after a repo
+  edit, and back after using an `omarchy hyprland ...` CLI command (those
+  write the live file). Verify with `hyprctl binds` / `hyprctl configerrors`,
+  never by assuming.
 - **`shell.json` does not stay a symlink.** `install.sh` links
   `~/.config/omarchy/shell.json` into this repo, but the live file was found
   as a plain `-rw-------` regular file with content the repo copy never had
@@ -120,8 +142,13 @@ after the force-push, but their local copy still has the old commits.
 
 ## Custom keybinds (see `config/hypr/bindings.lua`)
 
-- **Bare tap of `SUPER`** (not `SUPER+SPACE` anymore) opens the Omarchy
-  menu, via `SUPER + SUPER_L` with `{ release = true }`.
+- **Bare tap of `SUPER`** opens the Omarchy menu, via `SUPER + SUPER_L`
+  with `{ release = true }` - **in addition to** the stock `SUPER+SPACE`,
+  which works too. `SUPER+SPACE` was unbound here for a while; it isn't
+  anymore. The bare-tap bind is a *release* bind on the modifier itself, and
+  Hyprland only fires it when no other bind ran while Super was held - which
+  is why `SUPER+SPACE`, `SUPER+1`, `SUPER+L` etc. don't also pop the menu
+  when you let go of Super.
 - **`SUPER+L`** = "light" lock via `~/.local/bin/omarchy-lock-light`:
   real password-gated session lock, display **never blanks**. Was
   previously "Toggle workspace layout" (dwindle/master) - moved to
@@ -188,6 +215,35 @@ Mirrors the guard the stock screensaver path already had.
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
 above. `idle.lock` stays at 300s (5 min, stock default).
 
+**Which of these actually turns the panel off** - answered from the shell
+log, because it is genuinely confusing from the outside:
+
+| Trigger | What runs | Display |
+|---|---|---|
+| `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | **stays on** |
+| `SUPER+SHIFT+L` | `omarchy-system-lock` | off after 5s |
+| 2 min idle | `ttfx` screensaver | stays on |
+| **5 min idle** | `omarchy-system-lock` - a **full** lock | **off after 5s** |
+
+The last row is the one that surprises. The idle auto-lock is *not* the
+light lock; it blanks like `SUPER+SHIFT+L` does. So "I only pressed SUPER+L
+and the screen went dark anyway" is almost always: SUPER+L, then walking
+away, then something re-armed the idle cycle.
+
+To check rather than guess:
+`journalctl --user --since -3d | grep -E 'idleBlankTimer|lock-system'`.
+`idleBlankTimer fired: ... noBlank=true` means the blank was **suppressed**
+(light lock working as designed); `noBlank=false` means it went through.
+Both appear in this machine's log, which is how the table above was
+confirmed rather than assumed.
+
+Locking is orthogonal to the display either way - see the "never affects
+background processes" note above. If the 5-minute blank is unwanted, the
+knobs are: raise `idle.lock` in `shell.json`, or change `lockSystem()` in
+`gradiscp.idle/Service.qml` to call `omarchy-lock-light` instead of
+`omarchy-system-lock`. The second one costs battery on a laptop, which is
+why it was left alone.
+
 ### Plugin hot-reload gotcha (cost real debugging time)
 
 **`service` and `panel` kind plugins do NOT hot-reload on file save**,
@@ -234,6 +290,56 @@ inconsistent between workspaces.
   Currently: no `user.js`, no `devPixelsPerPx` - Firefox follows the
   system scale like everything else, which is what's wanted.
 
+## Custom theme: `crimson-core`
+
+Lives in `config/omarchy/themes/crimson-core/`, symlinked as a **whole
+directory** to `~/.config/omarchy/themes/crimson-core` (not a per-file
+overlay - it is its own theme, not a tweak of a stock one).
+`omarchy-theme-list` globs both directories and symlinks, so linking the
+directory is all that is needed.
+
+Every color in `colors.toml` was sampled out of the wallpaper
+(`backgrounds/0-3d-tech.jpg`) with `magick ... -colors N -unique-colors
+txt:` rather than invented - the near-black void `#0e0d0c`, the red neon
+strip `#e4212d`, and the brushed-steel grays `#7b837b` / `#8c948d` /
+`#d9dddb` off the circuit board. The warm ANSI slots (red/orange/yellow/
+magenta/brown) are the neon and its spill onto metal; the cool slots
+(green/cyan/blue) are the steel, which is why "green" here is a gray-green
+and there is no real blue - the image has none.
+
+- `hyprland_active_border` is **one flat color** (`rgba(e4212dff)`), on
+  purpose. A gradient was tried first
+  (`rgba(e4212dee) rgba(7a1015ee) 45deg`, matching the render's own 45deg
+  lighting) and rejected - on a real window it reads as an unevenly lit
+  border, brighter at the top and muddy at the bottom, not as a design.
+  With a single color `omarchy-theme-set-templates` emits a plain string
+  instead of the Lua `{ colors = {...}, angle = N }` form; the shell reuses
+  the same value for popup/notification/menu borders via the
+  `hyprland.active-border` token, so they all stay in step.
+- The `*_foreground` values and the cool ANSI slots are the raw steel
+  samples **lifted one notch brighter** (e.g. `foreground` `#b5bbb8` ->
+  `#cbd0ce`) - the literal sample was legible but dim against a near-black
+  background. `bright_foreground` (`#edefee`) is pushed just past the
+  brightest pixel actually in the image so bold/headings still separate.
+- **No `shell.toml`, no `preview.png`, no `vscode.json` are shipped on
+  purpose.** `shell.toml` *replaces* the generated file rather than merging
+  into it, so shipping one means hand-maintaining ~200 lines that drift on
+  every Omarchy update; the generated one already lands on solid `#0e0d0c`.
+  `preview*.png`/`unlock.png` are referenced by nothing in
+  `/usr/share/omarchy/{bin,shell}` (checked) - stock themes ship them, they
+  are not required. `vscode.json` names an extension to install and VS Code
+  isn't used here.
+- `neovim.lua` uses `ficcdaf/ashen.nvim` (rust/red on near-black), which was
+  **already installed** in `~/.local/share/nvim/lazy/` because the stock
+  `solitude` theme declares it - so switching to this theme does not trigger
+  a plugin download.
+- Icons are `Yaru-red-dark`, keyboard LEDs `e4212d`.
+
+To re-sample or retune: edit `colors.toml` in the repo, then
+`omarchy theme set crimson-core` (the theme dir is a symlink, so a repo edit
+is live immediately - but the *generated* files under
+`~/.local/state/omarchy/current/theme/` are only rebuilt on `theme set`).
+
 ## Appearance settings and where they live
 
 Scattered across several files, so listing them in one place:
@@ -250,7 +356,8 @@ Scattered across several files, so listing them in one place:
 | Terminal font | `foot/foot.ini` | JetBrainsMono Nerd Font size 8 |
 | Terminal transparency | `foot/foot.ini` | `alpha=0.85` under `[colors-dark]`, NOT `[main]` |
 | Font weight (global) | `fontconfig/conf.d/51-embolden-jetbrains.conf` | synthetic embolden - only Regular/Bold faces are installed, no Medium/SemiBold to switch to |
-| Bar background | `omarchy/themes/tokyo-night/shell.toml` `[bar]` | `#000000`, alpha `1.0` (solid black) |
+| Active theme | `omarchy/themes/crimson-core/` | `crimson-core` - custom, see the section above |
+| Bar background | generated from `crimson-core/colors.toml` `background` | `#0e0d0c`, alpha `1.0` - no `shell.toml` overlay is shipped for this theme, so the generated one is used as-is |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70` |
@@ -271,6 +378,21 @@ packages that became orphaned afterward, also removed). Webapp shortcuts
 (just `.desktop` files, never real packages): Basecamp, HEY, Zoom, the 4
 Google webapps, X/Twitter, plus Discord/WhatsApp/YouTube (removed later,
 when they broke from Chromium being gone - see the webapp note above).
+
+**All 22 stock themes were deleted too** (~119MB out of
+`/usr/share/omarchy/themes/`), leaving only `crimson-core`. There is no
+supported way to *hide* a theme - `omarchy-theme-list` globs
+`$OMARCHY_PATH/themes` unconditionally and `omarchy theme remove` only
+touches `~/.config/omarchy/themes` - so deletion is the only option, and
+`NoExtract = usr/share/omarchy/themes/*` in `/etc/pacman.conf` (added under
+`[options]`, with a timestamped `.bak` of the original next to it) is what
+stops `omarchy update` from restoring them. Both are re-applied by
+`remove-unwanted-apps.sh`. **To undo:** delete the `NoExtract` line, then
+`sudo pacman -S omarchy`. Seeding "Tokyo Night" on a fresh install is
+guarded by `theme.name` already being non-empty
+(`/usr/share/omarchy/install/user/theme.sh`), so nothing re-seeds it here -
+but a future Omarchy migration that assumes a stock theme exists is the one
+real risk this trade accepted.
 
 ## Planned: repurpose the second NVMe (ex-Windows, ~477GB) drive
 
@@ -311,6 +433,9 @@ install already uses) rather than two separate prompts.
 `install.sh` symlinks everything under `config/` into place and installs
 `packages.txt`. `remove-unwanted-apps.sh` re-applies the app cleanup above.
 Still manual: review `config/hypr/monitors.lua` scale for the new panel,
-copy an SSH key into `~/.ssh`, and re-run `omarchy theme set tokyo-night`
-once so the `background-alpha` overlay actually takes effect (the theme
-overlay files don't do anything just by existing on disk).
+copy an SSH key into `~/.ssh`. `install.sh` ends with
+`omarchy theme set crimson-core`, which is also what makes the theme's
+generated files (foot/hyprland/shell colors) exist at all - a theme does
+nothing just by sitting on disk. `remove-unwanted-apps.sh` also deletes the
+stock themes and adds the pacman `NoExtract` line, so run it before being
+surprised that `omarchy theme list` still shows 23 entries.

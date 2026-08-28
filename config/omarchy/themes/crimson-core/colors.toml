@@ -1,0 +1,55 @@
+# Crimson Core - derived pixel-for-pixel from backgrounds/0-3d-tech.jpg:
+# a near-black studio void, a red neon glow, and cold brushed-steel
+# highlights on the circuit board. Every value below was sampled from the
+# image (or mixed from sampled values), no invented hues.
+mode = "dark"
+
+# The red light strip inside the tower: sampled #e4212d at its brightest.
+accent = "#e4212d"
+# Selection = that red bled down into the black background.
+selection = "#3a1013"
+# The warm gray of the unlit board edges.
+muted = "#4a3f3d"
+
+# The void the object floats in: sampled #0e0d0c.
+background = "#0e0d0c"
+dark_background = "#090808"
+darker_background = "#050404"
+lighter_background = "#181514"
+
+# Brushed steel of the board and the glass frame, lifted a notch off the
+# raw sample so text reads brighter against the near-black background.
+foreground = "#cbd0ce"
+dark_foreground = "#6e716a"
+light_foreground = "#dbe0de"
+bright_foreground = "#edefee"
+
+# Warm axis: the neon and its spill onto metal (#a31921, #966660, #572221).
+red = "#e4212d"
+orange = "#c63d30"
+yellow = "#b8836e"
+magenta = "#a31921"
+brown = "#572221"
+
+# Cool axis: the steel greens/grays of the circuit board (sampled #7b837b /
+# #8c948d), lifted the same notch as the foreground.
+green = "#8d958d"
+cyan = "#a0a8a1"
+blue = "#7e8b90"
+
+bright_red = "#ff3b45"
+bright_orange = "#e05a45"
+bright_yellow = "#dda98d"
+bright_magenta = "#dc3d49"
+bright_green = "#b8c0b7"
+bright_cyan = "#e8ebe9"
+bright_blue = "#acb8bb"
+
+# Window borders: one flat neon red on all four sides. A gradient was tried
+# first (bright top -> dark bottom, matching the render's 45deg lighting) and
+# rejected - it reads as an unevenly lit border, not as a design. A single
+# color here makes omarchy-theme-set-templates emit a plain string instead of
+# the Lua { colors = {...}, angle = N } form, and the shell's
+# hyprland.active-border token (popups, notifications, menus) follows.
+hyprland_active_border = "rgba(e4212dff)"
+hyprland_inactive_border = "rgba(2a2422aa)"

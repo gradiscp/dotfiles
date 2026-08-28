@@ -36,7 +36,10 @@ echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.lock" "$CONFIG_DIR/omarchy/plugins/gradiscp.lock"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.idle" "$CONFIG_DIR/omarchy/plugins/gradiscp.idle"
-link "$REPO_DIR/config/omarchy/themes/tokyo-night/shell.toml" "$CONFIG_DIR/omarchy/themes/tokyo-night/shell.toml"
+# Custom theme (whole directory, not a single file - it is not an overlay
+# on a stock theme, it is its own theme). omarchy-theme-list globs both
+# dirs and symlinks, so linking the directory is enough.
+link "$REPO_DIR/config/omarchy/themes/crimson-core" "$CONFIG_DIR/omarchy/themes/crimson-core"
 
 echo "== Foot terminal =="
 link "$REPO_DIR/config/foot/foot.ini" "$CONFIG_DIR/foot/foot.ini"
@@ -59,7 +62,7 @@ echo "== App cleanup =="
 bash "$REPO_DIR/remove-unwanted-apps.sh"
 
 echo "== Reload =="
-omarchy theme set tokyo-night || true
+omarchy theme set crimson-core || true
 omarchy restart shell || true
 hyprctl reload || true
 
