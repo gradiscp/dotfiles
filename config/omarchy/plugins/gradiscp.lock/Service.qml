@@ -38,6 +38,11 @@ Item {
   property bool unlockSucceeded: false
   readonly property string screenshotPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/omarchy-lock-screenshot.png"
   property int screenshotVersion: 0
+  // False from the moment a lock starts until grim has actually written the
+  // PNG for *that* lock. LockView must not point an Image at the path before
+  // this flips, or it reads a file that is either absent (first lock after
+  // boot) or half-overwritten (every lock after that).
+  property bool screenshotReady: false
 
   readonly property bool locked: lockRequested || sessionLock.locked || sessionLock.secure
   readonly property bool authenticating: authenticatingPassword || fingerprintAuthenticating
@@ -145,6 +150,10 @@ Item {
     logEvent("lock-requested")
     // Grab the live desktop now, before the session lock surface takes over
     // rendering (after which windows are no longer composited/capturable).
+    // The previous lock's screenshot is stale from here on - drop it so the
+    // lock surface comes up on flat background rather than on last time's
+    // desktop while grim is still running.
+    screenshotReady = false
     lockScreenshotProc.running = true
     queueSessionLock()
 
@@ -294,7 +303,7 @@ Item {
         unlockSucceeded: root.unlockSucceeded
         failedAttempts: root.failedAttempts
         inputEnabled: root.lockRequested
-        loadBackground: root.locked
+        loadBackground: root.locked && root.screenshotReady
         passwordText: root.enteredPassword
         onPasswordTextEdited: function(password) { root.enteredPassword = password }
         onSubmitPassword: function(password) { root.submitPassword(password) }
@@ -380,8 +389,21 @@ Item {
 
   Process {
     id: lockScreenshotProc
-    command: ["grim", root.screenshotPath]
-    onExited: root.screenshotVersion += 1
+    // Write to a temp file and rename into place: grim writing directly to
+    // screenshotPath overwrites it in-place, so anything reading the path
+    // mid-capture gets a truncated PNG. rename(2) is atomic, so a reader
+    // sees either the old file or the new one, never a partial one.
+    command: ["bash", "-c", "grim '" + root.screenshotPath + ".tmp' && mv -f '" + root.screenshotPath + ".tmp' '" + root.screenshotPath + "'"]
+    onExited: function(exitCode, exitStatus) {
+      if (exitCode !== 0) {
+        // Leave screenshotReady false: the lock screen then just keeps its
+        // flat background, which is a better failure than a broken Image.
+        root.logEvent("screenshot-failed: exitCode=" + exitCode)
+        return
+      }
+      root.screenshotVersion += 1
+      root.screenshotReady = true
+    }
   }
 
   Timer {
