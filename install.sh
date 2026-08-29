@@ -1,6 +1,10 @@
 #!/bin/bash
 # Bring a fresh Omarchy install up to the same config as this repo.
-# Usage: ~/Projects/dotfiles/install.sh
+# Usage: run it from wherever the repo is checked out, e.g.
+#   ~/Projects/paulgradischnig/dotfiles/install.sh
+# (REPO_DIR below is derived from this file's own location, so the path
+# does not matter - but note the symlinks it creates DO bake it in. Moving
+# the repo afterwards leaves them dangling; re-run this script then.)
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -81,4 +85,10 @@ Done. Manual steps still needed on this machine:
   4. Chromium is NOT installed here, only Firefox — any leftover Omarchy
      webapp shortcut (WhatsApp/Discord/YouTube/Docker) will fail to launch
      until Chromium is reinstalled (see CLAUDE.md for why).
+  5. Boot/login screen — not done automatically, because it writes to
+     /usr/share and rebuilds the initramfs. Run by hand:
+         omarchy plymouth set by theme crimson-core
+     That styles both the Plymouth LUKS unlock prompt and the SDDM
+     greeter from crimson-core's colors.toml + unlock.png.
+     `omarchy plymouth reset` puts the stock Omarchy one back.
 EOF

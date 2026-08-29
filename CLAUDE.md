@@ -416,6 +416,23 @@ overlay - it is its own theme, not a tweak of a stock one).
 `omarchy-theme-list` globs both directories and symlinks, so linking the
 directory is all that is needed.
 
+**That symlink was found dangling on 2026-08-29** - it pointed at
+`/home/gradiscp/Projects/dotfiles/...`, but the repo actually lives at
+`/home/gradiscp/Projects/paulgradischnig/dotfiles/...`. Repointed with
+`ln -sfn`. This is nastier than it sounds, because **nothing visibly
+broke**: the desktop still looked themed, since the *generated* files under
+`~/.local/state/omarchy/current/theme/` had been built while the path was
+still valid and are what the shell/foot/hyprland actually read.
+`omarchy-theme-list` also still printed "Crimson Core" (it globs symlinks
+without resolving them). What gave it away was `omarchy-theme-dir
+crimson-core` falling through to `/usr/share/omarchy/themes/crimson-core`,
+a directory that does not exist (all stock themes were deleted). So: if a
+theme-dir-reading command behaves oddly, **check `ls -laL
+~/.config/omarchy/themes/` before anything else** - `omarchy theme set`
+would have failed here too, and the live desktop is not evidence that the
+link is intact. `install.sh` recreates it, but it had never run on this
+machine (same story as the `hypr/*.lua` copies above).
+
 Every color in `colors.toml` was sampled out of the wallpaper
 (`backgrounds/0-3d-tech.jpg`) with `magick ... -colors N -unique-colors
 txt:` rather than invented - the near-black void `#0e0d0c`, the red neon
@@ -443,10 +460,19 @@ and there is no real blue - the image has none.
   purpose.** `shell.toml` *replaces* the generated file rather than merging
   into it, so shipping one means hand-maintaining ~200 lines that drift on
   every Omarchy update; the generated one already lands on solid `#0e0d0c`.
-  `preview*.png`/`unlock.png` are referenced by nothing in
-  `/usr/share/omarchy/{bin,shell}` (checked) - stock themes ship them, they
-  are not required. `vscode.json` names an extension to install and VS Code
-  isn't used here.
+  `preview.png` is referenced by nothing in `/usr/share/omarchy/{bin,shell}`
+  - stock themes ship it, it is not required. `vscode.json` names an
+  extension to install and VS Code isn't used here.
+
+  **Correction (2026-08-29): `unlock.png` and `preview-unlock.png` *are*
+  used** - this file previously lumped them in with `preview.png` as
+  unreferenced, which was wrong. They drive the boot/login screen:
+  `omarchy-plymouth-set-by-theme` reads `<theme>/unlock.png` plus
+  `background`/`foreground` out of `colors.toml`, and
+  `omarchy-plymouth-list` only lists a theme at all **if it has a
+  `preview-unlock.png`** (which is also what the `omarchy plymouth
+  switcher` menu shows). Both are shipped now - see the boot screen section
+  below.
 - `neovim.lua` uses `ficcdaf/ashen.nvim` (rust/red on near-black), which was
   **already installed** in `~/.local/share/nvim/lazy/` because the stock
   `solitude` theme declares it - so switching to this theme does not trigger
@@ -457,6 +483,83 @@ To re-sample or retune: edit `colors.toml` in the repo, then
 `omarchy theme set crimson-core` (the theme dir is a symlink, so a repo edit
 is live immediately - but the *generated* files under
 `~/.local/state/omarchy/current/theme/` are only rebuilt on `theme set`).
+
+## Boot / login screen (Plymouth + SDDM)
+
+**Which screen you actually see after powering on:** the **Plymouth
+passphrase prompt for the LUKS root** (`nvme1n1p2` -> `root`). That is the
+only place a password is typed at boot. **SDDM is installed and running**
+(`sddm.service`, a leftover from the EndeavourOS+KDE era that Omarchy kept
+using) **but `/etc/sddm.conf.d/autologin.conf` autologins `gradiscp` into
+`omarchy.desktop`**, so its greeter only ever appears after an explicit
+logout - never after a boot. Don't go looking for a display-manager theme
+to explain what you see at startup; it's Plymouth.
+
+Both are styled by **one command**, which is the whole point of doing it
+this way:
+
+```
+omarchy plymouth set by theme crimson-core     # needs sudo, rebuilds initramfs
+omarchy plymouth reset                         # back to stock Omarchy
+```
+
+`omarchy-plymouth-set-by-theme` pulls `background` (`#0e0d0c`) and
+`foreground` (`#cbd0ce`) out of the theme's `colors.toml` and hands them
+plus `<theme>/unlock.png` to `omarchy-plymouth-set`, which then writes
+**both** `/usr/share/plymouth/themes/omarchy/` **and**
+`/usr/share/sddm/themes/omarchy/` and rebuilds the initramfs
+(`limine-mkinitcpio` on this machine, since limine is the bootloader).
+Those are package-owned paths, but writing them through this command is the
+supported path - don't hand-edit them.
+
+**Applied and verified 2026-08-29:** `omarchy plymouth current` reports
+`crimson-core`, the installed `omarchy.script` carries
+`SetBackgroundTopColor(0.055, 0.051, 0.047)` (= `#0e0d0c`), SDDM's
+`Main.qml` carries `color: "#0e0d0c"`, both `logo.png` copies are
+byte-identical to the theme's `unlock.png`, and `entry`/`lock`/`bullet` are
+flattened to `#cbd0ce`. The initramfs rebuild emitted the usual
+`Possibly missing firmware for module: 'xhci_pci_renesas' / 'qat_6xxx'`
+warnings - those are stock mkinitcpio noise on this machine, unrelated to
+this change. **Note `plymouth-set-default-theme` still prints `omarchy`** -
+that is the Plymouth theme *name*, which never changes; Omarchy restyles
+that one theme in place. `omarchy plymouth current` is the command that
+actually tells you which Omarchy theme is driving it (it works by comparing
+the installed `logo.png` byte-for-byte against each theme's `unlock.png`).
+
+What the theme ships for this (`config/omarchy/themes/crimson-core/`):
+
+- **`unlock.png`** - 800x120, transparent, the `CRIMSON CORE` wordmark in
+  JetBrainsMono NF Bold (pointsize 92, `-kerning 14`) filled with the neon
+  red `#e4212d`, plus a soft glow (blurred copy composited back with
+  `-compose screen`). 800px wide matches the stock Omarchy logo, and
+  Plymouth centers it at native size on the 1920x1080 panel - it is not
+  scaled, so don't ship a bigger one.
+- **`preview-unlock.png`** - 1920x1080, generated with
+  `omarchy plymouth preview '#0e0d0c' '#cbd0ce' unlock.png <out>` rather
+  than mocked up by hand, so it is pixel-accurate to what boots. Required
+  for the theme to appear in `omarchy plymouth list` / `omarchy plymouth
+  switcher` at all.
+
+Gotchas worth knowing before touching this again:
+
+- **Only the logo keeps its own colors.** `entry.png`, `lock.png`,
+  `bullet.png` and `progress_bar.png` are flattened to the theme's
+  `foreground` with `magick +level-colors`, so the password box and padlock
+  are always steel-gray here, never red. Putting the red in the wordmark is
+  therefore the only place it can go.
+- **The SDDM failure state is hardcoded to `#f7768e`** (Tokyo Night's red)
+  in `omarchy-plymouth-set` - it is not derived from the theme. A wrong
+  password on the SDDM greeter flashes a color this theme never defines.
+  Cosmetic, only visible after a logout, left alone.
+- **The logo path must not be a symlink** - `omarchy-plymouth-set` rejects
+  one outright (it copies into world-readable `/usr/share`, so it refuses to
+  follow a link that could point anywhere). The theme *directory* being a
+  symlink is fine; `unlock.png` inside it is a real file, which is what the
+  check looks at.
+- It needs a **real sudo password prompt** (the `NOPASSWD` rules on this
+  machine cover only `omarchy-dns` and `timedatectl set-timezone`), and it
+  rebuilds the initramfs, so it has to be run from a terminal by hand - an
+  agent can't complete it.
 
 ## Appearance settings and where they live
 
@@ -480,6 +583,7 @@ Scattered across several files, so listing them in one place:
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70` |
 | Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 300s |
+| Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 
 Firefox opacity has to target the **`firefox-based-browser` tag**, not the
 `firefox` class - Omarchy's own `default/hypr/apps/browser.lua` forces
@@ -551,7 +655,10 @@ install already uses) rather than two separate prompts.
 `install.sh` symlinks everything under `config/` into place and installs
 `packages.txt`. `remove-unwanted-apps.sh` re-applies the app cleanup above.
 Still manual: review `config/hypr/monitors.lua` scale for the new panel,
-copy an SSH key into `~/.ssh`. `install.sh` ends with
+copy an SSH key into `~/.ssh`, and run
+`omarchy plymouth set by theme crimson-core` for the boot/login screen
+(left out of `install.sh` on purpose - it writes to `/usr/share` and
+rebuilds the initramfs). `install.sh` ends with
 `omarchy theme set crimson-core`, which is also what makes the theme's
 generated files (foot/hyprland/shell colors) exist at all - a theme does
 nothing just by sitting on disk. `remove-unwanted-apps.sh` also deletes the
