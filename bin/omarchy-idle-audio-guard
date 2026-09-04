@@ -1,0 +1,89 @@
+#!/bin/bash
+# Hold Omarchy's "stay awake" flag for as long as audio is actually playing,
+# so watching a film/series does not get interrupted by the 2-minute
+# screensaver or the 5-minute idle lock.
+#
+# Why this exists at all: Firefox *does* try to inhibit the screensaver while
+# a video plays, but on this machine it cannot succeed. Firefox 154's Linux
+# wakelock has exactly two backends (checked in libxul: WakeLockTopic::
+# DBusInhibitScreensaver and ::InhibitFreeDesktopPortal) - the DBus name
+# org.freedesktop.ScreenSaver does not exist in this session, and the portal
+# route ends at xdg-desktop-portal-gtk's GNOME-session backend, which is not
+# running either. Firefox has no Wayland zwp_idle_inhibit path in its wakelock
+# code. Meanwhile Omarchy's idle plugin (IdleMonitor { respectInhibitors:
+# true }) only ever honours *Wayland* idle inhibitors. So the two can never
+# meet, no matter which pref is flipped - the inhibit has to come from here.
+#
+# It drives the same flag as `omarchy toggle idle` / the bar's stay-awake
+# indicator, so what it does is always visible in the bar, and the idle
+# plugin picks the change up instantly (it watches that directory).
+#
+# Manual toggles win: if the flag is already set by hand the guard keeps its
+# hands off, and if it is switched off mid-playback the guard stands down for
+# the rest of that playback instead of fighting the user.
+
+set -uo pipefail
+
+INTERVAL="${OMARCHY_IDLE_AUDIO_GUARD_INTERVAL:-15}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/indicators"
+FLAG="$STATE_DIR/stay-awake"            # Omarchy's own flag, shared with the bar
+OWNED="$STATE_DIR/stay-awake-by-audio"  # marker: this flag is ours to clear
+
+toggle_idle() {
+  local cmd
+  cmd="$(command -v omarchy-toggle-idle || true)"
+  [[ -n $cmd ]] || cmd="${OMARCHY_PATH:-/usr/share/omarchy}/bin/omarchy-toggle-idle"
+  "$cmd" "$1" >/dev/null 2>&1
+}
+
+# A sink reports RUNNING only while a stream is actually feeding it; a paused
+# or closed video leaves it IDLE/SUSPENDED. Covers every app and output
+# (speakers, bluetooth, HDMI), not just the browser.
+audio_playing() {
+  pactl list short sinks 2>/dev/null | grep -qw RUNNING
+}
+
+acquire() {
+  toggle_idle stay-awake
+  mkdir -p "$STATE_DIR"
+  touch "$OWNED"
+  echo "idle-audio-guard: audio playing - staying awake"
+}
+
+release() {
+  rm -f "$OWNED"
+  if [[ -f $FLAG ]]; then
+    toggle_idle allow-idle
+    echo "idle-audio-guard: audio stopped - idle allowed again"
+  fi
+}
+
+check() {
+  if audio_playing; then
+    if [[ -f $FLAG ]]; then
+      : # already awake - either ours, or the user's own toggle. Leave it.
+    elif [[ -f $OWNED ]]; then
+      # We had set it and the user switched it back off. Stand down until the
+      # next time playback starts from scratch.
+      rm -f "$OWNED"
+      echo "idle-audio-guard: stay-awake turned off by hand - standing down"
+    else
+      acquire
+    fi
+  elif [[ -f $OWNED ]]; then
+    release
+  fi
+}
+
+# --release is what the systemd unit calls on stop, so a logout/restart never
+# leaves the machine pinned awake by a stale flag.
+if [[ ${1:-} == "--release" ]]; then
+  [[ -f $OWNED ]] && release
+  exit 0
+fi
+
+echo "idle-audio-guard: watching audio every ${INTERVAL}s"
+while :; do
+  check
+  sleep "$INTERVAL"
+done

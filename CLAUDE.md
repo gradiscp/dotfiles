@@ -184,8 +184,13 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   works fine** (e.g. `omarchy.lock` below) - the bug is specific to the
   `bar` kind's `Loader`/`required property` combination.
 - **Fullscreen (`SUPER+F`) forces window opacity back to solid** regardless
-  of any per-window `opacity` rule - Hyprland has a separate
+  of any *two-value* per-window `opacity` rule - Hyprland has a separate
   `decoration.fullscreen_opacity` setting for this, set in `looknfeel.lua`.
+  **But an `opacity` rule takes up to three values** (`active inactive
+  fullscreen`), and the third overrides `fullscreen_opacity` for that window
+  only - verified 2026-09-04 by feeding a fourth value to `hyprctl eval`,
+  which errors with `more than 3 alpha values`. That is how Firefox is solid
+  in fullscreen while a fullscreen `foot` stays at the global `0.9`.
 - **`omarchy-launch-webapp` hardcodes a Chromium-family browser.** It reads
   the default browser via `xdg-settings`, but only recognizes
   `google-chrome|brave|microsoft-edge|opera|vivaldi|helium` - anything else
@@ -329,6 +334,35 @@ Clone of `omarchy.idle`, with two changes to `lockSystem()`:
    deliberately - don't "fix" it back without asking.
    `omarchy-lock-light` lives in `~/.local/bin`; `runProcess` uses
    `bash -lc`, so the login shell's PATH finds it.
+
+**Watching a film/series no longer trips the screensaver** (added
+2026-09-04). `bin/omarchy-idle-audio-guard` + the systemd user unit
+`config/systemd/user/omarchy-idle-audio-guard.service` poll PipeWire every
+15s and hold Omarchy's own stay-awake flag
+(`~/.local/state/omarchy/indicators/stay-awake`, the same one
+`omarchy toggle idle` and the bar indicator use) while any sink reports
+`RUNNING`. Sink-level detection means it covers speakers, the headphone
+jack, Bluetooth and HDMI alike, and every app, not just the browser.
+
+**Why a homegrown guard and not just Firefox's own inhibit:** Firefox *does*
+try, and cannot succeed here. Firefox 154's Linux wakelock has exactly two
+backends - verified with `strings libxul.so | grep WakeLockTopic::`:
+`DBusInhibitScreensaver` (the `org.freedesktop.ScreenSaver` DBus name, which
+`busctl --user list` shows does not exist in this session) and
+`InhibitFreeDesktopPortal` (whose backend would be
+xdg-desktop-portal-gtk's GNOME-session route - also not running). There is
+**no Wayland `zwp_idle_inhibit` path in Firefox's wakelock code** (the
+protocol symbols are linked into libxul but nothing in `WakeLockTopic` uses
+them). Meanwhile Omarchy's idle plugin uses
+`IdleMonitor { respectInhibitors: true }`, which honours only *Wayland* idle
+inhibitors. The two can therefore never meet, and no `about:config` pref
+changes that - don't go hunting for one.
+
+Manual toggles win over the guard: it never touches a flag it did not set
+(marker file `stay-awake-by-audio` next to it), and if stay-awake is turned
+off by hand mid-playback it stands down until playback restarts. The unit's
+`ExecStop` releases the flag, so a logout can't leave the machine pinned
+awake. To watch it: `journalctl --user -u omarchy-idle-audio-guard -f`.
 
 `idle.screensaver` in `shell.json` is 120s (2 min) - triggers Omarchy's
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
@@ -581,7 +615,7 @@ Scattered across several files, so listing them in one place:
 | Bar background | generated from `crimson-core/colors.toml` `background` | `#0e0d0c`, alpha `1.0` - no `shell.toml` overlay is shipped for this theme, so the generated one is used as-is |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
-| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70` |
+| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` |
 | Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 300s |
 | Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 

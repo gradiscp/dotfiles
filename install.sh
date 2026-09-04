@@ -58,6 +58,15 @@ link "$REPO_DIR/config/nvim/lua/config/autocmds.lua" "$CONFIG_DIR/nvim/lua/confi
 echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
 link "$REPO_DIR/bin/omarchy-lock-light" "$HOME/.local/bin/omarchy-lock-light"
+link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
+
+echo "== Systemd user services =="
+# Keeps the screensaver/idle lock away while audio is playing (films, series).
+# See the idle section in CLAUDE.md for why Firefox cannot do this itself.
+link "$REPO_DIR/config/systemd/user/omarchy-idle-audio-guard.service" \
+  "$CONFIG_DIR/systemd/user/omarchy-idle-audio-guard.service"
+systemctl --user daemon-reload
+systemctl --user enable --now omarchy-idle-audio-guard.service
 
 echo "== GTK/GNOME settings =="
 bash "$REPO_DIR/gsettings.sh"
