@@ -4,9 +4,9 @@
     "layout": {
       "center": [
         {
-          "id": "omarchy.clock",
           "format": "ddd d MMM HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
+          "id": "omarchy.clock",
           "verticalFormat": "HH\n—\nmm"
         },
         {
@@ -48,6 +48,14 @@
     "position": "top",
     "transparent": false
   },
+  "cloneSourceRestores": [
+    "gradiscp.lock",
+    "gradiscp.idle"
+  ],
+  "disabledPlugins": [
+    "omarchy.lock",
+    "omarchy.idle"
+  ],
   "idle": {
     "lock": 300,
     "screensaver": 120
@@ -60,13 +68,5 @@
       "id": "gradiscp.idle"
     }
   ],
-  "version": 1,
-  "disabledPlugins": [
-    "omarchy.lock",
-    "omarchy.idle"
-  ],
-  "cloneSourceRestores": [
-    "gradiscp.lock",
-    "gradiscp.idle"
-  ]
+  "version": 1
 }
