@@ -100,8 +100,10 @@ hl.unbind("PRINT")
 hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy")
 
--- SUPER+SHIFT+L: full lock, display blanks after 5s. Replaces the default
--- SUPER+CTRL+L for this - that one's unbound now, only SHIFT+L is used.
+-- SUPER+SHIFT+L: full lock - the normal Omarchy lock screen plus a clock
+-- (FullLockView in the gradiscp.lock clone), display blanks after 5s. Same
+-- lock the idle timer takes. Replaces the default SUPER+CTRL+L for this -
+-- that one's unbound now, only SHIFT+L is used.
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
 

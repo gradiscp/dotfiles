@@ -57,8 +57,8 @@
     "omarchy.idle"
   ],
   "idle": {
-    "lock": 300,
-    "screensaver": 120
+    "lock": 180,
+    "screensaver": 60
   },
   "plugins": [
     {
