@@ -1,6 +1,8 @@
 #!/bin/bash
-# Light lock: same as SUPER+SHIFT+L, but the display is never blanked/turned
-# off - just the blurred lock overlay.
+# Light lock (SUPER+L): same lock as SUPER+SHIFT+L, but the display is never
+# blanked/turned off, and gradiscp.lock shows its minimal view (blurred
+# screenshot + lock icon) instead of the normal lock screen with the clock.
+# Both hinge on the flag file below.
 
 mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles"
 touch "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles/lock-no-blank"

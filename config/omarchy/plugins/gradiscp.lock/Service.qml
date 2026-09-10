@@ -148,13 +148,12 @@ Item {
     refreshNoBlank()
     armBlankTimer()
     logEvent("lock-requested")
-    // Grab the live desktop now, before the session lock surface takes over
-    // rendering (after which windows are no longer composited/capturable).
     // The previous lock's screenshot is stale from here on - drop it so the
     // lock surface comes up on flat background rather than on last time's
-    // desktop while grim is still running.
+    // desktop while grim is still running. The capture itself starts in
+    // noBlankCheckProc, once it is known this is a light lock: the full lock
+    // shows the theme wallpaper and has no use for a screenshot.
     screenshotReady = false
-    lockScreenshotProc.running = true
     queueSessionLock()
 
     Qt.callLater(function() {
@@ -292,9 +291,18 @@ Item {
       id: lockSurface
       color: Color.background
 
+      // Two looks, picked by how the lock was taken. SUPER+L (light lock,
+      // noBlank) gets the minimal LockView: blurred live screenshot, lock
+      // icon, blind typing. Everything else - SUPER+SHIFT+L and the idle
+      // auto-lock - gets FullLockView: sharp wallpaper, clock bottom-left,
+      // password field that only fades in once typing starts.
+      // Only the visible one takes input, so they never fight over focus.
+      // noBlank resolves ~1ms after lock-requested and the surface only comes
+      // up ~500ms later, so the wrong view is never actually on screen.
       LockView {
         id: lockView
         anchors.fill: parent
+        visible: root.noBlank
         backgroundPath: root.screenshotPath
         backgroundVersion: root.screenshotVersion
         fingerprintConfigured: root.fingerprintConfigured
@@ -302,8 +310,27 @@ Item {
         failureMessage: root.failureMessage
         unlockSucceeded: root.unlockSucceeded
         failedAttempts: root.failedAttempts
-        inputEnabled: root.lockRequested
-        loadBackground: root.locked && root.screenshotReady
+        inputEnabled: root.lockRequested && root.noBlank
+        loadBackground: root.locked && root.noBlank && root.screenshotReady
+        passwordText: root.enteredPassword
+        onPasswordTextEdited: function(password) { root.enteredPassword = password }
+        onSubmitPassword: function(password) { root.submitPassword(password) }
+        onClearFailureRequested: root.failureMessage = ""
+        onWakeRequested: root.runWake()
+      }
+
+      FullLockView {
+        id: fullLockView
+        anchors.fill: parent
+        visible: !root.noBlank
+        backgroundPath: root.backgroundPath
+        backgroundVersion: root.backgroundVersion
+        fingerprintConfigured: root.fingerprintConfigured
+        authenticatingPassword: root.authenticatingPassword
+        failureMessage: root.failureMessage
+        failedAttempts: root.failedAttempts
+        inputEnabled: root.lockRequested && !root.noBlank
+        loadBackground: root.locked && !root.noBlank
         passwordText: root.enteredPassword
         onPasswordTextEdited: function(password) { root.enteredPassword = password }
         onSubmitPassword: function(password) { root.submitPassword(password) }
@@ -324,7 +351,9 @@ Item {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     exclusionMode: ExclusionMode.Ignore
 
-    LockView {
+    // `omarchy-shell lock preview` shows the full view - the light one is
+    // just an icon over a screenshot, nothing there worth previewing.
+    FullLockView {
       anchors.fill: parent
       backgroundPath: root.backgroundPath
       backgroundVersion: root.backgroundVersion
@@ -357,11 +386,14 @@ Item {
       root.pendingPassword = ""
 
       if (!root.lockRequested) return
-      if (result === PamResult.Success) {
-        // Brief green flash on the lock icon before the overlay actually
-        // tears down, so correct-password feedback is visible at all.
+      if (result === PamResult.Success && root.noBlank) {
+        // Brief green flash on the light lock's icon before the overlay
+        // actually tears down, so correct-password feedback is visible at
+        // all. FullLockView has no icon to flash - it unlocks straight away.
         root.unlockSucceeded = true
         unlockSuccessTimer.restart()
+      } else if (result === PamResult.Success) {
+        root.finishUnlock()
       } else {
         root.handlePasswordFailure()
       }
@@ -471,9 +503,10 @@ Item {
     command: ["bash", "-c", "omarchy-brightness-keyboard off; omarchy-brightness-display off"]
   }
 
-  // SUPER+L (light lock) drops this flag before locking so the display never
-  // auto-blanks; SUPER+CTRL+L (full lock) does not, so it keeps the normal
-  // blank-after-5s behavior. Cleared again on unlock either way.
+  // SUPER+L (light lock) drops this flag before locking; SUPER+SHIFT+L and
+  // the idle auto-lock (both omarchy-system-lock) do not. It decides two
+  // things: whether the display auto-blanks after 5s, and which view the
+  // lock surface shows (LockView vs FullLockView). Cleared on unlock.
   Process {
     id: noBlankCheckProc
     command: ["bash", "-c", "[[ -f '" + root.noBlankFlagPath + "' ]] && echo yes || echo no"]
@@ -481,6 +514,10 @@ Item {
     onExited: {
       root.noBlank = String(noBlankCheckStdout.text || "").trim() === "yes"
       root.logEvent("noBlank=" + root.noBlank)
+      // Grab the live desktop for the light lock's background. This is still
+      // well before the session lock surface takes over rendering (~500ms
+      // later), after which windows are no longer composited/capturable.
+      if (root.noBlank && root.lockRequested) lockScreenshotProc.running = true
     }
   }
 

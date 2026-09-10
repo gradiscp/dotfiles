@@ -95,11 +95,13 @@ resolved past the function name; the log ordering is the evidence.
 
 Practical consequence: the race needs a **blanked** panel plus a lid/hotplug
 event. `SUPER+L` (light lock) never blanks, so it cannot get into this
-state; `SUPER+SHIFT+L` and the 5-minute idle auto-lock could. That was the
-second argument for switching the idle auto-lock to `omarchy-lock-light`,
-**done 2026-08-28** (see the idle section) - so the only remaining way to
-reach the state this crash needs is `SUPER+SHIFT+L`, or closing the lid.
-This narrows the exposure; it does not fix the upstream bug.
+state; `SUPER+SHIFT+L` and a blanking idle auto-lock can. From 2026-08-28
+the idle auto-lock used `omarchy-lock-light` partly for this reason, which
+left `SUPER+SHIFT+L` and closing the lid as the only ways in. **On
+2026-09-10 that was reversed on request** - the idle auto-lock is
+`omarchy-system-lock` again and blanks 5s after locking (see the idle
+section), so walking away and later closing the lid can reach this state
+again. Accepted knowingly; none of this fixes the upstream bug either way.
 
 To read a future one of these:
 `coredumpctl list`, then `coredumpctl info <pid>`, and above all
@@ -225,9 +227,11 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   real password-gated session lock, display **never blanks**. Was
   previously "Toggle workspace layout" (dwindle/master) - moved to
   `SUPER+H`.
-- **`SUPER+SHIFT+L`** = full lock (`omarchy-system-lock`, stock), display
-  blanks after 5s. The default `SUPER+CTRL+L` bind for this is unbound -
-  only SHIFT+L is used.
+- **`SUPER+SHIFT+L`** = full lock (`omarchy-system-lock`, stock): the
+  normal Omarchy lock screen plus a clock (`FullLockView`, see the lock
+  screen section), display blanks after 5s. The idle auto-lock takes this
+  same lock. The default `SUPER+CTRL+L` bind for this is unbound - only
+  SHIFT+L is used.
 - **`SUPER+SHIFT+S`** = screenshot (was `PRINT`, now unbound). Runs
   `omarchy-capture-screenshot smart copy` - **`copy` mode on purpose**:
   clipboard only, no file written to `~/Pictures` on every capture. Use
@@ -267,12 +271,47 @@ above, hence the explicit `hl.unbind` list.
 
 ### Lock screen design (`config/omarchy/plugins/gradiscp.lock/`)
 
-A clone of the `omarchy.lock` service plugin, deliberately minimal:
+A clone of the `omarchy.lock` service plugin with **two views**, picked per
+lock by the `noBlank` flag (see below):
+
+- **`FullLockView.qml`** - for `SUPER+SHIFT+L` and the idle auto-lock
+  (added 2026-09-10). Started as the stock `omarchy.lock` `LockView.qml`
+  plus a clock, then reworked the same day on request:
+  - the *theme wallpaper* **sharp** - stock's blur `MultiEffect` is gone;
+  - an `HH:mm` clock with a `dddd, d MMMM` date in the **bottom-left
+    corner** (same `SystemClock` the bar clock uses; **stock has no clock
+    at all**), with a drop shadow, which is what keeps it legible now that
+    nothing is blurred;
+  - the password field has a **transparent fill and starts invisible**.
+    Any keystroke or click fades/scales/slides it in (240ms in, 420ms out,
+    `OutCubic`); it hides again 6s after the last keystroke, but never
+    while there is text in it or a password check is running. A wrong
+    password re-reveals it so the error is readable. It stays focused at
+    opacity 0 - opacity doesn't affect focus, the minimal `LockView`
+    already relied on the same thing - so the first key both types and
+    reveals.
+
+  The password logic itself (dots, `Checking…`, error text, fingerprint
+  hint) is stock and unchanged; if this is ever re-synced from a newer
+  `omarchy.lock`, the list above is what to carry over. It unlocks straight
+  away on success (no icon, so no flash). It is also what
+  `omarchy-shell lock preview` shows - the one way to look at it without
+  locking, though only in its idle clock-only state, since the preview
+  takes no input (`omarchy-shell lock hidePreview` or a click closes it).
+- **`LockView.qml`** - for `SUPER+L` only, deliberately minimal. Everything
+  below about the screenshot, the icon and blind typing is this view.
+
+Both sit inside the session lock surface; only the visible one gets
+`inputEnabled`, so they never compete for keyboard focus. `noBlank`
+resolves ~1ms after `lock-requested` and the surface comes up ~500ms later
+(read off the journal), so the wrong view is never actually on screen.
+
 - **Background is a live screenshot of the desktop at the moment of
-  locking** (`grim`, captured in `Service.qml`'s `beginLock()` before the
-  session-lock surface takes over rendering - can't screenshot after that
-  point, app content is no longer composited), lightly blurred - not the
-  static theme wallpaper Omarchy uses by default.
+  locking** (`grim`, started from `noBlankCheckProc` once the lock is known
+  to be a light one - the full view has no use for it - still long before
+  the session-lock surface takes over rendering; can't screenshot after
+  that point, app content is no longer composited), lightly blurred - not
+  the static theme wallpaper Omarchy uses by default.
 - **That capture is asynchronous, and used to race the lock surface.** grim
   runs as a `Process`; the lock surface (and with it `LockView`'s `Image`)
   could come up first and point at a path that was either absent (first lock
@@ -298,8 +337,9 @@ A clone of the `omarchy.lock` service plugin, deliberately minimal:
   wrong password.
 - `noBlank` flag (`~/.local/state/omarchy/toggles/lock-no-blank`, set by
   `omarchy-lock-light` before locking, cleared by `Service.qml` on every
-  unlock) suppresses the plugin's own 5-second post-lock display-blank
-  timer for SUPER+L specifically.
+  unlock) does two jobs for SUPER+L specifically: it suppresses the
+  plugin's own 5-second post-lock display-blank timer, and it selects
+  `LockView` over `FullLockView`.
 - **Dead end, don't repeat:** a passwordless "privacy cover" panel
   (`gradiscp.privacycover`, deleted from disk 2026-08-28 - it had been
   merely disabled, still sitting in `~/.config/omarchy/plugins/` but absent
@@ -316,24 +356,25 @@ A clone of the `omarchy.lock` service plugin, deliberately minimal:
 
 ### Idle behavior (`config/omarchy/plugins/gradiscp.idle/`)
 
-Clone of `omarchy.idle`, with two changes to `lockSystem()`:
+Clone of `omarchy.idle`. The one lasting change is in `lockSystem()`: it
+checks `omarchy-shell lock isLocked` before locking - without this, going
+idle while already locked fires a second lock call. Mirrors the guard the
+stock screensaver path already had. It matters more now that the idle lock
+blanks: a session locked with `SUPER+L` stays exactly as it is (lit,
+minimal view) however long it then sits idle.
 
-1. It checks `omarchy-shell lock isLocked` before locking again - without
-   this, being idle past the 5-minute `idle.lock` mark while already locked
-   fires a second lock call. Mirrors the guard the stock screensaver path
-   already had.
-2. **It calls `omarchy-lock-light`, not the stock `omarchy-system-lock`**
-   (changed 2026-08-28). The idle auto-lock therefore locks for real -
-   password required - but never blanks the panel, exactly like `SUPER+L`.
-   Stock behaviour blanked after 5s, and since walking away re-arms this
-   timer, that was the real answer to "I only pressed SUPER+L and the screen
-   went dark anyway". It also keeps the machine out of the disabled-connector
-   state the Hyprland/Aquamarine DRM crash needs (see the crash section
-   above). **Known trade-off: the panel now stays lit for as long as the
-   session sits idle-locked, which costs battery.** That was accepted
-   deliberately - don't "fix" it back without asking.
-   `omarchy-lock-light` lives in `~/.local/bin`; `runProcess` uses
-   `bash -lc`, so the login shell's PATH finds it.
+**History of the lock command - it has flipped twice, check before
+touching it.** Stock is `omarchy-system-lock`. On 2026-08-28 it became
+`omarchy-lock-light` (lock for real, never blank the panel), because "I only
+pressed SUPER+L and the screen went dark anyway" turned out to be SUPER+L,
+walking away, and the idle cycle blanking it - and to stay out of the DRM
+crash's blanked-panel state. **On 2026-09-10 it went back to
+`omarchy-system-lock` on explicit request** ("nach 1 min Screensaver, nach 3
+Bildschirm aus"): the idle lock now shows the full lock screen with the
+clock and turns the panel off 5s later, same as `SUPER+SHIFT+L`. That brings
+the crash exposure back (see above); the `isLocked` guard is what keeps the
+old SUPER+L complaint from returning. The `shell.idleConfig` fallback on
+`idleConfig` was synced from the updated stock plugin at the same time.
 
 **Watching a film/series no longer trips the screensaver** (added
 2026-09-04). `bin/omarchy-idle-audio-guard` + the systemd user unit
@@ -364,26 +405,25 @@ off by hand mid-playback it stands down until playback restarts. The unit's
 `ExecStop` releases the flag, so a logout can't leave the machine pinned
 awake. To watch it: `journalctl --user -u omarchy-idle-audio-guard -f`.
 
-`idle.screensaver` in `shell.json` is 120s (2 min) - triggers Omarchy's
+`idle.screensaver` in `shell.json` is 60s (1 min) - triggers Omarchy's
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
-above. `idle.lock` stays at 300s (5 min, stock default).
+above. `idle.lock` is 180s (3 min). Both were 120s / 300s until 2026-09-10.
+Both count from the moment idle began, not from each other.
 
 **Which of these actually turns the panel off** - answered from the shell
 log, because it is genuinely confusing from the outside:
 
-| Trigger | What runs | Display |
-|---|---|---|
-| `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | **stays on** |
-| `SUPER+SHIFT+L` | `omarchy-system-lock` | off after 5s |
-| 2 min idle | `ttfx` screensaver | stays on |
-| 5 min idle | `omarchy-lock-light` (was `omarchy-system-lock`) | **stays on** |
+| Trigger | What runs | Lock view | Display |
+|---|---|---|---|
+| `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | minimal (`LockView`) | **stays on** |
+| `SUPER+SHIFT+L` | `omarchy-system-lock` | full, with clock | off after 5s |
+| 1 min idle | `ttfx` screensaver | - | stays on |
+| 3 min idle | `omarchy-system-lock` (skipped if already locked) | full, with clock | off after 5s |
 
-Only `SUPER+SHIFT+L` blanks the panel now. Before 2026-08-28 the 5-minute
-row read "`omarchy-system-lock` - **off after 5s**", and that was the
-surprise: the idle auto-lock was *not* the light lock, so "I only pressed
-SUPER+L and the screen went dark anyway" was really SUPER+L, then walking
-away, then the idle cycle blanking it. If a blanking idle-lock is ever
-wanted back, that is the one line to change in `gradiscp.idle/Service.qml`.
+Between 2026-08-28 and 2026-09-10 the last row was `omarchy-lock-light` /
+**stays on**, and only `SUPER+SHIFT+L` blanked. If a non-blanking idle lock
+is wanted again, that is the one command to swap back in
+`gradiscp.idle/Service.qml`.
 
 To check rather than guess:
 `journalctl --user --since -3d | grep -E 'idleBlankTimer|lock-system'`.
@@ -394,7 +434,7 @@ confirmed rather than assumed.
 
 Locking is orthogonal to the display either way - see the "never affects
 background processes" note above. The remaining knob is `idle.lock` in
-`shell.json` (how long until it locks at all), currently 300s.
+`shell.json` (how long until it locks at all), currently 180s.
 
 ### Plugin hot-reload gotcha (cost real debugging time)
 
@@ -616,7 +656,7 @@ Scattered across several files, so listing them in one place:
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` |
-| Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 300s |
+| Idle screensaver / lock | `omarchy/shell.json` `idle` | 60s / 180s - the idle lock blanks the panel 5s later |
 | Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 
 Firefox opacity has to target the **`firefox-based-browser` tag**, not the
