@@ -154,14 +154,20 @@ Item {
     }
 
     // Clock in the bottom-left corner. With the wallpaper no longer blurred,
-    // the soft shadow is what keeps it legible over bright patches.
+    // the soft shadow is what keeps it legible over bright patches. It hands
+    // the screen over to the password field: fades/sinks out as the field
+    // comes in, and back once the field hides again - mirrored timings.
     Column {
       id: clockColumn
       anchors.left: parent.left
       anchors.bottom: parent.bottom
       anchors.leftMargin: root.clockMargin
-      anchors.bottomMargin: root.clockMargin
+      anchors.bottomMargin: root.fieldShown ? root.clockMargin - 16 : root.clockMargin
       spacing: Math.round(Style.font.heading * 0.25)
+      opacity: root.fieldShown ? 0 : 1
+
+      Behavior on opacity { NumberAnimation { duration: root.fieldShown ? 240 : 420; easing.type: Easing.OutCubic } }
+      Behavior on anchors.bottomMargin { NumberAnimation { duration: root.fieldShown ? 240 : 420; easing.type: Easing.OutCubic } }
 
       layer.enabled: true
       layer.effect: MultiEffect {

@@ -290,6 +290,10 @@ lock by the `noBlank` flag (see below):
     opacity 0 - opacity doesn't affect focus, the minimal `LockView`
     already relied on the same thing - so the first key both types and
     reveals.
+  - **clock and field never share the screen**: while the field is shown
+    the clock fades and sinks out, with the same timings mirrored, and
+    comes back when the field hides. Both hang off one `fieldShown`
+    binding, so they cannot get out of step.
 
   The password logic itself (dots, `Checking…`, error text, fingerprint
   hint) is stock and unchanged; if this is ever re-synced from a newer
