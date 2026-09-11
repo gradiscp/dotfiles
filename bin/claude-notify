@@ -1,0 +1,216 @@
+#!/bin/bash
+# Pop an Omarchy toast (top right, same popup as the low-battery warning)
+# whenever Claude Code stops to ask for permission, and jump straight back to
+# that exact terminal when it is clicked.
+#
+# Wired up as a Claude Code Notification hook with matcher
+# "permission_prompt" in config/claude/settings.json. Two kinds of terminal:
+#
+# - Inside herdr: the hook inherits HERDR_PANE_ID from the pane Claude runs
+#   in, so a click focuses herdr's window *and* that pane - no guessing which
+#   of several agents is the one asking.
+# - A plain terminal window (foot etc.): the hook walks up its own process
+#   tree to the window that owns it, and a click focuses that window.
+#   Out of reach: Claude over SSH (the hook runs on the other machine) and
+#   inside tmux (the tmux server owns no window) - no toast for those.
+#
+# The toast is gone after 10s no matter what, or sooner once it has been
+# dealt with: in herdr when the agent leaves the "blocked" state, in a plain
+# terminal when that window gets focus. It is critical urgency for the
+# battery-warning look, and Omarchy never expires critical toasts on its own,
+# so a detached watcher takes it down. No toast at all when that terminal is
+# already the one you are looking at.
+#
+# Because the toast does not wait around, `jump` exists for a keybind: the
+# most recently blocked herdr agent, else the last plain terminal that asked
+# and has not been visited since.
+#
+# Usage:
+#   claude-notify                         reads Claude's hook JSON on stdin
+#   claude-notify focus <pane>            click action, herdr pane
+#   claude-notify focus-window <address>  click action, plain terminal
+#   claude-notify jump                    keybind
+
+set -uo pipefail
+
+OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
+# The click action runs from the shell's environment, whose PATH need not
+# include ~/.local/bin - so hand it an absolute path to this script.
+SELF="$(realpath -s "$0")"
+RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-notify"
+LAST_WINDOW="$RUN_DIR/last-window"
+TOAST_MS=10000
+
+now_ms() { date +%s%3N; }
+
+active_window() { hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'; }
+
+# Address of the Hyprland window owned by <pid> or its nearest ancestor that
+# owns one. Fails if the chain reaches init without finding a window.
+window_of() {
+  local pid=$1 address clients
+  clients=$(hyprctl clients -j 2>/dev/null) || clients='[]'
+  while [[ -n $pid && $pid -gt 1 ]]; do
+    address=$(jq -r --argjson pid "$pid" \
+      'first(.[] | select(.pid == $pid)).address // empty' <<<"$clients")
+    [[ -n $address ]] && { echo "$address"; return 0; }
+    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+  done
+  return 1
+}
+
+# herdr runs as a headless server plus a client; only the client sits in a
+# terminal window (the server's chain ends at systemd and never finds one).
+herdr_window() {
+  local pid
+  for pid in $(pgrep -x herdr); do
+    window_of "$pid" && return 0
+  done
+  return 1
+}
+
+# Whether <pid> runs somewhere under a herdr process.
+under_herdr() {
+  local pid=$1
+  while [[ -n $pid && $pid -gt 1 ]]; do
+    [[ $(ps -o comm= -p "$pid") == herdr ]] && return 0
+    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+  done
+  return 1
+}
+
+focus_window() {
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$1\" })" >/dev/null 2>&1 ||
+    hyprctl dispatch focuswindow "address:$1" >/dev/null 2>&1
+}
+
+# Take down the toast recorded under <key> (a herdr pane id or window-<address>).
+dismiss() {
+  local headline
+  headline=$(sed -n 2p "$RUN_DIR/$1" 2>/dev/null)
+  [[ -n $headline ]] && "$OMARCHY_BIN/omarchy-shell" notifications dismiss "$headline" >/dev/null 2>&1
+}
+
+# The plain terminal counts as visited: `jump` should not lead back to it.
+forget_window() {
+  [[ $(cat "$LAST_WINDOW" 2>/dev/null) == "$1" ]] && rm -f "$LAST_WINDOW"
+}
+
+focus_pane() {
+  local pane=$1 address
+
+  # Server-side focus first, so a client attaching below opens on this pane.
+  herdr agent focus "$pane" >/dev/null 2>&1
+  dismiss "$pane"
+
+  if address=$(herdr_window); then
+    focus_window "$address"
+  else
+    # No window attached to the session any more - open one.
+    setsid -f "$OMARCHY_BIN/omarchy-launch-terminal-herdr" >/dev/null 2>&1
+  fi
+}
+
+focus_plain() {
+  dismiss "window-$1"
+  forget_window "$1"
+  focus_window "$1"
+}
+
+case ${1:-} in
+focus)
+  focus_pane "${2:?usage: claude-notify focus <pane>}"
+  exit 0
+  ;;
+focus-window)
+  focus_plain "${2:?usage: claude-notify focus-window <address>}"
+  exit 0
+  ;;
+jump)
+  pane=$(herdr agent list 2>/dev/null | jq -r '
+    [.result.agents[] | select(.agent_status == "blocked")]
+    | max_by(.state_change_seq) | .pane_id // empty')
+  if [[ -n $pane ]]; then
+    focus_pane "$pane"
+  elif [[ -s $LAST_WINDOW ]]; then
+    focus_plain "$(cat "$LAST_WINDOW")"
+  fi
+  exit 0
+  ;;
+esac
+
+input=$(cat)
+message=$(jq -r '.message // empty' <<<"$input")
+# HERDR_PANE_ID alone proves little: a terminal window opened from a shell
+# inside herdr inherits it too. Trust it only with herdr up the process tree.
+pane=
+[[ -n ${HERDR_PANE_ID:-} ]] && under_herdr "$$" && pane=$HERDR_PANE_ID
+
+if [[ -n $pane ]]; then
+  agent=$(herdr agent get "$pane" 2>/dev/null | jq -c '.result.agent // {}')
+  window=$(herdr_window)
+  key=$pane
+  title=$(jq -r '.terminal_title_stripped // empty' <<<"$agent")
+  # herdr's window being active is not enough - another tab may be showing.
+  [[ $(jq -r '.focused' <<<"$agent") == true ]] && looking=1 || looking=0
+  click=(focus "$pane")
+else
+  window=$(window_of "$$") || exit 0 # SSH, tmux, ...: no local window to go to
+  key="window-$window"
+  # Claude titles its terminal "<spinner glyph> <task>"; drop the glyph.
+  title=$(hyprctl clients -j 2>/dev/null |
+    jq -r --arg a "$window" 'first(.[] | select(.address == $a)).title // empty' |
+    sed 's/^[^[:alnum:]]* //')
+  looking=1
+  click=(focus-window "$window")
+fi
+[[ -n $title ]] || title=$(basename "$(jq -r '.cwd // empty' <<<"$input")")
+
+# Already looking at that very terminal: a toast would only be noise.
+if ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; then
+  exit 0
+fi
+
+# The headline doubles as the handle for dismissing the toast later, so it
+# carries the terminal's title to tell two waiting sessions apart.
+headline="Claude wartet${title:+: $title}"
+
+"$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" \
+  -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
+  --exec "$SELF" "${click[@]}" >/dev/null 2>&1
+
+# One state file per terminal: a token, so a watcher left over from an earlier
+# prompt in the same place cannot take down this newer toast, and the headline
+# for dismiss().
+mkdir -p "$RUN_DIR"
+token="$$.$(now_ms)"
+printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
+[[ -z $pane ]] && echo "$window" >"$LAST_WINDOW"
+
+# Fully detached, so the hook returns at once and Claude is not held up.
+(
+  deadline=$(($(now_ms) + TOAST_MS))
+  if [[ -n $pane ]]; then
+    # herdr reads the agent state off the terminal, so right when the hook
+    # fires it may not have registered "blocked" yet - wait for that first,
+    # otherwise the second wait would return immediately.
+    if herdr agent wait "$pane" --until blocked --timeout "$TOAST_MS"; then
+      left=$((deadline - $(now_ms)))
+      ((left > 0)) && herdr agent wait "$pane" \
+        --until idle --until working --until done --until unknown --timeout "$left"
+    fi
+  else
+    # No agent state outside herdr; going to the window is the best signal.
+    while (($(now_ms) < deadline)); do
+      if [[ $(active_window) == "$window" ]]; then
+        forget_window "$window"
+        break
+      fi
+      sleep 0.5
+    done
+  fi
+  [[ $(sed -n 1p "$RUN_DIR/$key" 2>/dev/null) == "$token" ]] && dismiss "$key"
+) </dev/null >/dev/null 2>&1 &
+disown
+
+exit 0
