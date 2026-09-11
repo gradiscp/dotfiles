@@ -237,6 +237,11 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   clipboard only, no file written to `~/Pictures` on every capture. Use
   `omarchy capture screenshot smart save` by hand when a file is actually
   wanted.
+- **`SUPER+P`** = jump to the Claude session waiting for a permission
+  (`claude-notify jump`, see the Claude permission toasts section).
+  Was "Pseudo window", a dwindle-only action that does nothing in the
+  scrolling layout. **Fn+Enter was asked for first and can't work**: Fn is
+  resolved inside the keyboard, so Linux only ever sees a plain Enter.
 - **`SUPER+H`** = toggle workspace layout (the old `SUPER+L` action).
   Careful, this has a side effect - see the Workspaces section below.
 - **`CTRL+SHIFT+ESCAPE`** = shutdown, **`SUPER+CTRL+SHIFT+R`** = reboot.
@@ -486,6 +491,56 @@ inconsistent between workspaces.
   Currently: no `user.js`, no `devPixelsPerPx` - Firefox follows the
   system scale like everything else, which is what's wanted.
 
+## Claude permission toasts (herdr and plain terminals)
+
+`bin/claude-notify`, hooked into Claude Code through
+`config/claude/settings.json` (a `Notification` hook with matcher
+`permission_prompt`). When a Claude session stops to ask for permission, an
+Omarchy toast shows top right - the same `omarchy-notification-send -u
+critical` popup as the low-battery warning. Clicking it (the toast's
+`--exec`) goes straight back to that terminal:
+
+- **Inside herdr** the hook inherits `HERDR_PANE_ID` from the pane Claude
+  runs in; the click runs `herdr agent focus <pane>` and focuses herdr's
+  window, found by walking the herdr *client's* parents up to a Hyprland
+  window (the server's chain ends at systemd and never has one).
+- **In a plain terminal window** (foot etc.) the hook walks up its *own*
+  parents to the window that owns it, and the click focuses that window.
+- **No toast** for Claude over SSH (the hook runs on the remote machine) or
+  inside tmux (the tmux server belongs to no window) - nothing local to go to.
+
+Details:
+
+- **Gone after 10s no matter what**, or sooner once it has been dealt with:
+  in herdr when the agent leaves `blocked`, in a plain terminal when that
+  window gets focus (outside herdr there is no agent state to wait on). Omarchy's notification service
+  never expires a *critical* toast (`durationFor` returns 0 for Critical and
+  ignores `-t`), so a detached watcher takes it down with
+  `omarchy-shell notifications dismiss <headline>`. `-u normal -t 10000`
+  would expire by itself but loses the battery-warning look.
+- The watcher waits for `blocked` **first**. herdr reads agent state off the
+  terminal - `herdr integration status` says `claude: not installed`, and
+  detection works regardless - so right when the hook fires it can still
+  say `working`; waiting straight for "not blocked" would dismiss instantly.
+- **No toast when you are already looking**: skipped when that pane is
+  herdr-focused *and* herdr's window is the active Hyprland window, or for
+  a plain terminal when its window is the active one.
+- Because the toast vanishes, the keybind (**`SUPER+P`**) runs
+  `claude-notify jump` - the most recent `blocked` herdr agent (by
+  `state_change_seq`), else the last plain terminal that asked and has not
+  been focused since (`$XDG_RUNTIME_DIR/claude-notify/last-window`). herdr
+  wins when both are waiting, since it offers no timestamp to compare. That
+  is used rather than the stock
+  `SUPER+ALT+COMMA` "invoke last notification", which only reaches a toast
+  that is still on screen.
+- A settings change is picked up by **already running** Claude sessions -
+  observed: sessions started before the hook existed fired it minutes later.
+
+**`~/.claude/settings.json` is a symlink into this repo.** Claude Code writes
+that file itself (`/model`, `/config`, permission "always allow" answers), so
+expect the same story as `shell.json`: if `ls -la ~/.claude/settings.json`
+ever shows a plain file, copy it back into `config/claude/` and relink.
+
 ## Custom theme: `crimson-core`
 
 Lives in `config/omarchy/themes/crimson-core/`, symlinked as a **whole
@@ -731,7 +786,9 @@ install already uses) rather than two separate prompts.
 ## Syncing to a new machine
 
 `install.sh` symlinks everything under `config/` into place and installs
-`packages.txt`. `remove-unwanted-apps.sh` re-applies the app cleanup above.
+`packages.txt`, and links `~/.claude/settings.json` (the Claude permission
+toast hook) - an existing one there is moved aside to `.bak.<timestamp>`.
+`remove-unwanted-apps.sh` re-applies the app cleanup above.
 Still manual: review `config/hypr/monitors.lua` scale for the new panel,
 copy an SSH key into `~/.ssh`, and run
 `omarchy plymouth set by theme crimson-core` for the boot/login screen

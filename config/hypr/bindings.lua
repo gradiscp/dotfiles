@@ -107,6 +107,14 @@ o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
 
+-- SUPER+P: jump to the Claude session (herdr pane or plain terminal) that is
+-- waiting for a permission - the keyboard half of the claude-notify toast,
+-- and it still works after that toast has gone (10s). Was: "Pseudo window",
+-- which only means anything in the dwindle layout, not the scrolling one
+-- used here.
+hl.unbind("SUPER + P")
+o.bind("SUPER + P", "Jump to waiting Claude", "claude-notify jump")
+
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).
 o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")

@@ -59,6 +59,12 @@ echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
 link "$REPO_DIR/bin/omarchy-lock-light" "$HOME/.local/bin/omarchy-lock-light"
 link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
+link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
+
+echo "== Claude Code =="
+# Carries the Notification hook that runs claude-notify above - see
+# "Claude permission toasts" in CLAUDE.md.
+link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
 
 echo "== Systemd user services =="
 # Keeps the screensaver/idle lock away while audio is playing (films, series).
