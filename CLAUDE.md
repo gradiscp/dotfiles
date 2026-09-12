@@ -247,19 +247,26 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   terminal's shell has a child process - Claude, herdr, ssh, an editor. An
   idle prompt, a terminal started straight into a TUI, and every
   non-terminal window close at once as stock (GUI apps with unsaved work ask
-  on their own). The question is an Omarchy menu route, `close-window` in
-  `config/omarchy/extensions/omarchy-menu.jsonc` (linked into
-  `~/.config/omarchy/extensions/`), summoned by id; its `when` keeps the row
-  out of the root menu except while a question is open. **"Abbrechen" is
-  first on purpose**, so a stray Enter keeps the window; **SUPER+W a second
-  time confirms**. The window being asked about is held in
-  `$XDG_RUNTIME_DIR/window-close-guard/pending` and ignored after a minute,
-  so a question dismissed with Escape can't close anything later. The Omarchy
-  shell has a `ConfirmDialog.qml`, but it is wired to the app uninstall
-  row only and not reachable over IPC - hence the menu. The menu's header is
-  really its search field: it shows the title as a placeholder with `…`
-  always appended (`Menu.qml`), cut at roughly 25 characters - hence the
-  short title with no `?`. Typing there filters the rows.
+  on their own). The question is our own overlay plugin,
+  `config/omarchy/plugins/gradiscp.closeconfirm/`, summoned as
+  `omarchy-shell shell summon gradiscp.closeconfirm '{"process":"claude"}'`.
+  It draws a terminal-styled card, picked on 2026-09-12 out of three
+  mockups: a `window-close-guard` title strip, `$ claude läuft noch`, the
+  question with a blinking red block cursor, and `[ Abbrechen ]` /
+  `[ Schließen ]` with the selected one inverted (red for Schließen) -
+  theme tokens only, so it follows a theme change. Keys: **Tab /
+  Shift+Tab / Left / Right** switch, Enter picks, Escape or a click beside
+  the card cancels. The first cut wrapped the shell's `Ui/ConfirmDialog.qml`
+  (same keys, but 10px buttons and no hierarchy). **"Abbrechen" is
+  preselected on purpose**, so a stray Enter keeps the window; **SUPER+W a second time confirms**. The window being
+  asked about is held in `$XDG_RUNTIME_DIR/window-close-guard/pending` and
+  ignored after a minute, so an abandoned question can't close anything
+  later. Like every overlay/service plugin, edits need
+  `omarchy restart shell`.
+  **The first version (2026-09-11) asked through an Omarchy menu route**
+  (`omarchy-menu.jsonc` extension) and was replaced a day later: the stock
+  menu has no Tab handling at all (`Menu.qml` only knows Up/Down/PageUp/
+  PageDown), and adding it would mean owning a clone of the ~1200-line menu.
   Note that closing herdr's window only detaches: its server keeps every
   pane (and every Claude in it) running, `SUPER+CTRL+RETURN` reattaches.
 - **`SUPER+H`** = toggle workspace layout (the old `SUPER+L` action).
@@ -309,7 +316,8 @@ lock by the `noBlank` flag (see below):
     nothing is blurred;
   - the password field has a **transparent fill and starts invisible**.
     Any keystroke or click fades/scales/slides it in (240ms in, 420ms out,
-    `OutCubic`); it hides again 6s after the last keystroke, but never
+    `OutCubic`); it hides again 3s after the last keystroke (6s until
+    2026-09-12, shortened on request), but never
     while there is text in it or a password check is running. A wrong
     password re-reveals it so the error is readable. It stays focused at
     opacity 0 - opacity doesn't affect focus, the minimal `LockView`
@@ -434,9 +442,12 @@ off by hand mid-playback it stands down until playback restarts. The unit's
 `ExecStop` releases the flag, so a logout can't leave the machine pinned
 awake. To watch it: `journalctl --user -u omarchy-idle-audio-guard -f`.
 
-`idle.screensaver` in `shell.json` is 60s (1 min) - triggers Omarchy's
+`idle.screensaver` in `shell.json` is 240s (4 min) - triggers Omarchy's
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
-above. `idle.lock` is 180s (3 min). Both were 120s / 300s until 2026-09-10.
+above. `idle.lock` is 300s (5 min). History: 120s / 300s stock, 60s / 180s
+from 2026-09-10, 240s / 300s from 2026-09-12. The lock has to stay *after*
+the screensaver, or the screensaver is never seen - the lock blanks the
+panel 5s later.
 Both count from the moment idle began, not from each other.
 
 **Which of these actually turns the panel off** - answered from the shell
@@ -446,8 +457,8 @@ log, because it is genuinely confusing from the outside:
 |---|---|---|---|
 | `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | minimal (`LockView`) | **stays on** |
 | `SUPER+SHIFT+L` | `omarchy-system-lock` | full, with clock | off after 5s |
-| 1 min idle | `ttfx` screensaver | - | stays on |
-| 3 min idle | `omarchy-system-lock` (skipped if already locked) | full, with clock | off after 5s |
+| 4 min idle | `ttfx` screensaver | - | stays on |
+| 5 min idle | `omarchy-system-lock` (skipped if already locked) | full, with clock | off after 5s |
 
 Between 2026-08-28 and 2026-09-10 the last row was `omarchy-lock-light` /
 **stays on**, and only `SUPER+SHIFT+L` blanked. If a non-blanking idle lock
@@ -463,7 +474,7 @@ confirmed rather than assumed.
 
 Locking is orthogonal to the display either way - see the "never affects
 background processes" note above. The remaining knob is `idle.lock` in
-`shell.json` (how long until it locks at all), currently 180s.
+`shell.json` (how long until it locks at all), currently 300s.
 
 ### Plugin hot-reload gotcha (cost real debugging time)
 
@@ -707,6 +718,18 @@ What the theme ships for this (`config/omarchy/themes/crimson-core/`):
 
 Gotchas worth knowing before touching this again:
 
+- **An Omarchy update resets it to stock.** The files under
+  `/usr/share/{plymouth,sddm}/themes/omarchy/` are owned by the
+  `omarchy-settings` package (`pacman -Qo`), so the 4.0.1 -> 4.0.3 upgrade
+  on 2026-09-10 overwrote the crimson-core logo and colors, and the next
+  boot showed the stock Omarchy screen again. `omarchy plymouth current`
+  reported `default` afterwards - that is the quick check. A pacman hook
+  that re-applies the theme can't work: `omarchy-plymouth-set` refuses to
+  run as root, and pacman hooks run as root. So `remove-unwanted-apps.sh`
+  adds `NoExtract` for both directories instead (trade-off: Omarchy's own
+  future changes to those files don't arrive either); re-apply with
+  `omarchy plymouth set by theme crimson-core` after adding it.
+
 - **Only the logo keeps its own colors.** `entry.png`, `lock.png`,
   `bullet.png` and `progress_bar.png` are flattened to the theme's
   `foreground` with `magick +level-colors`, so the password box and padlock
@@ -747,7 +770,7 @@ Scattered across several files, so listing them in one place:
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` |
-| Idle screensaver / lock | `omarchy/shell.json` `idle` | 60s / 180s - the idle lock blanks the panel 5s later |
+| Idle screensaver / lock | `omarchy/shell.json` `idle` | 240s / 300s - the idle lock blanks the panel 5s later |
 | Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 
 Firefox opacity has to target the **`firefox-based-browser` tag**, not the

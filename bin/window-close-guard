@@ -1,29 +1,29 @@
 #!/bin/bash
 # SUPER+W: close the active window - but when it is a terminal with something
-# still running in it (Claude, herdr, ssh, an editor ...), ask first through a
-# small Omarchy menu (the "close-window" entries in
-# config/omarchy/extensions/omarchy-menu.jsonc). Everything else closes
-# straight away, as stock: graphical apps with unsaved work already ask on
-# their own when they get a close request.
+# still running in it (Claude, herdr, ssh, an editor ...), ask first through
+# the gradiscp.closeconfirm shell plugin (config/omarchy/plugins/). Everything
+# else closes straight away, as stock: graphical apps with unsaved work already
+# ask on their own when they get a close request.
 #
 # "Something running" = the terminal's shell has a child process. An idle
 # prompt closes without a question, and so does a terminal started straight
 # into a TUI (`foot -e lazydocker`) - there is no shell in between to hold
 # anything worth keeping.
 #
-# Pressing SUPER+W again while the question is open counts as "yes".
+# In the question, Tab / Shift+Tab / arrows switch buttons, Enter picks and
+# Escape cancels. Pressing SUPER+W again while it is open counts as "yes".
 #
 # Usage:
 #   window-close-guard            the keybind
-#   window-close-guard confirm    menu: close the window that was asked about
-#   window-close-guard cancel     menu: forget it
-#   window-close-guard pending    exit 0 while a question is open (menu `when`)
+#   window-close-guard confirm    dialog: close the window that was asked about
+#   window-close-guard cancel     dialog: forget it
 
 set -uo pipefail
 
 OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
 PENDING="${XDG_RUNTIME_DIR:-/tmp}/window-close-guard/pending"
 TERMINALS='^(foot|footclient|Alacritty|kitty|com\.mitchellh\.ghostty|org\.omarchy\..*|TUI\.float)$'
+DIALOG=gradiscp.closeconfirm
 
 close() {
   hyprctl dispatch "hl.dsp.window.close({ window = \"address:$1\" })" >/dev/null 2>&1 ||
@@ -31,7 +31,7 @@ close() {
 }
 
 # Address of the window being asked about. A question older than a minute was
-# walked away from (Escape, click outside) and no longer counts.
+# abandoned and no longer counts.
 fresh_pending() {
   [[ -n $(find "$PENDING" -mmin -1 2>/dev/null) ]] && cat "$PENDING"
 }
@@ -46,10 +46,6 @@ busy_in() {
 }
 
 case ${1:-} in
-pending)
-  [[ -n $(fresh_pending) ]]
-  exit
-  ;;
 confirm)
   address=$(fresh_pending)
   rm -f "$PENDING"
@@ -69,15 +65,16 @@ read -r address pid class < <(hyprctl activewindow -j 2>/dev/null |
 # Second SUPER+W while the question about this same window is open: yes.
 if [[ $(fresh_pending) == "$address" ]]; then
   rm -f "$PENDING"
-  "$OMARCHY_BIN/omarchy-menu" close >/dev/null 2>&1
+  "$OMARCHY_BIN/omarchy-shell" shell hide "$DIALOG" >/dev/null 2>&1
   close "$address"
   exit 0
 fi
 
-if [[ $class =~ $TERMINALS && -n $(busy_in "$pid") ]]; then
+if [[ $class =~ $TERMINALS ]] && busy=$(busy_in "$pid") && [[ -n $busy ]]; then
   mkdir -p "$(dirname "$PENDING")"
   echo "$address" >"$PENDING"
-  "$OMARCHY_BIN/omarchy-menu" summon close-window >/dev/null 2>&1
+  "$OMARCHY_BIN/omarchy-shell" shell summon "$DIALOG" \
+    "$(jq -nc --arg p "$busy" '{process: $p}')" >/dev/null 2>&1
   exit 0
 fi
 
