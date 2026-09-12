@@ -1,6 +1,10 @@
 #!/bin/bash
 # Bring a fresh Omarchy install up to the same config as this repo.
-# Usage: ~/Projects/dotfiles/install.sh
+# Usage: run it from wherever the repo is checked out, e.g.
+#   ~/Projects/paulgradischnig/dotfiles/install.sh
+# (REPO_DIR below is derived from this file's own location, so the path
+# does not matter - but note the symlinks it creates DO bake it in. Moving
+# the repo afterwards leaves them dangling; re-run this script then.)
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,6 +40,8 @@ echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.lock" "$CONFIG_DIR/omarchy/plugins/gradiscp.lock"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.idle" "$CONFIG_DIR/omarchy/plugins/gradiscp.idle"
+# SUPER+W's "close anyway?" dialog, summoned by bin/window-close-guard.
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarchy/plugins/gradiscp.closeconfirm"
 # Custom theme (whole directory, not a single file - it is not an overlay
 # on a stock theme, it is its own theme). omarchy-theme-list globs both
 # dirs and symlinks, so linking the directory is enough.
@@ -54,6 +60,22 @@ link "$REPO_DIR/config/nvim/lua/config/autocmds.lua" "$CONFIG_DIR/nvim/lua/confi
 echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
 link "$REPO_DIR/bin/omarchy-lock-light" "$HOME/.local/bin/omarchy-lock-light"
+link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
+link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
+link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
+
+echo "== Claude Code =="
+# Carries the Notification hook that runs claude-notify above - see
+# "Claude permission toasts" in CLAUDE.md.
+link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
+
+echo "== Systemd user services =="
+# Keeps the screensaver/idle lock away while audio is playing (films, series).
+# See the idle section in CLAUDE.md for why Firefox cannot do this itself.
+link "$REPO_DIR/config/systemd/user/omarchy-idle-audio-guard.service" \
+  "$CONFIG_DIR/systemd/user/omarchy-idle-audio-guard.service"
+systemctl --user daemon-reload
+systemctl --user enable --now omarchy-idle-audio-guard.service
 
 echo "== GTK/GNOME settings =="
 bash "$REPO_DIR/gsettings.sh"
@@ -81,4 +103,10 @@ Done. Manual steps still needed on this machine:
   4. Chromium is NOT installed here, only Firefox — any leftover Omarchy
      webapp shortcut (WhatsApp/Discord/YouTube/Docker) will fail to launch
      until Chromium is reinstalled (see CLAUDE.md for why).
+  5. Boot/login screen — not done automatically, because it writes to
+     /usr/share and rebuilds the initramfs. Run by hand:
+         omarchy plymouth set by theme crimson-core
+     That styles both the Plymouth LUKS unlock prompt and the SDDM
+     greeter from crimson-core's colors.toml + unlock.png.
+     `omarchy plymouth reset` puts the stock Omarchy one back.
 EOF

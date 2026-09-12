@@ -16,7 +16,8 @@ Item {
   readonly property string stayAwakeStatePath: stayAwakeStateDir + "/stay-awake"
   readonly property int defaultScreensaverSeconds: 150
   readonly property int defaultLockSeconds: 300
-  readonly property var idleConfig: shell && shell.shellConfig && shell.shellConfig.idle ? shell.shellConfig.idle : ({})
+  readonly property var idleConfig: shell && shell.shellConfig && shell.shellConfig.idle
+    ? shell.shellConfig.idle : (shell && shell.idleConfig ? shell.idleConfig : ({}))
   readonly property int screensaverTimeoutSeconds: secondsFromConfig(idleConfig.screensaver, defaultScreensaverSeconds)
   readonly property int lockTimeoutSeconds: secondsFromConfig(idleConfig.lock, defaultLockSeconds)
   readonly property int firstIdleTimeoutSeconds: Math.min(screensaverTimeoutSeconds, lockTimeoutSeconds)
@@ -76,20 +77,16 @@ Item {
     root.idledThisCycle = false
     root.screensaverStartedThisCycle = false
     resetScreensaverWindows()
-    // The idle auto-lock uses the *light* lock, same as SUPER+L: it locks
-    // for real (password required) but never blanks the panel. Stock is
-    // omarchy-system-lock, which blanks after 5s - that was the actual
-    // source of "I only pressed SUPER+L and the screen went dark anyway",
-    // because walking away re-armed this timer. It also avoids the
-    // disabled-connector state that the Hyprland/Aquamarine DRM crash needs
-    // (see the crash section in CLAUDE.md). Trade-off accepted knowingly:
-    // the panel now stays lit while idle-locked, which costs battery.
+    // The idle auto-lock is the stock full lock again (since 2026-09-10):
+    // the normal lock screen with the clock, display off 5s after locking.
+    // From 2026-08-28 until then it used omarchy-lock-light and never
+    // blanked - see CLAUDE.md's idle section for why that was reversed, and
+    // its crash section for what a blanked panel exposes again.
     //
-    // The isLocked guard stays regardless - without it, being idle past the
-    // 5-minute mark while already locked fires a second lock call.
-    // omarchy-lock-light lives in ~/.local/bin; runProcess uses `bash -lc`,
-    // so the login shell's PATH picks it up.
-    runProcess(lockProcess, "lock", "[[ $(omarchy-shell lock isLocked 2>/dev/null) == \"true\" ]] || omarchy-lock-light")
+    // The isLocked guard stays regardless - without it, going idle while
+    // already locked (e.g. by SUPER+L, whose panel must stay lit) fires a
+    // second lock call.
+    runProcess(lockProcess, "lock", "[[ $(omarchy-shell lock isLocked 2>/dev/null) == \"true\" ]] || omarchy-system-lock")
   }
 
   function startIdleCycle() {

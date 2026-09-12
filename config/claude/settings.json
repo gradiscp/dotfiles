@@ -1,0 +1,28 @@
+{
+  "model": "opus",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "high"
+    }
+  },
+  "tui": "fullscreen",
+  "theme": "custom:omarchy",
+  "permissions": {
+    "defaultMode": "default"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/gradiscp/.local/bin/claude-notify"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+

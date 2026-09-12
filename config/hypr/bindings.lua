@@ -100,10 +100,27 @@ hl.unbind("PRINT")
 hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy")
 
--- SUPER+SHIFT+L: full lock, display blanks after 5s. Replaces the default
--- SUPER+CTRL+L for this - that one's unbound now, only SHIFT+L is used.
+-- SUPER+SHIFT+L: full lock - the normal Omarchy lock screen plus a clock
+-- (FullLockView in the gradiscp.lock clone), display blanks after 5s. Same
+-- lock the idle timer takes. Replaces the default SUPER+CTRL+L for this -
+-- that one's unbound now, only SHIFT+L is used.
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
+
+-- SUPER+P: jump to the Claude session (herdr pane or plain terminal) that is
+-- waiting for a permission - the keyboard half of the claude-notify toast,
+-- and it still works after that toast has gone (10s). Was: "Pseudo window",
+-- which only means anything in the dwindle layout, not the scrolling one
+-- used here.
+hl.unbind("SUPER + P")
+o.bind("SUPER + P", "Jump to waiting Claude", "claude-notify jump")
+
+-- SUPER+W: close the window, but ask first when it is a terminal with
+-- something still running in it (Claude, herdr, ssh, ...) - see
+-- bin/window-close-guard. SUPER+W a second time confirms. Every other window
+-- closes at once, as stock.
+hl.unbind("SUPER + W")
+o.bind("SUPER + W", "Close window", "window-close-guard")
 
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).
