@@ -40,6 +40,8 @@ echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.lock" "$CONFIG_DIR/omarchy/plugins/gradiscp.lock"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.idle" "$CONFIG_DIR/omarchy/plugins/gradiscp.idle"
+# Menu extensions - currently only the SUPER+W "close anyway?" question.
+link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
 # Custom theme (whole directory, not a single file - it is not an overlay
 # on a stock theme, it is its own theme). omarchy-theme-list globs both
 # dirs and symlinks, so linking the directory is enough.
@@ -60,6 +62,7 @@ mkdir -p "$HOME/.local/bin"
 link "$REPO_DIR/bin/omarchy-lock-light" "$HOME/.local/bin/omarchy-lock-light"
 link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
 link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
+link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
 
 echo "== Claude Code =="
 # Carries the Notification hook that runs claude-notify above - see

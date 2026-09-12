@@ -115,6 +115,13 @@ o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
 hl.unbind("SUPER + P")
 o.bind("SUPER + P", "Jump to waiting Claude", "claude-notify jump")
 
+-- SUPER+W: close the window, but ask first when it is a terminal with
+-- something still running in it (Claude, herdr, ssh, ...) - see
+-- bin/window-close-guard. SUPER+W a second time confirms. Every other window
+-- closes at once, as stock.
+hl.unbind("SUPER + W")
+o.bind("SUPER + W", "Close window", "window-close-guard")
+
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).
 o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")

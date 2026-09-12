@@ -43,6 +43,13 @@ TOAST_MS=10000
 
 now_ms() { date +%s%3N; }
 
+# Every hook decision lands here, since a toast that does not appear is
+# otherwise indistinguishable from a hook that never ran. tmpfs, gone on reboot.
+log() {
+  mkdir -p "$RUN_DIR"
+  printf '%s %s\n' "$(date +%T)" "$*" >>"$RUN_DIR/log"
+}
+
 active_window() { hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'; }
 
 # Address of the Hyprland window owned by <pid> or its nearest ancestor that
@@ -155,7 +162,7 @@ if [[ -n $pane ]]; then
   [[ $(jq -r '.focused' <<<"$agent") == true ]] && looking=1 || looking=0
   click=(focus "$pane")
 else
-  window=$(window_of "$$") || exit 0 # SSH, tmux, ...: no local window to go to
+  window=$(window_of "$$") || { log "skip: no local terminal window (SSH, tmux?)"; exit 0; }
   key="window-$window"
   # Claude titles its terminal "<spinner glyph> <task>"; drop the glyph.
   title=$(hyprctl clients -j 2>/dev/null |
@@ -168,12 +175,14 @@ fi
 
 # Already looking at that very terminal: a toast would only be noise.
 if ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; then
+  log "skip ($key): already looking at it"
   exit 0
 fi
 
 # The headline doubles as the handle for dismissing the toast later, so it
 # carries the terminal's title to tell two waiting sessions apart.
 headline="Claude wartet${title:+: $title}"
+log "toast ($key): $headline"
 
 "$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" \
   -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \

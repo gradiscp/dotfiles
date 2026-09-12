@@ -242,6 +242,26 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   Was "Pseudo window", a dwindle-only action that does nothing in the
   scrolling layout. **Fn+Enter was asked for first and can't work**: Fn is
   resolved inside the keyboard, so Linux only ever sees a plain Enter.
+- **`SUPER+W`** = close window, **but asks first for a terminal with
+  something still running** (`bin/window-close-guard`). "Running" means the
+  terminal's shell has a child process - Claude, herdr, ssh, an editor. An
+  idle prompt, a terminal started straight into a TUI, and every
+  non-terminal window close at once as stock (GUI apps with unsaved work ask
+  on their own). The question is an Omarchy menu route, `close-window` in
+  `config/omarchy/extensions/omarchy-menu.jsonc` (linked into
+  `~/.config/omarchy/extensions/`), summoned by id; its `when` keeps the row
+  out of the root menu except while a question is open. **"Abbrechen" is
+  first on purpose**, so a stray Enter keeps the window; **SUPER+W a second
+  time confirms**. The window being asked about is held in
+  `$XDG_RUNTIME_DIR/window-close-guard/pending` and ignored after a minute,
+  so a question dismissed with Escape can't close anything later. The Omarchy
+  shell has a `ConfirmDialog.qml`, but it is wired to the app uninstall
+  row only and not reachable over IPC - hence the menu. The menu's header is
+  really its search field: it shows the title as a placeholder with `…`
+  always appended (`Menu.qml`), cut at roughly 25 characters - hence the
+  short title with no `?`. Typing there filters the rows.
+  Note that closing herdr's window only detaches: its server keeps every
+  pane (and every Claude in it) running, `SUPER+CTRL+RETURN` reattaches.
 - **`SUPER+H`** = toggle workspace layout (the old `SUPER+L` action).
   Careful, this has a side effect - see the Workspaces section below.
 - **`CTRL+SHIFT+ESCAPE`** = shutdown, **`SUPER+CTRL+SHIFT+R`** = reboot.
@@ -533,8 +553,20 @@ Details:
   is used rather than the stock
   `SUPER+ALT+COMMA` "invoke last notification", which only reaches a toast
   that is still on screen.
-- A settings change is picked up by **already running** Claude sessions -
-  observed: sessions started before the hook existed fired it minutes later.
+- **Running Claude sessions keep the hook command they last loaded.** The
+  first version was added by editing `~/.claude/settings.json` in place, and
+  sessions already running picked that up. But when the script was renamed
+  (`claude-herdr-notify` -> `claude-notify`) and the path in the repo file
+  changed with `sed -i`, running sessions kept calling the old, deleted path
+  and failed silently - and re-creating the `~/.claude/settings.json`
+  symlink afterwards did **not** make them reload either (logged: the old
+  path was still called after it). Only a restarted session reads the new
+  command. So after changing the hook command, restart the Claude sessions,
+  or leave something executable at the old path until they are.
+- Every hook run logs its decision (`toast`, `skip: already looking`,
+  `skip: no local terminal window`) to `$XDG_RUNTIME_DIR/claude-notify/log`
+  - check it first when a toast "doesn't come"; a hook that never ran and
+  a toast that was deliberately skipped look identical from the outside.
 
 **`~/.claude/settings.json` is a symlink into this repo.** Claude Code writes
 that file itself (`/model`, `/config`, permission "always allow" answers), so
