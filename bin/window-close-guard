@@ -1,0 +1,81 @@
+#!/bin/bash
+# SUPER+W: close the active window - but when it is a terminal with something
+# still running in it (Claude, herdr, ssh, an editor ...), ask first through
+# the gradiscp.closeconfirm shell plugin (config/omarchy/plugins/). Everything
+# else closes straight away, as stock: graphical apps with unsaved work already
+# ask on their own when they get a close request.
+#
+# "Something running" = the terminal's shell has a child process. An idle
+# prompt closes without a question, and so does a terminal started straight
+# into a TUI (`foot -e lazydocker`) - there is no shell in between to hold
+# anything worth keeping.
+#
+# In the question, Tab / Shift+Tab / arrows switch buttons, Enter picks and
+# Escape cancels. Pressing SUPER+W again while it is open counts as "yes".
+#
+# Usage:
+#   window-close-guard            the keybind
+#   window-close-guard confirm    dialog: close the window that was asked about
+#   window-close-guard cancel     dialog: forget it
+
+set -uo pipefail
+
+OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
+PENDING="${XDG_RUNTIME_DIR:-/tmp}/window-close-guard/pending"
+TERMINALS='^(foot|footclient|Alacritty|kitty|com\.mitchellh\.ghostty|org\.omarchy\..*|TUI\.float)$'
+DIALOG=gradiscp.closeconfirm
+
+close() {
+  hyprctl dispatch "hl.dsp.window.close({ window = \"address:$1\" })" >/dev/null 2>&1 ||
+    hyprctl dispatch closewindow "address:$1" >/dev/null 2>&1
+}
+
+# Address of the window being asked about. A question older than a minute was
+# abandoned and no longer counts.
+fresh_pending() {
+  [[ -n $(find "$PENDING" -mmin -1 2>/dev/null) ]] && cat "$PENDING"
+}
+
+# Name of the first process running inside the terminal's shell, empty for an
+# idle prompt.
+busy_in() {
+  local shell
+  for shell in $(pgrep -P "$1"); do
+    ps -o comm= --ppid "$shell"
+  done | head -1
+}
+
+case ${1:-} in
+confirm)
+  address=$(fresh_pending)
+  rm -f "$PENDING"
+  [[ -n $address ]] && close "$address"
+  exit 0
+  ;;
+cancel)
+  rm -f "$PENDING"
+  exit 0
+  ;;
+esac
+
+read -r address pid class < <(hyprctl activewindow -j 2>/dev/null |
+  jq -r '"\(.address // "") \(.pid // "") \(.class // "")"')
+[[ -n $address ]] || exit 0
+
+# Second SUPER+W while the question about this same window is open: yes.
+if [[ $(fresh_pending) == "$address" ]]; then
+  rm -f "$PENDING"
+  "$OMARCHY_BIN/omarchy-shell" shell hide "$DIALOG" >/dev/null 2>&1
+  close "$address"
+  exit 0
+fi
+
+if [[ $class =~ $TERMINALS ]] && busy=$(busy_in "$pid") && [[ -n $busy ]]; then
+  mkdir -p "$(dirname "$PENDING")"
+  echo "$address" >"$PENDING"
+  "$OMARCHY_BIN/omarchy-shell" shell summon "$DIALOG" \
+    "$(jq -nc --arg p "$busy" '{process: $p}')" >/dev/null 2>&1
+  exit 0
+fi
+
+close "$address"

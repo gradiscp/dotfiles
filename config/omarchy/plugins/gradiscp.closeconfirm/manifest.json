@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.closeconfirm",
+  "name": "Close confirmation",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "Asks before SUPER+W closes a terminal that still has something running.",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "CloseConfirm.qml"
+  }
+}

@@ -95,11 +95,13 @@ resolved past the function name; the log ordering is the evidence.
 
 Practical consequence: the race needs a **blanked** panel plus a lid/hotplug
 event. `SUPER+L` (light lock) never blanks, so it cannot get into this
-state; `SUPER+SHIFT+L` and the 5-minute idle auto-lock could. That was the
-second argument for switching the idle auto-lock to `omarchy-lock-light`,
-**done 2026-08-28** (see the idle section) - so the only remaining way to
-reach the state this crash needs is `SUPER+SHIFT+L`, or closing the lid.
-This narrows the exposure; it does not fix the upstream bug.
+state; `SUPER+SHIFT+L` and a blanking idle auto-lock can. From 2026-08-28
+the idle auto-lock used `omarchy-lock-light` partly for this reason, which
+left `SUPER+SHIFT+L` and closing the lid as the only ways in. **On
+2026-09-10 that was reversed on request** - the idle auto-lock is
+`omarchy-system-lock` again and blanks 5s after locking (see the idle
+section), so walking away and later closing the lid can reach this state
+again. Accepted knowingly; none of this fixes the upstream bug either way.
 
 To read a future one of these:
 `coredumpctl list`, then `coredumpctl info <pid>`, and above all
@@ -184,8 +186,13 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   works fine** (e.g. `omarchy.lock` below) - the bug is specific to the
   `bar` kind's `Loader`/`required property` combination.
 - **Fullscreen (`SUPER+F`) forces window opacity back to solid** regardless
-  of any per-window `opacity` rule - Hyprland has a separate
+  of any *two-value* per-window `opacity` rule - Hyprland has a separate
   `decoration.fullscreen_opacity` setting for this, set in `looknfeel.lua`.
+  **But an `opacity` rule takes up to three values** (`active inactive
+  fullscreen`), and the third overrides `fullscreen_opacity` for that window
+  only - verified 2026-09-04 by feeding a fourth value to `hyprctl eval`,
+  which errors with `more than 3 alpha values`. That is how Firefox is solid
+  in fullscreen while a fullscreen `foot` stays at the global `0.9`.
 - **`omarchy-launch-webapp` hardcodes a Chromium-family browser.** It reads
   the default browser via `xdg-settings`, but only recognizes
   `google-chrome|brave|microsoft-edge|opera|vivaldi|helium` - anything else
@@ -220,14 +227,56 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   real password-gated session lock, display **never blanks**. Was
   previously "Toggle workspace layout" (dwindle/master) - moved to
   `SUPER+H`.
-- **`SUPER+SHIFT+L`** = full lock (`omarchy-system-lock`, stock), display
-  blanks after 5s. The default `SUPER+CTRL+L` bind for this is unbound -
-  only SHIFT+L is used.
+- **`SUPER+SHIFT+L`** = full lock (`omarchy-system-lock`, stock): the
+  normal Omarchy lock screen plus a clock (`FullLockView`, see the lock
+  screen section), display blanks after 5s. The idle auto-lock takes this
+  same lock. The default `SUPER+CTRL+L` bind for this is unbound - only
+  SHIFT+L is used.
 - **`SUPER+SHIFT+S`** = screenshot (was `PRINT`, now unbound). Runs
   `omarchy-capture-screenshot smart copy` - **`copy` mode on purpose**:
   clipboard only, no file written to `~/Pictures` on every capture. Use
   `omarchy capture screenshot smart save` by hand when a file is actually
   wanted.
+- **`SUPER+P`** = jump to the Claude session waiting for a permission
+  (`claude-notify jump`, see the Claude permission toasts section).
+  Was "Pseudo window", a dwindle-only action that does nothing in the
+  scrolling layout. **Fn+Enter was asked for first and can't work**: Fn is
+  resolved inside the keyboard, so Linux only ever sees a plain Enter.
+- **`SUPER+W`** = close window, **but asks first for a terminal with
+  something still running** (`bin/window-close-guard`). "Running" means the
+  terminal's shell has a child process - Claude, herdr, ssh, an editor. An
+  idle prompt, a terminal started straight into a TUI, and every
+  non-terminal window close at once as stock (GUI apps with unsaved work ask
+  on their own). The question is our own overlay plugin,
+  `config/omarchy/plugins/gradiscp.closeconfirm/`, summoned as
+  `omarchy-shell shell summon gradiscp.closeconfirm '{"process":"claude"}'`.
+  It draws a terminal-styled card, picked on 2026-09-12 out of three
+  mockups: a `window-close-guard` title strip, `$ claude läuft noch`, the
+  question with a blinking red block cursor, and `[ Abbrechen ]` /
+  `[ Schließen ]` with the selected one inverted (red for Schließen) -
+  theme tokens only, so it follows a theme change. Keys: **Tab /
+  Shift+Tab / Left / Right** switch, Enter picks, Escape or a click beside
+  the card cancels. The first cut wrapped the shell's `Ui/ConfirmDialog.qml`
+  (same keys, but 10px buttons and no hierarchy). **"Abbrechen" is
+  preselected on purpose**, so a stray Enter keeps the window; **SUPER+W a
+  second time confirms** - through `window-close-guard` when Hyprland's bind
+  fires, and through the dialog's own key handler if the key reaches the
+  dialog instead. Neither path can be exercised with `wtype`: a synthetic
+  `wtype -M logo -k w` triggered no bind and reached no surface (plain keys
+  like Tab did reach the dialog), so SUPER+W needs a real keyboard to test.
+  The bind runs via `hl.dsp.exec_cmd` with Hyprland's PATH, which includes
+  `~/.local/bin` - the same route `SUPER+L`'s `omarchy-lock-light` takes.
+  The window being
+  asked about is held in `$XDG_RUNTIME_DIR/window-close-guard/pending` and
+  ignored after a minute, so an abandoned question can't close anything
+  later. Like every overlay/service plugin, edits need
+  `omarchy restart shell`.
+  **The first version (2026-09-11) asked through an Omarchy menu route**
+  (`omarchy-menu.jsonc` extension) and was replaced a day later: the stock
+  menu has no Tab handling at all (`Menu.qml` only knows Up/Down/PageUp/
+  PageDown), and adding it would mean owning a clone of the ~1200-line menu.
+  Note that closing herdr's window only detaches: its server keeps every
+  pane (and every Claude in it) running, `SUPER+CTRL+RETURN` reattaches.
 - **`SUPER+H`** = toggle workspace layout (the old `SUPER+L` action).
   Careful, this has a side effect - see the Workspaces section below.
 - **`CTRL+SHIFT+ESCAPE`** = shutdown, **`SUPER+CTRL+SHIFT+R`** = reboot.
@@ -262,12 +311,52 @@ above, hence the explicit `hl.unbind` list.
 
 ### Lock screen design (`config/omarchy/plugins/gradiscp.lock/`)
 
-A clone of the `omarchy.lock` service plugin, deliberately minimal:
+A clone of the `omarchy.lock` service plugin with **two views**, picked per
+lock by the `noBlank` flag (see below):
+
+- **`FullLockView.qml`** - for `SUPER+SHIFT+L` and the idle auto-lock
+  (added 2026-09-10). Started as the stock `omarchy.lock` `LockView.qml`
+  plus a clock, then reworked the same day on request:
+  - the *theme wallpaper* **sharp** - stock's blur `MultiEffect` is gone;
+  - an `HH:mm` clock with a `dddd, d MMMM` date in the **bottom-left
+    corner** (same `SystemClock` the bar clock uses; **stock has no clock
+    at all**), with a drop shadow, which is what keeps it legible now that
+    nothing is blurred;
+  - the password field has a **transparent fill and starts invisible**.
+    Any keystroke or click fades/scales/slides it in (240ms in, 420ms out,
+    `OutCubic`); it hides again 3s after the last keystroke (6s until
+    2026-09-12, shortened on request), but never
+    while there is text in it or a password check is running. A wrong
+    password re-reveals it so the error is readable. It stays focused at
+    opacity 0 - opacity doesn't affect focus, the minimal `LockView`
+    already relied on the same thing - so the first key both types and
+    reveals.
+  - **clock and field never share the screen**: while the field is shown
+    the clock fades and sinks out, with the same timings mirrored, and
+    comes back when the field hides. Both hang off one `fieldShown`
+    binding, so they cannot get out of step.
+
+  The password logic itself (dots, `Checking…`, error text, fingerprint
+  hint) is stock and unchanged; if this is ever re-synced from a newer
+  `omarchy.lock`, the list above is what to carry over. It unlocks straight
+  away on success (no icon, so no flash). It is also what
+  `omarchy-shell lock preview` shows - the one way to look at it without
+  locking, though only in its idle clock-only state, since the preview
+  takes no input (`omarchy-shell lock hidePreview` or a click closes it).
+- **`LockView.qml`** - for `SUPER+L` only, deliberately minimal. Everything
+  below about the screenshot, the icon and blind typing is this view.
+
+Both sit inside the session lock surface; only the visible one gets
+`inputEnabled`, so they never compete for keyboard focus. `noBlank`
+resolves ~1ms after `lock-requested` and the surface comes up ~500ms later
+(read off the journal), so the wrong view is never actually on screen.
+
 - **Background is a live screenshot of the desktop at the moment of
-  locking** (`grim`, captured in `Service.qml`'s `beginLock()` before the
-  session-lock surface takes over rendering - can't screenshot after that
-  point, app content is no longer composited), lightly blurred - not the
-  static theme wallpaper Omarchy uses by default.
+  locking** (`grim`, started from `noBlankCheckProc` once the lock is known
+  to be a light one - the full view has no use for it - still long before
+  the session-lock surface takes over rendering; can't screenshot after
+  that point, app content is no longer composited), lightly blurred - not
+  the static theme wallpaper Omarchy uses by default.
 - **That capture is asynchronous, and used to race the lock surface.** grim
   runs as a `Process`; the lock surface (and with it `LockView`'s `Image`)
   could come up first and point at a path that was either absent (first lock
@@ -293,8 +382,9 @@ A clone of the `omarchy.lock` service plugin, deliberately minimal:
   wrong password.
 - `noBlank` flag (`~/.local/state/omarchy/toggles/lock-no-blank`, set by
   `omarchy-lock-light` before locking, cleared by `Service.qml` on every
-  unlock) suppresses the plugin's own 5-second post-lock display-blank
-  timer for SUPER+L specifically.
+  unlock) does two jobs for SUPER+L specifically: it suppresses the
+  plugin's own 5-second post-lock display-blank timer, and it selects
+  `LockView` over `FullLockView`.
 - **Dead end, don't repeat:** a passwordless "privacy cover" panel
   (`gradiscp.privacycover`, deleted from disk 2026-08-28 - it had been
   merely disabled, still sitting in `~/.config/omarchy/plugins/` but absent
@@ -311,45 +401,77 @@ A clone of the `omarchy.lock` service plugin, deliberately minimal:
 
 ### Idle behavior (`config/omarchy/plugins/gradiscp.idle/`)
 
-Clone of `omarchy.idle`, with two changes to `lockSystem()`:
+Clone of `omarchy.idle`. The one lasting change is in `lockSystem()`: it
+checks `omarchy-shell lock isLocked` before locking - without this, going
+idle while already locked fires a second lock call. Mirrors the guard the
+stock screensaver path already had. It matters more now that the idle lock
+blanks: a session locked with `SUPER+L` stays exactly as it is (lit,
+minimal view) however long it then sits idle.
 
-1. It checks `omarchy-shell lock isLocked` before locking again - without
-   this, being idle past the 5-minute `idle.lock` mark while already locked
-   fires a second lock call. Mirrors the guard the stock screensaver path
-   already had.
-2. **It calls `omarchy-lock-light`, not the stock `omarchy-system-lock`**
-   (changed 2026-08-28). The idle auto-lock therefore locks for real -
-   password required - but never blanks the panel, exactly like `SUPER+L`.
-   Stock behaviour blanked after 5s, and since walking away re-arms this
-   timer, that was the real answer to "I only pressed SUPER+L and the screen
-   went dark anyway". It also keeps the machine out of the disabled-connector
-   state the Hyprland/Aquamarine DRM crash needs (see the crash section
-   above). **Known trade-off: the panel now stays lit for as long as the
-   session sits idle-locked, which costs battery.** That was accepted
-   deliberately - don't "fix" it back without asking.
-   `omarchy-lock-light` lives in `~/.local/bin`; `runProcess` uses
-   `bash -lc`, so the login shell's PATH finds it.
+**History of the lock command - it has flipped twice, check before
+touching it.** Stock is `omarchy-system-lock`. On 2026-08-28 it became
+`omarchy-lock-light` (lock for real, never blank the panel), because "I only
+pressed SUPER+L and the screen went dark anyway" turned out to be SUPER+L,
+walking away, and the idle cycle blanking it - and to stay out of the DRM
+crash's blanked-panel state. **On 2026-09-10 it went back to
+`omarchy-system-lock` on explicit request** ("nach 1 min Screensaver, nach 3
+Bildschirm aus"): the idle lock now shows the full lock screen with the
+clock and turns the panel off 5s later, same as `SUPER+SHIFT+L`. That brings
+the crash exposure back (see above); the `isLocked` guard is what keeps the
+old SUPER+L complaint from returning. The `shell.idleConfig` fallback on
+`idleConfig` was synced from the updated stock plugin at the same time.
 
-`idle.screensaver` in `shell.json` is 120s (2 min) - triggers Omarchy's
+**Watching a film/series no longer trips the screensaver** (added
+2026-09-04). `bin/omarchy-idle-audio-guard` + the systemd user unit
+`config/systemd/user/omarchy-idle-audio-guard.service` poll PipeWire every
+15s and hold Omarchy's own stay-awake flag
+(`~/.local/state/omarchy/indicators/stay-awake`, the same one
+`omarchy toggle idle` and the bar indicator use) while any sink reports
+`RUNNING`. Sink-level detection means it covers speakers, the headphone
+jack, Bluetooth and HDMI alike, and every app, not just the browser.
+
+**Why a homegrown guard and not just Firefox's own inhibit:** Firefox *does*
+try, and cannot succeed here. Firefox 154's Linux wakelock has exactly two
+backends - verified with `strings libxul.so | grep WakeLockTopic::`:
+`DBusInhibitScreensaver` (the `org.freedesktop.ScreenSaver` DBus name, which
+`busctl --user list` shows does not exist in this session) and
+`InhibitFreeDesktopPortal` (whose backend would be
+xdg-desktop-portal-gtk's GNOME-session route - also not running). There is
+**no Wayland `zwp_idle_inhibit` path in Firefox's wakelock code** (the
+protocol symbols are linked into libxul but nothing in `WakeLockTopic` uses
+them). Meanwhile Omarchy's idle plugin uses
+`IdleMonitor { respectInhibitors: true }`, which honours only *Wayland* idle
+inhibitors. The two can therefore never meet, and no `about:config` pref
+changes that - don't go hunting for one.
+
+Manual toggles win over the guard: it never touches a flag it did not set
+(marker file `stay-awake-by-audio` next to it), and if stay-awake is turned
+off by hand mid-playback it stands down until playback restarts. The unit's
+`ExecStop` releases the flag, so a logout can't leave the machine pinned
+awake. To watch it: `journalctl --user -u omarchy-idle-audio-guard -f`.
+
+`idle.screensaver` in `shell.json` is 240s (4 min) - triggers Omarchy's
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
-above. `idle.lock` stays at 300s (5 min, stock default).
+above. `idle.lock` is 300s (5 min). History: 120s / 300s stock, 60s / 180s
+from 2026-09-10, 240s / 300s from 2026-09-12. The lock has to stay *after*
+the screensaver, or the screensaver is never seen - the lock blanks the
+panel 5s later.
+Both count from the moment idle began, not from each other.
 
 **Which of these actually turns the panel off** - answered from the shell
 log, because it is genuinely confusing from the outside:
 
-| Trigger | What runs | Display |
-|---|---|---|
-| `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | **stays on** |
-| `SUPER+SHIFT+L` | `omarchy-system-lock` | off after 5s |
-| 2 min idle | `ttfx` screensaver | stays on |
-| 5 min idle | `omarchy-lock-light` (was `omarchy-system-lock`) | **stays on** |
+| Trigger | What runs | Lock view | Display |
+|---|---|---|---|
+| `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | minimal (`LockView`) | **stays on** |
+| `SUPER+SHIFT+L` | `omarchy-system-lock` | full, with clock | off after 5s |
+| 4 min idle | `ttfx` screensaver | - | stays on |
+| 5 min idle | `omarchy-system-lock` (skipped if already locked) | full, with clock | off after 5s |
 
-Only `SUPER+SHIFT+L` blanks the panel now. Before 2026-08-28 the 5-minute
-row read "`omarchy-system-lock` - **off after 5s**", and that was the
-surprise: the idle auto-lock was *not* the light lock, so "I only pressed
-SUPER+L and the screen went dark anyway" was really SUPER+L, then walking
-away, then the idle cycle blanking it. If a blanking idle-lock is ever
-wanted back, that is the one line to change in `gradiscp.idle/Service.qml`.
+Between 2026-08-28 and 2026-09-10 the last row was `omarchy-lock-light` /
+**stays on**, and only `SUPER+SHIFT+L` blanked. If a non-blanking idle lock
+is wanted again, that is the one command to swap back in
+`gradiscp.idle/Service.qml`.
 
 To check rather than guess:
 `journalctl --user --since -3d | grep -E 'idleBlankTimer|lock-system'`.
@@ -408,6 +530,68 @@ inconsistent between workspaces.
   Currently: no `user.js`, no `devPixelsPerPx` - Firefox follows the
   system scale like everything else, which is what's wanted.
 
+## Claude permission toasts (herdr and plain terminals)
+
+`bin/claude-notify`, hooked into Claude Code through
+`config/claude/settings.json` (a `Notification` hook with matcher
+`permission_prompt`). When a Claude session stops to ask for permission, an
+Omarchy toast shows top right - the same `omarchy-notification-send -u
+critical` popup as the low-battery warning. Clicking it (the toast's
+`--exec`) goes straight back to that terminal:
+
+- **Inside herdr** the hook inherits `HERDR_PANE_ID` from the pane Claude
+  runs in; the click runs `herdr agent focus <pane>` and focuses herdr's
+  window, found by walking the herdr *client's* parents up to a Hyprland
+  window (the server's chain ends at systemd and never has one).
+- **In a plain terminal window** (foot etc.) the hook walks up its *own*
+  parents to the window that owns it, and the click focuses that window.
+- **No toast** for Claude over SSH (the hook runs on the remote machine) or
+  inside tmux (the tmux server belongs to no window) - nothing local to go to.
+
+Details:
+
+- **Gone after 10s no matter what**, or sooner once it has been dealt with:
+  in herdr when the agent leaves `blocked`, in a plain terminal when that
+  window gets focus (outside herdr there is no agent state to wait on). Omarchy's notification service
+  never expires a *critical* toast (`durationFor` returns 0 for Critical and
+  ignores `-t`), so a detached watcher takes it down with
+  `omarchy-shell notifications dismiss <headline>`. `-u normal -t 10000`
+  would expire by itself but loses the battery-warning look.
+- The watcher waits for `blocked` **first**. herdr reads agent state off the
+  terminal - `herdr integration status` says `claude: not installed`, and
+  detection works regardless - so right when the hook fires it can still
+  say `working`; waiting straight for "not blocked" would dismiss instantly.
+- **No toast when you are already looking**: skipped when that pane is
+  herdr-focused *and* herdr's window is the active Hyprland window, or for
+  a plain terminal when its window is the active one.
+- Because the toast vanishes, the keybind (**`SUPER+P`**) runs
+  `claude-notify jump` - the most recent `blocked` herdr agent (by
+  `state_change_seq`), else the last plain terminal that asked and has not
+  been focused since (`$XDG_RUNTIME_DIR/claude-notify/last-window`). herdr
+  wins when both are waiting, since it offers no timestamp to compare. That
+  is used rather than the stock
+  `SUPER+ALT+COMMA` "invoke last notification", which only reaches a toast
+  that is still on screen.
+- **Running Claude sessions keep the hook command they last loaded.** The
+  first version was added by editing `~/.claude/settings.json` in place, and
+  sessions already running picked that up. But when the script was renamed
+  (`claude-herdr-notify` -> `claude-notify`) and the path in the repo file
+  changed with `sed -i`, running sessions kept calling the old, deleted path
+  and failed silently - and re-creating the `~/.claude/settings.json`
+  symlink afterwards did **not** make them reload either (logged: the old
+  path was still called after it). Only a restarted session reads the new
+  command. So after changing the hook command, restart the Claude sessions,
+  or leave something executable at the old path until they are.
+- Every hook run logs its decision (`toast`, `skip: already looking`,
+  `skip: no local terminal window`) to `$XDG_RUNTIME_DIR/claude-notify/log`
+  - check it first when a toast "doesn't come"; a hook that never ran and
+  a toast that was deliberately skipped look identical from the outside.
+
+**`~/.claude/settings.json` is a symlink into this repo.** Claude Code writes
+that file itself (`/model`, `/config`, permission "always allow" answers), so
+expect the same story as `shell.json`: if `ls -la ~/.claude/settings.json`
+ever shows a plain file, copy it back into `config/claude/` and relink.
+
 ## Custom theme: `crimson-core`
 
 Lives in `config/omarchy/themes/crimson-core/`, symlinked as a **whole
@@ -415,6 +599,23 @@ directory** to `~/.config/omarchy/themes/crimson-core` (not a per-file
 overlay - it is its own theme, not a tweak of a stock one).
 `omarchy-theme-list` globs both directories and symlinks, so linking the
 directory is all that is needed.
+
+**That symlink was found dangling on 2026-08-29** - it pointed at
+`/home/gradiscp/Projects/dotfiles/...`, but the repo actually lives at
+`/home/gradiscp/Projects/paulgradischnig/dotfiles/...`. Repointed with
+`ln -sfn`. This is nastier than it sounds, because **nothing visibly
+broke**: the desktop still looked themed, since the *generated* files under
+`~/.local/state/omarchy/current/theme/` had been built while the path was
+still valid and are what the shell/foot/hyprland actually read.
+`omarchy-theme-list` also still printed "Crimson Core" (it globs symlinks
+without resolving them). What gave it away was `omarchy-theme-dir
+crimson-core` falling through to `/usr/share/omarchy/themes/crimson-core`,
+a directory that does not exist (all stock themes were deleted). So: if a
+theme-dir-reading command behaves oddly, **check `ls -laL
+~/.config/omarchy/themes/` before anything else** - `omarchy theme set`
+would have failed here too, and the live desktop is not evidence that the
+link is intact. `install.sh` recreates it, but it had never run on this
+machine (same story as the `hypr/*.lua` copies above).
 
 Every color in `colors.toml` was sampled out of the wallpaper
 (`backgrounds/0-3d-tech.jpg`) with `magick ... -colors N -unique-colors
@@ -443,10 +644,19 @@ and there is no real blue - the image has none.
   purpose.** `shell.toml` *replaces* the generated file rather than merging
   into it, so shipping one means hand-maintaining ~200 lines that drift on
   every Omarchy update; the generated one already lands on solid `#0e0d0c`.
-  `preview*.png`/`unlock.png` are referenced by nothing in
-  `/usr/share/omarchy/{bin,shell}` (checked) - stock themes ship them, they
-  are not required. `vscode.json` names an extension to install and VS Code
-  isn't used here.
+  `preview.png` is referenced by nothing in `/usr/share/omarchy/{bin,shell}`
+  - stock themes ship it, it is not required. `vscode.json` names an
+  extension to install and VS Code isn't used here.
+
+  **Correction (2026-08-29): `unlock.png` and `preview-unlock.png` *are*
+  used** - this file previously lumped them in with `preview.png` as
+  unreferenced, which was wrong. They drive the boot/login screen:
+  `omarchy-plymouth-set-by-theme` reads `<theme>/unlock.png` plus
+  `background`/`foreground` out of `colors.toml`, and
+  `omarchy-plymouth-list` only lists a theme at all **if it has a
+  `preview-unlock.png`** (which is also what the `omarchy plymouth
+  switcher` menu shows). Both are shipped now - see the boot screen section
+  below.
 - `neovim.lua` uses `ficcdaf/ashen.nvim` (rust/red on near-black), which was
   **already installed** in `~/.local/share/nvim/lazy/` because the stock
   `solitude` theme declares it - so switching to this theme does not trigger
@@ -457,6 +667,95 @@ To re-sample or retune: edit `colors.toml` in the repo, then
 `omarchy theme set crimson-core` (the theme dir is a symlink, so a repo edit
 is live immediately - but the *generated* files under
 `~/.local/state/omarchy/current/theme/` are only rebuilt on `theme set`).
+
+## Boot / login screen (Plymouth + SDDM)
+
+**Which screen you actually see after powering on:** the **Plymouth
+passphrase prompt for the LUKS root** (`nvme1n1p2` -> `root`). That is the
+only place a password is typed at boot. **SDDM is installed and running**
+(`sddm.service`, a leftover from the EndeavourOS+KDE era that Omarchy kept
+using) **but `/etc/sddm.conf.d/autologin.conf` autologins `gradiscp` into
+`omarchy.desktop`**, so its greeter only ever appears after an explicit
+logout - never after a boot. Don't go looking for a display-manager theme
+to explain what you see at startup; it's Plymouth.
+
+Both are styled by **one command**, which is the whole point of doing it
+this way:
+
+```
+omarchy plymouth set by theme crimson-core     # needs sudo, rebuilds initramfs
+omarchy plymouth reset                         # back to stock Omarchy
+```
+
+`omarchy-plymouth-set-by-theme` pulls `background` (`#0e0d0c`) and
+`foreground` (`#cbd0ce`) out of the theme's `colors.toml` and hands them
+plus `<theme>/unlock.png` to `omarchy-plymouth-set`, which then writes
+**both** `/usr/share/plymouth/themes/omarchy/` **and**
+`/usr/share/sddm/themes/omarchy/` and rebuilds the initramfs
+(`limine-mkinitcpio` on this machine, since limine is the bootloader).
+Those are package-owned paths, but writing them through this command is the
+supported path - don't hand-edit them.
+
+**Applied and verified 2026-08-29:** `omarchy plymouth current` reports
+`crimson-core`, the installed `omarchy.script` carries
+`SetBackgroundTopColor(0.055, 0.051, 0.047)` (= `#0e0d0c`), SDDM's
+`Main.qml` carries `color: "#0e0d0c"`, both `logo.png` copies are
+byte-identical to the theme's `unlock.png`, and `entry`/`lock`/`bullet` are
+flattened to `#cbd0ce`. The initramfs rebuild emitted the usual
+`Possibly missing firmware for module: 'xhci_pci_renesas' / 'qat_6xxx'`
+warnings - those are stock mkinitcpio noise on this machine, unrelated to
+this change. **Note `plymouth-set-default-theme` still prints `omarchy`** -
+that is the Plymouth theme *name*, which never changes; Omarchy restyles
+that one theme in place. `omarchy plymouth current` is the command that
+actually tells you which Omarchy theme is driving it (it works by comparing
+the installed `logo.png` byte-for-byte against each theme's `unlock.png`).
+
+What the theme ships for this (`config/omarchy/themes/crimson-core/`):
+
+- **`unlock.png`** - 800x120, transparent, the `CRIMSON CORE` wordmark in
+  JetBrainsMono NF Bold (pointsize 92, `-kerning 14`) filled with the neon
+  red `#e4212d`, plus a soft glow (blurred copy composited back with
+  `-compose screen`). 800px wide matches the stock Omarchy logo, and
+  Plymouth centers it at native size on the 1920x1080 panel - it is not
+  scaled, so don't ship a bigger one.
+- **`preview-unlock.png`** - 1920x1080, generated with
+  `omarchy plymouth preview '#0e0d0c' '#cbd0ce' unlock.png <out>` rather
+  than mocked up by hand, so it is pixel-accurate to what boots. Required
+  for the theme to appear in `omarchy plymouth list` / `omarchy plymouth
+  switcher` at all.
+
+Gotchas worth knowing before touching this again:
+
+- **An Omarchy update resets it to stock.** The files under
+  `/usr/share/{plymouth,sddm}/themes/omarchy/` are owned by the
+  `omarchy-settings` package (`pacman -Qo`), so the 4.0.1 -> 4.0.3 upgrade
+  on 2026-09-10 overwrote the crimson-core logo and colors, and the next
+  boot showed the stock Omarchy screen again. `omarchy plymouth current`
+  reported `default` afterwards - that is the quick check. A pacman hook
+  that re-applies the theme can't work: `omarchy-plymouth-set` refuses to
+  run as root, and pacman hooks run as root. So `remove-unwanted-apps.sh`
+  adds `NoExtract` for both directories instead (trade-off: Omarchy's own
+  future changes to those files don't arrive either); re-apply with
+  `omarchy plymouth set by theme crimson-core` after adding it.
+
+- **Only the logo keeps its own colors.** `entry.png`, `lock.png`,
+  `bullet.png` and `progress_bar.png` are flattened to the theme's
+  `foreground` with `magick +level-colors`, so the password box and padlock
+  are always steel-gray here, never red. Putting the red in the wordmark is
+  therefore the only place it can go.
+- **The SDDM failure state is hardcoded to `#f7768e`** (Tokyo Night's red)
+  in `omarchy-plymouth-set` - it is not derived from the theme. A wrong
+  password on the SDDM greeter flashes a color this theme never defines.
+  Cosmetic, only visible after a logout, left alone.
+- **The logo path must not be a symlink** - `omarchy-plymouth-set` rejects
+  one outright (it copies into world-readable `/usr/share`, so it refuses to
+  follow a link that could point anywhere). The theme *directory* being a
+  symlink is fine; `unlock.png` inside it is a real file, which is what the
+  check looks at.
+- It needs a **real sudo password prompt** (the `NOPASSWD` rules on this
+  machine cover only `omarchy-dns` and `timedatectl set-timezone`), and it
+  rebuilds the initramfs, so it has to be run from a terminal by hand - an
+  agent can't complete it.
 
 ## Appearance settings and where they live
 
@@ -478,8 +777,9 @@ Scattered across several files, so listing them in one place:
 | Bar background | generated from `crimson-core/colors.toml` `background` | `#0e0d0c`, alpha `1.0` - no `shell.toml` overlay is shipped for this theme, so the generated one is used as-is |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
-| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70` |
-| Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 300s |
+| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` |
+| Idle screensaver / lock | `omarchy/shell.json` `idle` | 240s / 300s - the idle lock blanks the panel 5s later |
+| Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 
 Firefox opacity has to target the **`firefox-based-browser` tag**, not the
 `firefox` class - Omarchy's own `default/hypr/apps/browser.lua` forces
@@ -549,9 +849,14 @@ install already uses) rather than two separate prompts.
 ## Syncing to a new machine
 
 `install.sh` symlinks everything under `config/` into place and installs
-`packages.txt`. `remove-unwanted-apps.sh` re-applies the app cleanup above.
+`packages.txt`, and links `~/.claude/settings.json` (the Claude permission
+toast hook) - an existing one there is moved aside to `.bak.<timestamp>`.
+`remove-unwanted-apps.sh` re-applies the app cleanup above.
 Still manual: review `config/hypr/monitors.lua` scale for the new panel,
-copy an SSH key into `~/.ssh`. `install.sh` ends with
+copy an SSH key into `~/.ssh`, and run
+`omarchy plymouth set by theme crimson-core` for the boot/login screen
+(left out of `install.sh` on purpose - it writes to `/usr/share` and
+rebuilds the initramfs). `install.sh` ends with
 `omarchy theme set crimson-core`, which is also what makes the theme's
 generated files (foot/hyprland/shell colors) exist at all - a theme does
 nothing just by sitting on disk. `remove-unwanted-apps.sh` also deletes the
