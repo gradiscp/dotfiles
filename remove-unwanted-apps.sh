@@ -37,4 +37,16 @@ if ! grep -qF 'usr/share/omarchy/themes/*' /etc/pacman.conf; then
 fi
 sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + 2>/dev/null || true
 
+# Boot/login screen: `omarchy plymouth set by theme crimson-core` writes its
+# result into /usr/share/{plymouth,sddm}/themes/omarchy/, but those files are
+# owned by the omarchy-settings package, so every update of it silently puts
+# the stock screen back (happened with 4.0.1 -> 4.0.3 on 2026-09-10). NoExtract
+# keeps pacman's hands off them. Undo: delete these lines, `sudo pacman -S
+# omarchy-settings`. Run `omarchy plymouth set by theme crimson-core`
+# afterwards to (re)apply the theme itself.
+if ! grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf; then
+  sudo cp -a /etc/pacman.conf "/etc/pacman.conf.bak.$(date +%s)"
+  sudo sed -i '/^\[options\]/a\\n# Plymouth/SDDM carry the crimson-core boot screen; keep updates from resetting it.\nNoExtract   = usr/share/plymouth/themes/omarchy/* usr/share/sddm/themes/omarchy/*' /etc/pacman.conf
+fi
+
 echo "Done. Run 'pacman -Qtdq' afterwards to check for newly-orphaned deps."

@@ -115,7 +115,7 @@ Item {
 
   Timer {
     id: concealTimer
-    interval: 6000
+    interval: 3000
     repeat: false
     onTriggered: root.fieldRevealed = false
   }
