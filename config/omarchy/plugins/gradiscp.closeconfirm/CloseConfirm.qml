@@ -89,6 +89,11 @@ Item {
       Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape) {
           root.answer("cancel")
+        } else if (event.key === Qt.Key_W && (event.modifiers & Qt.MetaModifier)) {
+          // SUPER+W again = yes. window-close-guard handles this when
+          // Hyprland's bind sees the key; this covers the key reaching the
+          // dialog instead, while it holds exclusive keyboard focus.
+          root.answer("confirm")
         } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab
                    || event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
           root.selected = root.selected === 0 ? 1 : 0

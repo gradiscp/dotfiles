@@ -258,7 +258,15 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   Shift+Tab / Left / Right** switch, Enter picks, Escape or a click beside
   the card cancels. The first cut wrapped the shell's `Ui/ConfirmDialog.qml`
   (same keys, but 10px buttons and no hierarchy). **"Abbrechen" is
-  preselected on purpose**, so a stray Enter keeps the window; **SUPER+W a second time confirms**. The window being
+  preselected on purpose**, so a stray Enter keeps the window; **SUPER+W a
+  second time confirms** - through `window-close-guard` when Hyprland's bind
+  fires, and through the dialog's own key handler if the key reaches the
+  dialog instead. Neither path can be exercised with `wtype`: a synthetic
+  `wtype -M logo -k w` triggered no bind and reached no surface (plain keys
+  like Tab did reach the dialog), so SUPER+W needs a real keyboard to test.
+  The bind runs via `hl.dsp.exec_cmd` with Hyprland's PATH, which includes
+  `~/.local/bin` - the same route `SUPER+L`'s `omarchy-lock-light` takes.
+  The window being
   asked about is held in `$XDG_RUNTIME_DIR/window-close-guard/pending` and
   ignored after a minute, so an abandoned question can't close anything
   later. Like every overlay/service plugin, edits need
