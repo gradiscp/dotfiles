@@ -122,6 +122,13 @@ o.bind("SUPER + P", "Jump to waiting Claude", "claude-notify jump")
 hl.unbind("SUPER + W")
 o.bind("SUPER + W", "Close window", "window-close-guard")
 
+-- Dead stock keys found in the 2026-09-13 audit:
+-- SUPER+CTRL+S opens the Share menu, and every Share entry ends in localsend,
+-- which isn't installed. SUPER+CTRL+ALT+W toggles the weather panel, which
+-- only works while the weather widget is in the bar - it was removed.
+hl.unbind("SUPER + CTRL + S")
+hl.unbind("SUPER + CTRL + ALT + W")
+
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).
 o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")
