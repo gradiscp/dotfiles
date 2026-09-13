@@ -18,12 +18,15 @@
       ],
       "left": [
         {
-          "id": "omarchy.workspaces"
+          "id": "gradiscp.workspaces"
         }
       ],
       "right": [
         {
           "id": "omarchy.tray"
+        },
+        {
+          "id": "gradiscp.claude-status"
         },
         {
           "id": "omarchy.agents"
@@ -50,11 +53,13 @@
   },
   "cloneSourceRestores": [
     "gradiscp.lock",
-    "gradiscp.idle"
+    "gradiscp.idle",
+    "gradiscp.notifications"
   ],
   "disabledPlugins": [
     "omarchy.lock",
-    "omarchy.idle"
+    "omarchy.idle",
+    "omarchy.notifications"
   ],
   "idle": {
     "lock": 300,
@@ -69,6 +74,9 @@
     },
     {
       "id": "gradiscp.closeconfirm"
+    },
+    {
+      "id": "gradiscp.notifications"
     }
   ],
   "version": 1

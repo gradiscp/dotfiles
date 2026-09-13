@@ -42,6 +42,12 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.lock" "$CONFIG_DIR/omarchy/plugi
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.idle" "$CONFIG_DIR/omarchy/plugins/gradiscp.idle"
 # SUPER+W's "close anyway?" dialog, summoned by bin/window-close-guard.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarchy/plugins/gradiscp.closeconfirm"
+# Clones of omarchy.workspaces / omarchy.notifications (red pill, calmer toasts)
+# and the Claude waiting-count widget. shell.json above already points the bar
+# and the plugin list at these ids.
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.workspaces" "$CONFIG_DIR/omarchy/plugins/gradiscp.workspaces"
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.notifications" "$CONFIG_DIR/omarchy/plugins/gradiscp.notifications"
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.claude-status"
 # Custom theme (whole directory, not a single file - it is not an overlay
 # on a stock theme, it is its own theme). omarchy-theme-list globs both
 # dirs and symlinks, so linking the directory is enough.

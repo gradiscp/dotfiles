@@ -1,0 +1,14 @@
+# Replaces the generated [notifications] section of shell.toml when the theme
+# is applied (omarchy-theme-set-templates: apply_shell_section_overrides).
+# It REPLACES the whole section, it is not merged key by key - so every key of
+# the generated section is repeated here, and only background-alpha differs.
+# 0.85 matches foot's terminal alpha; hyprland.lua blurs the
+# "omarchy-notifications" layer so text stays readable over busy windows.
+background       = "#0e0d0c"
+background-alpha = 0.85
+text             = "#cbd0ce"
+# Conventionally matches the Hyprland active-window border. Border accepts
+# either a solid color or the full active-border gradient.
+border           = "hyprland.active-border"
+border-alpha     = 1.0
+countdown        = "#e4212d"

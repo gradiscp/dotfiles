@@ -33,6 +33,11 @@ require("default.hypr.toggles")
 -- of just murky/black.
 hl.layer_rule({ match = { namespace = "omarchy-bar" }, blur = true, ignore_alpha = true })
 
+-- Same for notification toasts: the crimson-core theme ships
+-- shell.notifications.toml with background-alpha 0.85, and without blur a
+-- translucent toast is hard to read over a busy window.
+hl.layer_rule({ match = { namespace = "omarchy-notifications" }, blur = true, ignore_alpha = true })
+
 -- Make the terminal visibly translucent (foot doesn't follow the
 -- decoration.opacity default the way regular windows do).
 o.window("foot", { opacity = "0.85 0.80" })

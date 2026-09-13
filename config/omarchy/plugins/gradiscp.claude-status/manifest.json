@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.claude-status",
+  "name": "Claude status",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "How many Claude Code sessions are waiting for a permission; a click jumps to the latest.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Claude status",
+    "description": "Terminal glyph that turns red with a count while Claude Code sessions wait for a permission.",
+    "category": "AI",
+    "allowMultiple": false
+  }
+}

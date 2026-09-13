@@ -646,6 +646,51 @@ stay a link. Check it loaded with `/context` -> "Memory files" in a *new*
 session; running sessions don't pick it up. The repo is public, so nothing
 private goes in there.
 
+## Bar and notification clones (2026-09-13)
+
+Picked out of design mockups ("Crimson-Core Leiste und Mitteilungen" canvas).
+All three live in `config/omarchy/plugins/`, are directory-symlinked into
+`~/.config/omarchy/plugins/` by `install.sh`, and `shell.json` points the bar
+and the plugin list at them.
+
+- **`gradiscp.workspaces`** (`omarchy plugin clone omarchy.workspaces`): the
+  focused workspace shows its number in dark ink on a red pill (`bar.urgent`,
+  22x17) instead of stock's filled-square glyph; occupied/empty opacity is
+  unchanged. The clone keeps `moduleName: "omarchy.workspaces"` on purpose -
+  `omarchy-plugin-clone` leaves built-in ids as IPC targets and routes them
+  through `clonedFrom`.
+- **`gradiscp.claude-status`** (new bar widget, right section between tray and
+  agents): polls `claude-notify count` every 2s - herdr agents in `blocked`
+  plus the last plain terminal that asked and was not visited, so plain
+  terminals add at most 1. Terminal glyph U+F489, dim at 0, red with a count
+  badge otherwise; a click runs `claude-notify jump`. It polls because herdr
+  has no push event for agent state. The stock `omarchy.agents` widget only
+  shows usage/limits, not session state.
+- **`gradiscp.notifications`** (`omarchy plugin clone omarchy.notifications`):
+  only `components/NotificationCard.qml` differs. Red border, and a red glyph
+  on a dark-red tile, for critical toasts only - everything else gets a steel
+  border (stock put the same red border on every toast, so nothing stood out).
+  Text uses the injected monospace `fontFamily` instead of hardcoded Liberation
+  Sans. Toasts from app `Claude Code` add "Klicken springt zum Terminal".
+  Compact: 320 wide (stock 380), 30px glyph slot, 12px type, tighter padding.
+  Service plugin, so edits need `omarchy restart shell`. The stock card already
+  had a glyph slot (`-g`); despite the `countdown` color token there is no
+  countdown bar.
+- **Translucent toasts:** `config/omarchy/themes/crimson-core/shell.notifications.toml`
+  sets `background-alpha = 0.85`, applied by `omarchy theme set crimson-core`.
+  **It replaces the whole `[notifications]` section** of the generated
+  `shell.toml` - `apply_shell_section_override` in
+  `omarchy-theme-set-templates` drops the original section and emits the file's
+  body - so every key of that section is repeated in the file; one holding only
+  `background-alpha` would silently drop `border`, `text` and `countdown`.
+  `hyprland.lua` blurs the `omarchy-notifications` layer, like the bar.
+
+Verified live with screenshots: the pill on the focused workspace, the badge
+with a forced count of 2, critical vs normal toasts, translucency with blur,
+the compact size; no QML warnings from the three plugins after
+`omarchy restart shell`. Not exercised: clicking the widget or a redesigned
+toast (`wtype` can't click).
+
 ## Custom theme: `crimson-core`
 
 Lives in `config/omarchy/themes/crimson-core/`, symlinked as a **whole
@@ -830,7 +875,8 @@ Scattered across several files, so listing them in one place:
 | Active theme | `omarchy/themes/crimson-core/` | `crimson-core` - custom, see the section above |
 | Bar background | generated from `crimson-core/colors.toml` `background` | `#0e0d0c`, alpha `1.0` - no `shell.toml` overlay is shipped for this theme, so the generated one is used as-is |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
-| Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
+| Bar widgets | `omarchy/shell.json` `bar.layout` | left: `gradiscp.workspaces` (red pill); center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, `gradiscp.claude-status`, agents, bluetooth, network, audio, monitor, power |
+| Notification toasts | `omarchy/plugins/gradiscp.notifications` + `crimson-core/shell.notifications.toml` | 320px, background alpha 0.85 with layer blur, red border only for critical - see the bar and notification clones section |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` - both Firefox rules need `override` on every value (see the Fullscreen gotcha) |
 | Idle screensaver / lock | `omarchy/shell.json` `idle` | 240s / 300s - the idle lock blanks the panel 5s later |
 | Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
