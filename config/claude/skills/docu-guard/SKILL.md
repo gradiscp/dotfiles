@@ -1,7 +1,7 @@
 ---
-name: doku-guard
+name: docu-guard
 description: >
-  End-of-session documentation pass. Use when the user says /doku-guard,
+  End-of-session documentation pass. Use when the user says /docu-guard,
   "doku nachziehen", "dokumentiere die session", "bevor ich clear mache",
   or asks that the next session knows everything from the docs alone.
   Reviews what this session changed, decided, learned and left open, then
@@ -9,7 +9,7 @@ description: >
   docs/, README, CLAUDE.md / AGENTS.md, handoffs - so /clear loses nothing.
 ---
 
-# doku-guard
+# docu-guard
 
 Goal: after this pass, a fresh session that reads only the project's
 documentation knows everything this session knew. Nothing lives only in the
