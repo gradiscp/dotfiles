@@ -688,7 +688,7 @@ the compact size; no QML warnings from the three plugins after
 toast (`wtype` can't click).
 
 **Own skills live in `config/claude/skills/<name>/`**, linked one directory
-each into `~/.claude/skills/` (2026-09-13). `doku-guard` is the end-of-session
+each into `~/.claude/skills/` (2026-09-13). `docu-guard` is the end-of-session
 documentation pass: it collects what the session changed from git and the
 conversation, finds the project's own documentation (guideline, Obsidian
 vault, docs/, README, CLAUDE.md/AGENTS.md, handoffs), routes each item to
