@@ -47,19 +47,24 @@ o.window("org.gnome.Nautilus", { opacity = "0.85 0.75" })
 -- "firefox-based-browser"-tagged windows back to opacity 1.0/0.985
 -- (loaded before this file). Overriding the class directly isn't enough to
 -- win against that; target the same tag it uses so this applies after it.
--- Third value = fullscreen opacity. A window rule's third slot overrides
--- decoration.fullscreen_opacity (0.9) for this window only, so a fullscreen
--- video is solid while a fullscreen terminal stays translucent. This is the
--- only way to do it: per-window opacity rules are otherwise ignored in
--- fullscreen, the global fullscreen_opacity wins (see CLAUDE.md).
-o.window({ tag = "firefox-based-browser" }, { opacity = "0.80 0.70 1.0" })
+-- Third value = fullscreen opacity, so a fullscreen video is solid while a
+-- fullscreen terminal stays at decoration.fullscreen_opacity (0.9).
+-- The "override" after each value is what makes that true: without it a rule
+-- value is MULTIPLIED by the global one, and "1.0" in fullscreen still came
+-- out as 1.0 x 0.9 - measured 2026-09-13 on a white fullscreen window: centre
+-- pixel 231 without override, 255 with it. active/inactive_opacity are 1.0
+-- globally, so override changes nothing for the first two values.
+o.window({ tag = "firefox-based-browser" }, { opacity = "0.80 override 0.70 override 1.0 override" })
 
 -- ...and the same for a *windowed* video: streaming sites are matched by
 -- window title (Firefox puts the page title in it) and forced fully opaque,
 -- so a half-transparent picture is impossible either way. Trade-off: a tab
 -- merely *open* on one of these sites is opaque too, not only one that is
 -- actually playing - Hyprland can match a title, not a play state.
+-- The .* on both ends is required: a title regex has to match the WHOLE title,
+-- and Firefox's is "<page title> — Mozilla Firefox". Without them this rule
+-- silently never matched anything (verified 2026-09-13 with hyprctl getprop).
 o.window(
-  { tag = "firefox-based-browser", title = "(?i)(youtube|netflix|prime video|disney|twitch|mediathek|joyn|dazn|crunchyroll)" },
-  { opacity = "1.0 1.0 1.0" }
+  { tag = "firefox-based-browser", title = "(?i).*(youtube|netflix|prime video|disney|twitch|mediathek|joyn|dazn|crunchyroll).*" },
+  { opacity = "1.0 override 1.0 override 1.0 override" }
 )
