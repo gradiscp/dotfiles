@@ -188,11 +188,23 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
 - **Fullscreen (`SUPER+F`) forces window opacity back to solid** regardless
   of any *two-value* per-window `opacity` rule - Hyprland has a separate
   `decoration.fullscreen_opacity` setting for this, set in `looknfeel.lua`.
-  **But an `opacity` rule takes up to three values** (`active inactive
-  fullscreen`), and the third overrides `fullscreen_opacity` for that window
-  only - verified 2026-09-04 by feeding a fourth value to `hyprctl eval`,
-  which errors with `more than 3 alpha values`. That is how Firefox is solid
-  in fullscreen while a fullscreen `foot` stays at the global `0.9`.
+  **An `opacity` rule takes up to three values** (`active inactive
+  fullscreen`; a fourth errors with `more than 3 alpha values`), **but each
+  value is multiplied by the matching global one unless it is followed by
+  `override`**. So `"0.80 0.70 1.0"` gave Firefox 1.0 x 0.9 in fullscreen -
+  still see-through. Measured 2026-09-13 on a white fullscreen probe window:
+  centre pixel 231 with `"1.0 1.0 1.0"`, 255 with
+  `"1.0 override 1.0 override 1.0 override"`; `hyprctl getprop <win>
+  opacity_fullscreen_override` shows which one applies. Until then this note
+  claimed the plain three-value form was verified - only the parsing had
+  been checked, never the pixels. `hyprctl getprop <win> opacity_fullscreen`
+  reads `1` either way, so don't take that value as proof.
+- **Hyprland title regexes must match the whole title.** `(?i)(prime video)`
+  never matches `Prime Video: ... — Mozilla Firefox`; `(?i).*(prime video).*`
+  does (tested 2026-09-13 with probe windows and `hyprctl eval`). The
+  streaming-site rule in `hyprland.lua` had this bug from the day it was
+  written. Title rules *are* re-applied when a title changes - also tested -
+  so a tab navigating to a matching site is caught.
 - **`omarchy-launch-webapp` hardcodes a Chromium-family browser.** It reads
   the default browser via `xdg-settings`, but only recognizes
   `google-chrome|brave|microsoft-edge|opera|vivaldi|helium` - anything else
@@ -592,12 +604,36 @@ that file itself (`/model`, `/config`, permission "always allow" answers), so
 expect the same story as `shell.json`: if `ls -la ~/.claude/settings.json`
 ever shows a plain file, copy it back into `config/claude/` and relink.
 
+**`tui` is deliberately unset - no fullscreen renderer** (removed
+2026-09-12). `"tui": "fullscreen"` puts Claude Code on the terminal's
+alternate screen, and herdr corrupts an alternate-screen pane whenever the
+pane is resized ([herdr#3329](https://github.com/herdrdev/herdr/issues/3329),
+open). On a `dwindle` workspace - workspaces 1-5 all had a `SUPER+H`
+override until 2026-09-13, when the five files were deleted on request, see
+the Workspaces section - Hyprland resizes the herdr window every
+time another window opens or closes beside it, so every Claude pane in herdr
+ended up as overlapping
+garbage that Ctrl+L does not repair (`/exit` + `claude --resume` does). Don't
+turn it back on until that issue is closed. Change renderer settings between
+sessions, not under running ones: right after this edit, a session in a
+plain foot window broke as well (cause not confirmed). Full write-up:
+`2026-09-12-herdr-claude-fullscreen-garbled.md` in the `incidents` repo.
+
 **`~/.claude/rules/` is a symlink to `config/claude/rules/` - the whole
 directory** (added 2026-09-12). Every `.md` in it is a user-level rule that
 Claude Code loads in *every* project at session start and re-injects after
 `/compact`; one topic per file, so dropping a rule means deleting its file.
 `rueckfragen.md` makes Claude check what it can look up itself, then ask
 instead of guessing, and never invent file names/flags/API behaviour.
+`incidents.md` (2026-09-13) points Claude at the postmortems in
+`~/Projects/paulgradischnig/incidents`: read only the README index at the
+start of a task and open matching incidents, search the repo for the symptom
+before debugging an error, and *offer* a new postmortem after a real fix
+(written only on a yes). Index-only on purpose, so the rule stays cheap as the
+repo grows. `git-remote.md` (2026-09-13) tells Claude it cannot push, pull or
+fetch - the SSH key has a passphrase, no ssh-agent runs, `gh` is logged out -
+so it names what to push instead and never works around it (no HTTPS remote,
+no token hunting).
 Chosen over `~/.claude/CLAUDE.md` (same loading, but one growing file) and
 over a skill (skills only load when Claude decides they fit - a rule about
 not guessing has to apply exactly when it doesn't notice it is guessing).
@@ -793,7 +829,7 @@ Scattered across several files, so listing them in one place:
 | Bar background | generated from `crimson-core/colors.toml` `background` | `#0e0d0c`, alpha `1.0` - no `shell.toml` overlay is shipped for this theme, so the generated one is used as-is |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
 | Bar widgets | `omarchy/shell.json` `bar.layout` | center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, agents, bluetooth, network, audio, monitor, power |
-| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` |
+| Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` - both Firefox rules need `override` on every value (see the Fullscreen gotcha) |
 | Idle screensaver / lock | `omarchy/shell.json` `idle` | 240s / 300s - the idle lock blanks the panel 5s later |
 | Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 

@@ -5,7 +5,6 @@
       "effortLevel": "high"
     }
   },
-  "tui": "fullscreen",
   "theme": "custom:omarchy",
   "permissions": {
     "defaultMode": "default"
