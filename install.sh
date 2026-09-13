@@ -103,6 +103,13 @@ link "$REPO_DIR/bin/omarchy-lock-light" "$HOME/.local/bin/omarchy-lock-light"
 link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
 link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
 link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
+# Run from ~/Projects: every repo's uncommitted/unpushed state at a glance.
+link "$REPO_DIR/bin/git-status-all" "$HOME/.local/bin/git-status-all"
+
+echo "== Bash =="
+# Omarchy's bashrc plus the herdr opaque-background wrapper. Machine-specific
+# ssh aliases are deliberately NOT in here (public repo).
+link "$REPO_DIR/config/bashrc" "$HOME/.bashrc"
 # Repairs links Omarchy's tools turned into plain files, and reports the rest.
 # Linked a second time into the post-update hook dir, so it runs after every
 # `omarchy update` - that is when the drift happens.

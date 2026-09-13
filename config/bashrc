@@ -1,0 +1,26 @@
+# Omarchy environment (OMARCHY_PATH + PATH), needed even for non-interactive shells
+[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+
+# If not running interactively, don't do anything else (leave this above the rc source)
+[[ $- != *i* ]] && return
+
+# All the default Omarchy aliases and functions
+# (don't mess with these directly, just overwrite them here!)
+source "$OMARCHY_PATH/default/bash/rc"
+
+# alias p='python'
+
+# herdr draws its sidebar and tab bar on the terminal's *default* background,
+# which foot renders at alpha=0.85 - so the wallpaper shows straight through
+# the panels and the whole TUI is hard to read. OSC 11 with an explicit rgba
+# spec makes this one window opaque for as long as herdr runs; OSC 111 puts
+# the theme default (and with it the transparency) back on exit. 0e0d0c is
+# crimson-core's own background, so nothing changes except the see-through.
+# Overrides Omarchy's `alias h='herdr'`, which an alias would otherwise shadow.
+unalias h 2>/dev/null
+h() {
+  printf '\033]11;rgba:0e/0d/0c/ff\033\\'
+  command herdr "$@"
+  printf '\033]111\033\\'
+}
+
