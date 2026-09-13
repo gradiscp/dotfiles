@@ -776,6 +776,15 @@ To re-sample or retune: edit `colors.toml` in the repo, then
 is live immediately - but the *generated* files under
 `~/.local/state/omarchy/current/theme/` are only rebuilt on `theme set`).
 
+**Backgrounds** live in `backgrounds/` and are numbered in cycle order
+(`0-3d-tech.jpg` - the palette source - and `1-snowcapped-mountains.jpg`,
+added 2026-09-13: red foliage, snow and near-black sky, same palette).
+`omarchy theme bg next` / `SUPER+CTRL+SPACE` cycles them, the lock screen
+follows the current one. **A new file in the repo is not seen until
+`omarchy theme set crimson-core`**: `current/theme/` is a copy made at theme
+set, not a link, so `bg next` cycled through the old single image until the
+theme was re-applied.
+
 ## Boot / login screen (Plymouth + SDDM)
 
 **Which screen you actually see after powering on:** the **Plymouth
