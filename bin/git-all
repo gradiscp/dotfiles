@@ -1,0 +1,95 @@
+#!/bin/bash
+# Run one git action over every repo below the current directory (or a given
+# root). Meant to be run from ~/Projects.
+#
+#   git-all            status: uncommitted, unpushed, no-upstream, stashes
+#   git-all fetch      git fetch --all --prune (drops remote branches deleted on origin)
+#   git-all pull       git pull --ff-only on the current branch; dirty repos are skipped
+#   git-all push       push every branch that has an upstream and is ahead of it;
+#                      branches without upstream are only listed (push -u by hand)
+#
+# Status never talks to the network. fetch/pull/push do, and every repo asks
+# for the SSH key passphrase unless an ssh-agent holds it - to type it once:
+#   eval "$(ssh-agent)" && ssh-add
+#
+# Usage: git-all [status|fetch|pull|push] [root]
+
+set -uo pipefail
+action="${1:-status}"
+case $action in status|fetch|pull|push) ;; *) echo "usage: git-all [status|fetch|pull|push] [root]" >&2; exit 2 ;; esac
+root="${2:-$PWD}"
+
+red=$'\e[31m' yellow=$'\e[33m' green=$'\e[32m' dim=$'\e[2m' reset=$'\e[0m'
+open=0 total=0
+
+if [[ $action != status && -z ${SSH_AUTH_SOCK:-} ]]; then
+  echo "${dim}no ssh-agent - each repo will ask for the key passphrase (eval \"\$(ssh-agent)\" && ssh-add to type it once)${reset}"
+fi
+
+# status lines for one repo, one per line, empty when clean
+status_notes() {
+  local repo=$1 n s branch upstream ahead
+  n=$(git -C "$repo" status --porcelain 2>/dev/null | wc -l)
+  ((n > 0)) && echo "${red}${n} uncommitted${reset}"
+  while IFS=' ' read -r branch upstream; do
+    if [[ -z $upstream ]]; then
+      echo "${yellow}${branch}: no upstream${reset}"
+    else
+      ahead=$(git -C "$repo" rev-list --count "$upstream..$branch" 2>/dev/null)
+      ((ahead > 0)) && echo "${yellow}${branch}: ${ahead} unpushed${reset}"
+    fi
+  done < <(git -C "$repo" for-each-ref --format='%(refname:short) %(upstream:short)' refs/heads)
+  s=$(git -C "$repo" stash list 2>/dev/null | wc -l)
+  ((s > 0)) && echo "${dim}${s} stash${reset}"
+}
+
+# fetch / pull / push for one repo; prints result lines
+act() {
+  local repo=$1 out branch upstream ahead
+  case $action in
+  fetch)
+    out=$(git -C "$repo" fetch --all --prune 2>&1) && echo "${green}fetched${reset}${out:+ $dim$(echo "$out" | grep -c ' - \[deleted\]') pruned$reset}" || echo "${red}fetch failed:${reset} ${out##*$'\n'}"
+    ;;
+  pull)
+    if [[ -n $(git -C "$repo" status --porcelain 2>/dev/null) ]]; then
+      echo "${yellow}skipped: uncommitted changes${reset}"; return
+    fi
+    out=$(git -C "$repo" pull --ff-only 2>&1) && echo "${green}${out##*$'\n'}${reset}" || echo "${red}pull failed:${reset} ${out##*$'\n'}"
+    ;;
+  push)
+    while IFS=' ' read -r branch upstream; do
+      if [[ -z $upstream ]]; then
+        echo "${yellow}${branch}: no upstream - push by hand: git push -u origin ${branch}${reset}"; continue
+      fi
+      ahead=$(git -C "$repo" rev-list --count "$upstream..$branch" 2>/dev/null)
+      ((ahead > 0)) || continue
+      out=$(git -C "$repo" push origin "$branch" 2>&1) && echo "${green}${branch}: pushed ${ahead}${reset}" || echo "${red}${branch}: push failed:${reset} ${out##*$'\n'}"
+    done < <(git -C "$repo" for-each-ref --format='%(refname:short) %(upstream:short)' refs/heads)
+    ;;
+  esac
+}
+
+while IFS= read -r gitdir; do
+  repo=${gitdir%/.git}
+  ((total++))
+  name=${repo#"$root"/}
+  if [[ $action == status ]]; then
+    mapfile -t notes < <(status_notes "$repo")
+  else
+    mapfile -t notes < <(act "$repo")
+  fi
+  if ((${#notes[@]} > 0)); then
+    ((open++))
+    printf '%s● %s%s\n' "$red" "$reset" "$name"
+    printf '    %s\n' "${notes[@]}"
+  else
+    printf '%s✓%s %s%s%s\n' "$green" "$reset" "$dim" "$name" "$reset"
+  fi
+done < <(find "$root" -maxdepth 5 -type d -name .git 2>/dev/null | sort)
+
+echo
+if [[ $action == status ]]; then
+  echo "${dim}${total} repos, ${open} with something open (no fetch - unpushed = since your last fetch)${reset}"
+else
+  echo "${dim}${total} repos${reset}"
+fi

@@ -951,11 +951,26 @@ draws on the terminal's default background, which foot renders at alpha
 and the repo is public. If they are wanted again, put them in a file that
 stays out of the repo, not here.
 
-`bin/git-status-all` (in `~/.local/bin`): run it in `~/Projects` and it lists
+`bin/git-all` (in `~/.local/bin`): run it in `~/Projects`. `git-all` lists
 every repo below the current directory with uncommitted changes, unpushed
-commits, branches without upstream and stashes; clean repos get a ✓. It
-never fetches (see `git-remote.md`), so "unpushed" is relative to the last
-fetch.
+commits, branches without upstream and stashes; clean repos get a ✓.
+`git-all fetch` fetches with `--prune` everywhere, `git-all pull` fast-forwards
+clean repos (dirty ones are skipped), `git-all push` pushes branches that have
+an upstream and are ahead; branches without upstream are only listed, since
+pushing them creates them on origin. Status never touches the network (see
+`git-remote.md`); the other three ask for the key passphrase per repo unless
+an ssh-agent runs. "no upstream" on a branch that *is* on origin (two repos
+had that on 2026-09-13, created locally and pushed without `-u`) is fixed
+with `git branch --set-upstream-to=origin/<branch>`.
+
+**herdr after a reboot** (checked in herdr's session-state docs and the
+server log): the layout, tabs and directories come back, the processes do
+not - every pane is a fresh shell. Claude sessions are resumed automatically
+only with the herdr Claude integration, which reports each session's id via a
+`SessionStart` hook; it was `not installed` here until 2026-09-13
+(`herdr integration install claude`, now run by install.sh). Sessions
+started before the hook existed are not known to herdr and have to be
+resumed by hand once (`/exit`, `claude --resume`).
 
 ## 2026-09-13 bloat audit - what went and what stayed
 
