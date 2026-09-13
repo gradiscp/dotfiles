@@ -123,6 +123,8 @@ link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
 # Global instructions for every project (e.g. ask instead of guessing).
 # Whole directory, so a new rule file in the repo is live without relinking.
 link "$REPO_DIR/config/claude/rules" "$HOME/.claude/rules"
+# Own skills, one directory each (the Omarchy ones are linked by Omarchy itself).
+link "$REPO_DIR/config/claude/skills/doku-guard" "$HOME/.claude/skills/doku-guard"
 # herdr's Claude hook: reports each session's id so herdr can `claude --resume`
 # it after a reboot. Writes ~/.claude/hooks/herdr-agent-state.sh and the
 # SessionStart entry in settings.json (through the link above).
