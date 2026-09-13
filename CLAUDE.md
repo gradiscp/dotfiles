@@ -623,7 +623,9 @@ plain foot window broke as well (cause not confirmed). Full write-up:
 directory** (added 2026-09-12). Every `.md` in it is a user-level rule that
 Claude Code loads in *every* project at session start and re-injects after
 `/compact`; one topic per file, so dropping a rule means deleting its file.
-`rueckfragen.md` makes Claude check what it can look up itself, then ask
+`ask-first.md` (named `rueckfragen.md` until 2026-09-13; rule file names
+are English, their content may be German) makes Claude check what it can
+look up itself, then ask
 instead of guessing, and never invent file names/flags/API behaviour.
 `incidents.md` (2026-09-13) points Claude at the postmortems in
 `~/Projects/paulgradischnig/incidents`: read only the README index at the
