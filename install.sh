@@ -103,8 +103,8 @@ link "$REPO_DIR/bin/omarchy-lock-light" "$HOME/.local/bin/omarchy-lock-light"
 link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
 link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
 link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
-# Run from ~/Projects: every repo's uncommitted/unpushed state at a glance.
-link "$REPO_DIR/bin/git-status-all" "$HOME/.local/bin/git-status-all"
+# Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
+link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
 
 echo "== Bash =="
 # Omarchy's bashrc plus the herdr opaque-background wrapper. Machine-specific
@@ -123,6 +123,10 @@ link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
 # Global instructions for every project (e.g. ask instead of guessing).
 # Whole directory, so a new rule file in the repo is live without relinking.
 link "$REPO_DIR/config/claude/rules" "$HOME/.claude/rules"
+# herdr's Claude hook: reports each session's id so herdr can `claude --resume`
+# it after a reboot. Writes ~/.claude/hooks/herdr-agent-state.sh and the
+# SessionStart entry in settings.json (through the link above).
+if command -v herdr >/dev/null; then herdr integration install claude || true; fi
 
 echo "== Systemd user services =="
 # Keeps the screensaver/idle lock away while audio is playing (films, series).
