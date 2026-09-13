@@ -4,9 +4,11 @@ Omarchy Linux config for a Samsung Galaxy Book Pro 360. This file is notes
 for whoever (human or Claude) touches this repo next - the *why* behind
 non-obvious choices, and known gotchas that cost real debugging time.
 
-`archive/endeavouros-kde/` is the leftover archinstall config from this
-machine's previous EndeavourOS+KDE setup - kept for reference, not live
-config for anything.
+There is no `archive/` any more (the old EndeavourOS+KDE installer config was
+dropped). **This machine was installed fresh with Omarchy on 2026-08-22** -
+the pacman log starts with a clean base install, and no KDE/Plasma packages
+exist - so nothing on it is a leftover from that earlier setup, SDDM
+included (Omarchy requires it).
 
 **History was rewritten on 2026-08-23** with `git filter-repo` to strip a
 committed `user_credentials.json` (contained this user's login password
@@ -51,7 +53,7 @@ why - the content was verified intact afterwards, nothing was lost.
   its context) and looked like the config "kept reverting" when it was
   actually the local override fighting the correct global value.
 
-  **This note used to name `gradiscp` / `fortnitepro06@yahoo.com` as the
+  **This note used to name `gradiscp` plus a private address as the
   correct identity. That is outdated** - as of 2026-08-28 all 28 commits in
   the history are authored by the GitHub noreply address above, and the
   global config matches. The old address appears nowhere in the history any
@@ -143,28 +145,22 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
     just that one section - see `apply_shell_section_overrides` in
     `omarchy-theme-set-templates`. That is the cheap way to change one knob
     like `background-alpha` without owning the whole file.
-- **Nothing in `~/.config/hypr/` is a symlink either** - all six `.lua`
-  files are plain copies (checked 2026-08-28: not one is a link, i.e.
-  `install.sh` has never actually run on this machine, or something replaced
-  them since). Their content still matched the repo byte-for-byte, so
-  nothing had been lost - but **editing the repo file alone changes
-  nothing live**, and `hyprctl reload` will happily report success while
-  running the old config. That cost real debugging time once: a binding
-  edited in the repo simply never appeared in `hyprctl binds`. Until this is
-  converted to real symlinks, treat it like `shell.json` below and copy in
-  both directions: `cp config/hypr/<f>.lua ~/.config/hypr/` after a repo
-  edit, and back after using an `omarchy hyprland ...` CLI command (those
-  write the live file). Verify with `hyprctl binds` / `hyprctl configerrors`,
-  never by assuming.
-- **`shell.json` does not stay a symlink.** `install.sh` links
-  `~/.config/omarchy/shell.json` into this repo, but the live file was found
-  as a plain `-rw-------` regular file with content the repo copy never had
-  (a changed `clock.format`), i.e. something rewrote the path rather than
-  writing through the link - the `omarchy bar` commands and the shell's own
-  settings UI both persist to this file. So **after changing anything in the
-  bar/idle config, copy the live file back into the repo** rather than
-  assuming the symlink carried it:
-  `cp ~/.config/omarchy/shell.json config/omarchy/shell.json`.
+- **Omarchy's own tools turn the repo symlinks into plain files.** Confirmed
+  in their source: `omarchy-shell-config` writes a temp file and `mv`s it
+  over `~/.config/omarchy/shell.json`; `omarchy-hyprland-monitor-scaling`
+  runs `sed -i` on `monitors.lua` without `--follow-symlinks`. Until
+  2026-09-13 all six `hypr/*.lua`, `shell.json`, `foot.ini`, the lock/idle
+  plugin dirs and more were plain copies, and **editing the repo file alone
+  changed nothing live** - `hyprctl reload` reports success while running
+  the old config, and a binding edited in the repo never showed in
+  `hyprctl binds`. Now `bin/omarchy-drift-check` re-links any copy whose
+  content still equals the repo and reports one that differs; it runs after
+  every `omarchy update` (post-update hook) and by hand. So: after an
+  `omarchy hyprland ...` / `omarchy bar ...` command, or when something
+  "doesn't apply", run `omarchy-drift-check` first, then verify with
+  `hyprctl binds` / `hyprctl configerrors` - never by assuming. If it
+  reports a copy that *differs*, the live side usually holds a change made
+  through Omarchy's UI: copy it into the repo, then re-run.
 - **There is no `omarchy bar remove`.** `omarchy bar --help` lists
   `use/reset/defaults/position/transparent/put/move/set` only - taking a
   widget *out* of the bar means deleting its entry from `bar.layout` in
@@ -772,8 +768,7 @@ is live immediately - but the *generated* files under
 **Which screen you actually see after powering on:** the **Plymouth
 passphrase prompt for the LUKS root** (`nvme1n1p2` -> `root`). That is the
 only place a password is typed at boot. **SDDM is installed and running**
-(`sddm.service`, a leftover from the EndeavourOS+KDE era that Omarchy kept
-using) **but `/etc/sddm.conf.d/autologin.conf` autologins `gradiscp` into
+(`sddm.service` - the `omarchy` package requires it) **but `/etc/sddm.conf.d/autologin.conf` autologins `gradiscp` into
 `omarchy.desktop`**, so its greeter only ever appears after an explicit
 logout - never after a boot. Don't go looking for a display-manager theme
 to explain what you see at startup; it's Plymouth.
@@ -946,20 +941,59 @@ Encrypting it the same way as the main drive means one LUKS passphrase
 prompt at boot unlocks both (keyfile-in-header, same pattern the main
 install already uses) rather than two separate prompts.
 
+## 2026-09-13 bloat audit - what went and what stayed
+
+Three read-only audits (packages/services, desktop layer, repo
+reproducibility), findings re-checked before acting. The rule the owner set:
+lean, containerize anything real, reproducible from this repo in one run.
+
+**Removed** (`remove-unwanted-apps.sh`, ~1.8 GiB with dependencies; nothing
+from Omarchy, Hyprland, the shell or the boot chain): libreoffice, clang/llvm,
+dotnet, ruby/tobi-try, mariadb-/postgresql-libs, yt-dlp (+deno), tesseract,
+webkit2gtk, frei0r (+opencv), qemu-user-static, cups and print tools,
+chromium-widevine. Also `chromium` itself is on that list now - it is in
+Omarchy's base set and had only been removed by hand, so a fresh install
+kept it. Live-only cleanups: ~/.config leftovers of removed apps (chromium
+alone 469 MB), old mise tool versions (707 MB).
+
+**Kept on purpose:** the pacman cache at two versions - `omarchy update` runs
+`paccache -rk2` itself as the offline downgrade path, so don't prune to one.
+`noto-fonts-cjk` (boxes in Firefox without it), non-Intel `linux-firmware`
+parts (USB network adapters, docks), Xwayland (Obsidian/Electron), fcitx5
+(CapsLock compose), avahi (`.local` lookups), udiskie, tailscale, docker.
+
+**Dead entries fixed** via `config/omarchy/extensions/omarchy-menu.jsonc`
+and `bindings.lua`: the Share submenu (every entry ends in the uninstalled
+`localsend`) is hidden by a `when`, the Learn pages open via
+`omarchy-launch-browser` (the webapp launcher needs Chromium), SUPER+CTRL+S
+and SUPER+CTRL+ALT+W are unbound, the invisible keyboard-layout widget left
+the bar. **A menu override replaces the stock entry completely** - missing
+fields become defaults (label = id), they are not inherited - so overrides
+carry every stock field; the lines were copied out of the stock file with
+`sed` to keep the glyphs byte-identical.
+
+**Not worth doing here:** an Arch-news-before-update check. Omarchy serves
+`core`/`extra`/`multilib` from its own curated `stable-mirror.omarchy.org`
+and snapshots before every update; `omarchy update` also prunes orphans and
+the cache itself.
+
 ## Syncing to a new machine
 
-`install.sh` symlinks everything under `config/` into place and installs
-`packages.txt`, and links `~/.claude/settings.json` (the Claude permission
-toast hook) and `~/.claude/rules/` (global Claude instructions) - an
-existing one there is moved aside to `.bak.<timestamp>`.
-`remove-unwanted-apps.sh` re-applies the app cleanup above.
-Still manual: review `config/hypr/monitors.lua` scale for the new panel,
-copy an SSH key into `~/.ssh`, and run
-`omarchy plymouth set by theme crimson-core` for the boot/login screen
-(left out of `install.sh` on purpose - it writes to `/usr/share` and
-rebuilds the initramfs). `install.sh` ends with
-`omarchy theme set crimson-core`, which is also what makes the theme's
-generated files (foot/hyprland/shell colors) exist at all - a theme does
-nothing just by sitting on disk. `remove-unwanted-apps.sh` also deletes the
-stock themes and adds the pacman `NoExtract` line, so run it before being
-surprised that `omarchy theme list` still shows 23 entries.
+On a fresh Omarchy install, clone the repo and run `./install.sh`. It:
+
+1. installs `packages.txt` (pacman list, then an `[aur]` section via yay;
+   `-S --needed`, never `-Sy`) and sets up tailscaled,
+2. symlinks every config (`link` lines - keep them one per line, the drift
+   check parses them): hypr, shell.json, the gradiscp plugins, the
+   crimson-core theme, foot, fontconfig, nvim, herdr, git, mise (then
+   `mise install`), mimeapps, the scripts in `bin/`, the Claude settings and
+   rules, the idle-audio-guard unit, and the drift check as a post-update hook,
+3. sets text size 10 (`omarchy display text size`), GTK settings, runs
+   `remove-unwanted-apps.sh`, applies the theme (a theme does nothing until
+   `omarchy theme set` generates its files), restarts the shell,
+4. checks that every link points into the repo.
+
+Still manual, printed at the end: monitor scale for a different panel,
+the SSH key, `sudo tailscale up`, the boot screen
+(`omarchy plymouth set by theme crimson-core` - sudo plus an initramfs
+rebuild), Firefox Sync.
