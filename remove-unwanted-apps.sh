@@ -2,9 +2,28 @@
 # Strip apps from the stock Omarchy set that aren't wanted here.
 set -e
 
-sudo pacman -Rns --noconfirm \
-  aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp \
-  2>/dev/null || true
+# Anything that is really needed runs in a container instead (see CLAUDE.md).
+unwanted=(
+  # Stock Omarchy apps not used here
+  aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
+  # Firefox is the browser; chromium-widevine only installs into /usr/lib/chromium
+  chromium chromium-widevine
+  # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
+  # 90 packages, ~1.8 GiB, nothing from Omarchy, Hyprland, the shell or the boot chain)
+  libreoffice-fresh clang llvm dotnet-runtime ruby tobi-try mariadb-libs postgresql-libs
+  yt-dlp tesseract tesseract-data-eng tesseract-data-osd webkit2gtk-4.1 frei0r-plugins
+  qemu-user-static qemu-user-static-binfmt
+  cups cups-filters cups-pk-helper system-config-printer
+)
+# Only names that are actually installed: pacman aborts the whole -Rns
+# transaction if a single one is missing, so the old fixed list followed by
+# `|| true` silently removed nothing at all on every re-run.
+installed=$(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)
+if [[ -n $installed ]]; then
+  # -Rns also takes the dependencies nothing else needs any more (opencv, deno, ...).
+  # shellcheck disable=SC2086
+  sudo pacman -Rns --noconfirm $installed
+fi
 
 rm -f ~/.local/share/applications/Basecamp.desktop \
       ~/.local/share/applications/HEY.desktop \
