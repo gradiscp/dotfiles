@@ -133,6 +133,20 @@ focus-window)
   focus_plain "${2:?usage: claude-notify focus-window <address>}"
   exit 0
   ;;
+count)
+  # For the gradiscp.claude-status bar widget: herdr agents in "blocked", plus
+  # the plain terminal that asked and has not been visited since. Only the
+  # last plain terminal is remembered, so that side adds at most 1.
+  n=$(herdr agent list 2>/dev/null |
+    jq '[.result.agents[]? | select(.agent_status == "blocked")] | length' 2>/dev/null)
+  n=${n:-0}
+  if [[ -s $LAST_WINDOW ]] && hyprctl clients -j 2>/dev/null |
+    jq -e --arg a "$(cat "$LAST_WINDOW")" 'any(.[]; .address == $a)' >/dev/null; then
+    n=$((n + 1))
+  fi
+  echo "$n"
+  exit 0
+  ;;
 jump)
   pane=$(herdr agent list 2>/dev/null | jq -r '
     [.result.agents[] | select(.agent_status == "blocked")]
