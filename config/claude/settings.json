@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/home/gradiscp/.local/bin/claude-notify"
+            "command": "claude-notify"
           }
         ]
       }
