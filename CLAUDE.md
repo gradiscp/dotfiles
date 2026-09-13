@@ -941,6 +941,22 @@ Encrypting it the same way as the main drive means one LUKS passphrase
 prompt at boot unlocks both (keyfile-in-header, same pattern the main
 install already uses) rather than two separate prompts.
 
+## Shell: `config/bashrc` and `git-status-all`
+
+`~/.bashrc` is linked to `config/bashrc`: Omarchy's bootstrap and default rc,
+plus the `h` function that makes the terminal opaque while herdr runs (herdr
+draws on the terminal's default background, which foot renders at alpha
+0.85). **The three `ssh*` aliases that used to live there were dropped on
+2026-09-13 by choice** - they carried Tailscale IPs, ports and user names,
+and the repo is public. If they are wanted again, put them in a file that
+stays out of the repo, not here.
+
+`bin/git-status-all` (in `~/.local/bin`): run it in `~/Projects` and it lists
+every repo below the current directory with uncommitted changes, unpushed
+commits, branches without upstream and stashes; clean repos get a ✓. It
+never fetches (see `git-remote.md`), so "unpushed" is relative to the last
+fetch.
+
 ## 2026-09-13 bloat audit - what went and what stayed
 
 Three read-only audits (packages/services, desktop layer, repo
