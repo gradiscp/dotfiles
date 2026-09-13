@@ -687,6 +687,19 @@ the compact size; no QML warnings from the three plugins after
 `omarchy restart shell`. Not exercised: clicking the widget or a redesigned
 toast (`wtype` can't click).
 
+**Own skills live in `config/claude/skills/<name>/`**, linked one directory
+each into `~/.claude/skills/` (2026-09-13). `doku-guard` is the end-of-session
+documentation pass: it collects what the session changed from git and the
+conversation, finds the project's own documentation (guideline, Obsidian
+vault, docs/, README, CLAUDE.md/AGENTS.md, handoffs), routes each item to
+exactly one place following that project's guideline (valiora:
+`docs/doku-leitfaden.md`), and commits - so `/clear` loses nothing. Skills
+are the right form here, unlike the rules: this should run when asked, not
+in every turn. The AI setup stays in this repo rather than its own: nothing
+in it is private, and a second repo would need its own install and drift
+handling. Split out a private `ai-setup` repo only for things that must not
+be public (e.g. `~/.claude/agents/`, which name private projects).
+
 ## Custom theme: `crimson-core`
 
 Lives in `config/omarchy/themes/crimson-core/`, symlinked as a **whole
