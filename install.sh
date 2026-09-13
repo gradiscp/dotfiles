@@ -68,6 +68,9 @@ echo "== Claude Code =="
 # Carries the Notification hook that runs claude-notify above - see
 # "Claude permission toasts" in CLAUDE.md.
 link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
+# Global instructions for every project (e.g. ask instead of guessing).
+# Whole directory, so a new rule file in the repo is live without relinking.
+link "$REPO_DIR/config/claude/rules" "$HOME/.claude/rules"
 
 echo "== Systemd user services =="
 # Keeps the screensaver/idle lock away while audio is playing (films, series).

@@ -592,6 +592,22 @@ that file itself (`/model`, `/config`, permission "always allow" answers), so
 expect the same story as `shell.json`: if `ls -la ~/.claude/settings.json`
 ever shows a plain file, copy it back into `config/claude/` and relink.
 
+**`~/.claude/rules/` is a symlink to `config/claude/rules/` - the whole
+directory** (added 2026-09-12). Every `.md` in it is a user-level rule that
+Claude Code loads in *every* project at session start and re-injects after
+`/compact`; one topic per file, so dropping a rule means deleting its file.
+`rueckfragen.md` makes Claude check what it can look up itself, then ask
+instead of guessing, and never invent file names/flags/API behaviour.
+Chosen over `~/.claude/CLAUDE.md` (same loading, but one growing file) and
+over a skill (skills only load when Claude decides they fit - a rule about
+not guessing has to apply exactly when it doesn't notice it is guessing).
+**Keep `paths:` frontmatter out of these files** - with it a rule only loads
+when Claude reads a matching file, and drops out after compaction. Claude
+Code never writes into `rules/`, so unlike `settings.json` the link should
+stay a link. Check it loaded with `/context` -> "Memory files" in a *new*
+session; running sessions don't pick it up. The repo is public, so nothing
+private goes in there.
+
 ## Custom theme: `crimson-core`
 
 Lives in `config/omarchy/themes/crimson-core/`, symlinked as a **whole
@@ -850,7 +866,8 @@ install already uses) rather than two separate prompts.
 
 `install.sh` symlinks everything under `config/` into place and installs
 `packages.txt`, and links `~/.claude/settings.json` (the Claude permission
-toast hook) - an existing one there is moved aside to `.bak.<timestamp>`.
+toast hook) and `~/.claude/rules/` (global Claude instructions) - an
+existing one there is moved aside to `.bak.<timestamp>`.
 `remove-unwanted-apps.sh` re-applies the app cleanup above.
 Still manual: review `config/hypr/monitors.lua` scale for the new panel,
 copy an SSH key into `~/.ssh`, and run
