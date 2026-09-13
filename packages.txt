@@ -1,16 +1,14 @@
-# Extra packages beyond a stock Omarchy install.
-# Official repos (pacman):
-firefox
+# Packages beyond a stock Omarchy install. Read by install.sh: one package per
+# line, "#" comments and blank lines are ignored. AUR packages go in the
+# separate [aur] section and are installed with yay.
 
-# AUR (yay):
+# Official repos (pacman)
+firefox
+tailscale
+
+[aur]
 bibata-cursor-theme-bin
 
 # NOTE: fingerprint (libfprint/fprintd/usbutils) was tried and reverted -
 # this laptop's EgisTec EH57E sensor has no Linux driver, not worth installing.
-
-# Removed from the stock Omarchy app set (not needed):
-#   aether, cliamp, omacut, kdenlive, localsend, moonlight-qt, obs-studio,
-#   pinta, xournalpp, plus their now-orphaned KDE/Qt dependencies.
-# Removed webapp shortcuts: Basecamp, HEY, Zoom, Google Contacts/Maps/
-#   Messages/Photos, X - these were just ~/.local/share/applications/*.desktop
-#   files, not packages.
+# What is REMOVED from the stock Omarchy set lives in remove-unwanted-apps.sh.

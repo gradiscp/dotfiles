@@ -1,0 +1,112 @@
+#!/bin/bash
+# Find where the live system has drifted away from the dotfiles repo, repair
+# what is safe to repair, and report the rest as a desktop notification.
+#
+# Why this exists: Omarchy's own tools replace symlinks with plain files when
+# they write (omarchy-shell-config mv's a temp file over shell.json,
+# omarchy-hyprland-monitor-scaling runs sed -i without --follow-symlinks), and
+# omarchy-settings package updates overwrite the Plymouth/SDDM boot screen.
+# Both bit this machine in 2026-09 and were only noticed by accident.
+#
+# Runs after every `omarchy update` (linked into
+# ~/.config/omarchy/hooks/post-update.d/ by install.sh); run it by hand any time.
+#
+# Checks:
+#   links     every `link` in install.sh points into the repo. A plain file
+#             whose content equals the repo copy is re-linked (nothing lost);
+#             one that differs is only reported, with which side is newer.
+#   plugins   every plugin id in shell.json exists under ~/.config/omarchy/plugins
+#   plymouth  `omarchy plymouth current` still reports crimson-core
+#   pacman    both NoExtract lines are still in /etc/pacman.conf, and the
+#             stock theme directory is still empty
+#
+# Usage: omarchy-drift-check [--quiet]   (--quiet: no notification when clean)
+
+set -uo pipefail
+
+REPO_DIR="${DOTFILES_DIR:-$HOME/Projects/paulgradischnig/dotfiles}"
+CONFIG_DIR="$HOME/.config"
+STAMP="$(date +%s)"
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-drift-check.log"
+OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
+quiet=0; [[ ${1:-} == --quiet ]] && quiet=1
+
+problems=()
+repaired=()
+
+say() { printf '%s %s\n' "$(date '+%F %T')" "$*" >>"$LOG"; }
+problem() { problems+=("$1"); say "PROBLEM $1"; }
+fixed() { repaired+=("$1"); say "REPAIRED $1"; }
+
+[[ -d $REPO_DIR ]] || { echo "dotfiles repo not found at $REPO_DIR" >&2; exit 2; }
+
+# ---- links: parsed from install.sh so there is exactly one list --------------
+# Each line is `link "<src>" "<dst>"` with $REPO_DIR / $CONFIG_DIR / $HOME
+# inside; the variables are ours, so evaluating them is safe. install.sh's one
+# loop (the hypr .lua files, `link "$f" ...`) is expanded here by hand.
+check_link() {
+  local src=$1 dst=$2
+  if [[ -L $dst && $(readlink -f "$dst") == "$REPO_DIR"/* ]]; then
+    return
+  fi
+  if [[ ! -e $dst ]]; then
+    ln -sfn "$src" "$dst" 2>/dev/null && fixed "created missing link $dst" || problem "missing and could not link: $dst"
+    return
+  fi
+  # A plain file or directory in the way: safe to replace only if identical.
+  if diff -rq "$src" "$dst" >/dev/null 2>&1; then
+    mv "$dst" "$dst.bak.$STAMP" && ln -sfn "$src" "$dst" && rm -rf "$dst.bak.$STAMP" \
+      && fixed "re-linked $dst (content was identical)" \
+      || problem "could not re-link $dst"
+  else
+    newer="repo"
+    [[ $dst -nt $src ]] && newer="live"
+    problem "$dst is a plain copy that DIFFERS from the repo ($newer side is newer) - merge by hand"
+  fi
+}
+for f in "$REPO_DIR"/config/hypr/*.lua; do
+  check_link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
+done
+while IFS= read -r line; do
+  [[ $line == *'"$f"'* ]] && continue
+  eval "set -- $line"
+  check_link "$1" "$2"
+done < <(grep -E '^\s*link "' "$REPO_DIR/install.sh" | sed -E 's/^\s*link //')
+
+# ---- plugins referenced by shell.json ---------------------------------------
+if [[ -f $CONFIG_DIR/omarchy/shell.json ]]; then
+  while IFS= read -r id; do
+    [[ $id == gradiscp.* ]] || continue
+    [[ -e $CONFIG_DIR/omarchy/plugins/$id ]] || problem "shell.json lists plugin $id but ~/.config/omarchy/plugins/$id is missing"
+  done < <(jq -r '[.plugins[]?.id, .bar.layout[]?[]?.id] | .[]' "$CONFIG_DIR/omarchy/shell.json" 2>/dev/null | sort -u)
+fi
+
+# ---- boot screen ------------------------------------------------------------
+if command -v omarchy-plymouth-current >/dev/null 2>&1; then
+  current=$(omarchy-plymouth-current 2>/dev/null || true)
+  [[ $current == crimson-core ]] || problem "boot screen is '$current', not crimson-core - run: omarchy plymouth set by theme crimson-core"
+fi
+
+# ---- pacman NoExtract + stock themes ----------------------------------------
+grep -qF 'usr/share/omarchy/themes/*' /etc/pacman.conf || problem "NoExtract for stock themes is gone from /etc/pacman.conf - re-run remove-unwanted-apps.sh"
+grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf || problem "NoExtract for the Plymouth/SDDM theme is gone from /etc/pacman.conf - re-run remove-unwanted-apps.sh"
+if [[ -n $(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -1) ]]; then
+  problem "stock Omarchy themes are back in /usr/share/omarchy/themes - re-run remove-unwanted-apps.sh"
+fi
+
+# ---- report -----------------------------------------------------------------
+say "run finished: ${#repaired[@]} repaired, ${#problems[@]} problems"
+for r in "${repaired[@]}"; do echo "repaired: $r"; done
+for p in "${problems[@]}"; do echo "PROBLEM: $p"; done
+
+notify() { "$OMARCHY_BIN/omarchy-notification-send" "$@" >/dev/null 2>&1 || true; }
+if (( ${#problems[@]} > 0 )); then
+  notify -u critical -g $'\U000F0026' "Dotfiles-Drift: ${#problems[@]} Problem(e)" \
+    "$(printf '%s\n' "${problems[@]}" | head -3)" --exec foot -e less "$LOG"
+  exit 1
+elif (( ${#repaired[@]} > 0 )); then
+  notify -u normal -g $'\U000F0026' "Dotfiles: ${#repaired[@]} Link(s) repariert" "$(printf '%s\n' "${repaired[@]}" | head -3)"
+elif (( quiet == 0 )); then
+  notify -u low -g $'\U000F0026' "Dotfiles" "Alles im Reinen"
+fi
+exit 0

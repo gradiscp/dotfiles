@@ -1,1 +1,2 @@
-*.bak.*
+# Claude Code per-machine permission cache - full of local paths, never shared.
+.claude/settings.local.json
