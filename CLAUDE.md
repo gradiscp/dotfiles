@@ -148,7 +148,10 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
 - **Omarchy's own tools turn the repo symlinks into plain files.** Confirmed
   in their source: `omarchy-shell-config` writes a temp file and `mv`s it
   over `~/.config/omarchy/shell.json`; `omarchy-hyprland-monitor-scaling`
-  runs `sed -i` on `monitors.lua` without `--follow-symlinks`. Until
+  runs `sed -i` on `monitors.lua` without `--follow-symlinks`. Seen live
+  2026-09-13: `omarchy theme set` also left `shell.json` as a plain file
+  with `bar.transparent` flipped to `true` (the bar looked grey, not black)
+  - run `omarchy-drift-check` after every `theme set`. Until
   2026-09-13 all six `hypr/*.lua`, `shell.json`, `foot.ini`, the lock/idle
   plugin dirs and more were plain copies, and **editing the repo file alone
   changed nothing live** - `hyprctl reload` reports success while running
