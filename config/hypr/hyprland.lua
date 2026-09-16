@@ -38,6 +38,9 @@ hl.layer_rule({ match = { namespace = "omarchy-bar" }, blur = true, ignore_alpha
 -- translucent toast is hard to read over a busy window.
 hl.layer_rule({ match = { namespace = "omarchy-notifications" }, blur = true, ignore_alpha = true })
 
+-- SUPER+W's close question is a translucent strip under the bar, same idea.
+hl.layer_rule({ match = { namespace = "gradiscp-closeconfirm" }, blur = true, ignore_alpha = true })
+
 -- Make the terminal visibly translucent (foot doesn't follow the
 -- decoration.opacity default the way regular windows do).
 o.window("foot", { opacity = "0.85 0.80" })
