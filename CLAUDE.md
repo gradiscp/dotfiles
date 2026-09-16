@@ -859,10 +859,23 @@ Gotchas worth knowing before touching this again:
   boot showed the stock Omarchy screen again. `omarchy plymouth current`
   reported `default` afterwards - that is the quick check. A pacman hook
   that re-applies the theme can't work: `omarchy-plymouth-set` refuses to
-  run as root, and pacman hooks run as root. So `remove-unwanted-apps.sh`
-  adds `NoExtract` for both directories instead (trade-off: Omarchy's own
-  future changes to those files don't arrive either); re-apply with
-  `omarchy plymouth set by theme crimson-core` after adding it.
+  run as root, and pacman hooks run as root.
+  **Don't protect these files with `NoExtract` - that was tried on
+  2026-09-13 and made things worse.** `NoExtract` only skips *extracting*
+  the new package's copies; pacman still removes the old package's copies on
+  upgrade, so the 4.0.3 -> 4.0.4 upgrade on 2026-09-16 left both theme
+  directories **empty** (dir mtime = the upgrade minute, `omarchy plymouth
+  current` printed nothing). Symptoms: the LUKS prompt came up as a plain
+  text "to unlock volume" line, and logout ended on a black screen because
+  the SDDM greeter had no theme (`sddm: Loaded empty theme configuration`,
+  greeter started and stopped at once). Recovery: drop the rule from
+  `/etc/pacman.conf`, `sudo pacman -S omarchy-settings`, then
+  `omarchy plymouth set by theme crimson-core`. The stock-theme `NoExtract`
+  is different: there the deletion is the point.
+  What holds now: `omarchy-drift-check` runs after every `omarchy update`
+  (post-update hook, inside the update's terminal, where sudo is usually
+  still cached) and re-applies the theme itself when `omarchy plymouth
+  current` is not `crimson-core`; without a terminal it only reports.
 
 - **Only the logo keeps its own colors.** `entry.png`, `lock.png`,
   `bullet.png` and `progress_bar.png` are flattened to the theme's
