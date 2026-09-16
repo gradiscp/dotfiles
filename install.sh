@@ -138,9 +138,11 @@ link "$REPO_DIR/config/systemd/user/omarchy-idle-audio-guard.service" "$CONFIG_D
 systemctl --user daemon-reload
 systemctl --user enable --now omarchy-idle-audio-guard.service
 
-echo "== SDDM greeter cursor =="
-# A copy, not a link: /etc is root-owned and SDDM runs as its own user.
-sudo install -m 644 "$REPO_DIR/config/sddm/20-cursor.conf" /etc/sddm.conf.d/20-cursor.conf
+echo "== SDDM greeter =="
+# Copies, not links: root-owned paths, and SDDM runs as its own user. The
+# greeter's Hyprland gets the desktop's scale and cursor (see config/sddm/).
+sudo install -Dm 644 "$REPO_DIR/config/sddm/hyprland.lua" /usr/local/share/sddm/hyprland.lua
+sudo install -m 644 "$REPO_DIR/config/sddm/20-greeter.conf" /etc/sddm.conf.d/20-greeter.conf
 
 echo "== GTK/GNOME settings =="
 bash "$REPO_DIR/gsettings.sh"
