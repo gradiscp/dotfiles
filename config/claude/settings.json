@@ -1,14 +1,8 @@
 {
-  "model": "opus",
-  "modelSettings": {
-    "claude-opus-5": {
-      "effortLevel": "high"
-    }
-  },
-  "theme": "custom:omarchy",
   "permissions": {
     "defaultMode": "default"
   },
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -33,7 +27,11 @@
         ]
       }
     ]
-  }
+  },
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "high"
+    }
+  },
+  "theme": "dark-daltonized"
 }
-
-
