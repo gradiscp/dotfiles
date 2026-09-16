@@ -209,7 +209,9 @@ Item {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.verticalCenter: parent.verticalCenter
       anchors.verticalCenterOffset: root.fieldShown ? 0 : 16
-      color: "transparent"
+      // A dark but see-through fill (2026-09-16; was fully transparent),
+      // so the dots and the border read against the unblurred wallpaper.
+      color: Util.alpha(Color.background, 0.55)
       borderSpec: root.inputBorderSpec
       radius: Style.cornerRadius
       clip: true
