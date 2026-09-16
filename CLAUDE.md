@@ -907,7 +907,7 @@ Scattered across several files, so listing them in one place:
 | Window gaps | `hypr/looknfeel.lua` | `gaps_in = 2`, `gaps_out = 3` - down from 3/6 on 2026-09-16 (stock 5/10); `border_size = 2` after 1 read as too thin |
 | Corner rounding | `hypr/looknfeel.lua` | `10` |
 | Fullscreen opacity | `hypr/looknfeel.lua` | `0.9` - Hyprland forces 1.0 by default, ignoring per-window opacity rules |
-| Cursor | `hypr/looknfeel.lua` + `gsettings.sh` | Bibata-Modern-Ice, size 14 (both places, they must agree) |
+| Cursor | `hypr/looknfeel.lua` + `gsettings.sh` + `config/sddm/20-cursor.conf` | Bibata-Modern-Ice, size 14 in all three (SDDM greeter had no setting and showed the 24px default until 2026-09-16) |
 | Monitor scale | `hypr/monitors.lua` | `1.25` - set via CLI only, see Scaling gotchas |
 | Terminal font | `foot/foot.ini` | JetBrainsMono Nerd Font size 8 |
 | Terminal transparency | `foot/foot.ini` | `alpha=0.85` under `[colors-dark]`, NOT `[main]` |

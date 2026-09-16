@@ -138,6 +138,10 @@ link "$REPO_DIR/config/systemd/user/omarchy-idle-audio-guard.service" "$CONFIG_D
 systemctl --user daemon-reload
 systemctl --user enable --now omarchy-idle-audio-guard.service
 
+echo "== SDDM greeter cursor =="
+# A copy, not a link: /etc is root-owned and SDDM runs as its own user.
+sudo install -m 644 "$REPO_DIR/config/sddm/20-cursor.conf" /etc/sddm.conf.d/20-cursor.conf
+
 echo "== GTK/GNOME settings =="
 bash "$REPO_DIR/gsettings.sh"
 
