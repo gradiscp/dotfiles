@@ -52,33 +52,57 @@ BarWidget {
       model: root.workspaceIds()
 
       WidgetButton {
+        id: ws
         required property int modelData
 
         readonly property var workspace: root.workspaceById(modelData)
         readonly property bool occupied: workspace !== null && workspace.toplevels.values.length > 0
         readonly property bool focused: Hyprland.focusedWorkspace !== null && Hyprland.focusedWorkspace.id === modelData
+        readonly property color ink: root.bar ? root.bar.barForeground : Color.foreground
+        readonly property color accent: root.bar ? root.bar.urgent : Color.urgent
 
         bar: root.bar
-        // Focused workspace: its number in dark ink on a red pill ("B" of the
-        // 2026-09-13 bar mockups). Stock showed a filled-square glyph instead.
+        // A dot per workspace with its number underneath ("C" of the
+        // 2026-09-13 mockups, keeping the numbers): focused = red capsule,
+        // occupied = filled dot, empty = hollow ring.
+        // `text` stays set even though the built-in label is hidden -
+        // WidgetButton renders itself at opacity 0 when text is empty.
         text: modelData === 10 ? "0" : String(modelData)
-        foreground: focused ? Color.background : (root.bar ? root.bar.barForeground : Color.foreground)
-        opacity: occupied || focused ? 1 : 0.5
-
-        Rectangle {
-          visible: parent.focused
-          z: -1
-          anchors.centerIn: parent
-          width: Style.space(22)
-          height: Style.space(17)
-          radius: height / 2
-          color: root.bar ? root.bar.urgent : Color.urgent
-        }
-        horizontalMargin: 6
-        verticalPadding: 6
-        fixedWidth: root.vertical ? root.barSize : Style.space(20)
+        labelVisible: false
+        horizontalMargin: 5
+        verticalPadding: 3
+        fixedWidth: root.vertical ? root.barSize : Style.space(18)
         fixedHeight: root.barSize
         onPressed: function() { root.focusWorkspace(modelData) }
+
+        Column {
+          anchors.centerIn: parent
+          spacing: Style.space(2)
+
+          Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: ws.focused ? Style.space(13) : Style.space(6)
+            height: Style.space(6)
+            radius: height / 2
+            color: ws.focused ? ws.accent : (ws.occupied ? ws.ink : "transparent")
+            border.width: ws.focused || ws.occupied ? 0 : Math.max(1, Style.space(1))
+            border.color: Util.alpha(ws.ink, 0.45)
+
+            Behavior on width {
+              NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            }
+          }
+
+          Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            textFormat: Text.PlainText
+            text: ws.text
+            color: ws.focused ? ws.accent : (ws.occupied ? ws.ink : Util.alpha(ws.ink, 0.4))
+            font.family: ws.fontFamily
+            font.pixelSize: Style.font.caption
+            renderType: Text.NativeRendering
+          }
+        }
       }
     }
   }
