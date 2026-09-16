@@ -49,12 +49,14 @@
 --   },
 -- })
 
--- Niri-like side-scrolling layout instead of dwindle. Thinner gaps too.
+-- Niri-like side-scrolling layout instead of dwindle. Thinner gaps too:
+-- 2026-09-16 down from 3/6 (stock is 5/10), because the brighter
+-- snowcapped-mountains background made every gap obvious.
 hl.config({
   general = {
     layout = "scrolling",
-    gaps_in = 3,
-    gaps_out = 6,
+    gaps_in = 2,
+    gaps_out = 3,
   },
 })
 
