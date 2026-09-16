@@ -884,7 +884,7 @@ Scattered across several files, so listing them in one place:
 |---|---|---|
 | Window layout | `hypr/looknfeel.lua` | `scrolling` (niri-like) |
 | Scrolling column width | `hypr/looknfeel.lua` | `1.0` - 0.97 still left a visibly-not-full-screen margin |
-| Window gaps | `hypr/looknfeel.lua` | `gaps_in = 3`, `gaps_out = 6` |
+| Window gaps | `hypr/looknfeel.lua` | `gaps_in = 2`, `gaps_out = 3` - down from 3/6 on 2026-09-16 (stock 5/10) |
 | Corner rounding | `hypr/looknfeel.lua` | `10` |
 | Fullscreen opacity | `hypr/looknfeel.lua` | `0.9` - Hyprland forces 1.0 by default, ignoring per-window opacity rules |
 | Cursor | `hypr/looknfeel.lua` + `gsettings.sh` | Bibata-Modern-Ice, size 14 (both places, they must agree) |
