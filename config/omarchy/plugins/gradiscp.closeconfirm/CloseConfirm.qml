@@ -7,12 +7,13 @@ import qs.Ui
 // SUPER+W's "close anyway?" question, summoned by bin/window-close-guard when
 // the terminal about to close still has something running in it:
 //   omarchy-shell shell summon gradiscp.closeconfirm '{"process":"claude"}'
-// Terminal-styled card ("B" of three mockups): a title strip, "$ <process>
-// läuft noch", the question with a blinking block cursor, and bracketed
-// options with the selected one inverted. Colors, type and spacing come from
-// the theme tokens only, so it follows `omarchy theme set`.
-// Keys: Tab / Shift+Tab / Left / Right switch, Enter picks, Escape cancels.
-// The answer goes back to window-close-guard, which knows which window it was.
+// A slim strip under the bar ("C" of three mockups, picked 2026-09-16 over the
+// centred terminal card): no dimmed backdrop, translucent like the
+// notification toasts - Color.notifications.background carries the theme's
+// 0.85 alpha, and hyprland.lua blurs the "gradiscp-closeconfirm" layer.
+// Keys: Tab / Shift+Tab / Left / Right switch, Enter picks, Escape cancels,
+// SUPER+W again confirms. The answer goes back to window-close-guard, which
+// knows which window it was.
 Item {
   id: root
 
@@ -28,14 +29,10 @@ Item {
 
   readonly property string guard: Quickshell.env("HOME") + "/.local/bin/window-close-guard"
   readonly property string fontFamily: Style.font.menuFamily
-  readonly property color ink: Color.foreground
-  readonly property color brightInk: Qt.lighter(Color.foreground, 1.15)
-  readonly property color accent: Color.popups.border
-  readonly property color cardColor: Qt.darker(Color.background, 1.5)
-  // Opaque on purpose: the strip is drawn from two overlapping rectangles
-  // (rounded + square), and a translucent fill doubled up where they overlap,
-  // leaving the lower half visibly lighter than the upper.
-  readonly property color stripColor: Qt.tint(root.cardColor, Util.alpha(root.ink, 0.05))
+  readonly property color ink: Color.notifications.text
+  readonly property color brightInk: Qt.lighter(Color.notifications.text, 1.15)
+  readonly property color accent: Color.notifications.border
+  readonly property color cardColor: Color.notifications.background
   readonly property int borderWidth: 2
 
   function open(payloadJson) {
@@ -44,7 +41,6 @@ Item {
     root.process = payload.process || ""
     // Start on "Abbrechen", so a stray Enter keeps the window.
     root.selected = 0
-    cursor.visible = true
     root.opened = true
     Qt.callLater(function() { keyCatcher.forceActiveFocus() })
   }
@@ -63,17 +59,14 @@ Item {
   PanelWindow {
     id: panel
     visible: root.opened
+    // Full screen, but painted transparent: the whole surface is only there to
+    // take the keyboard focus and to catch a click beside the strip.
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
     WlrLayershell.namespace: "gradiscp-closeconfirm"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     exclusionMode: ExclusionMode.Ignore
-
-    Rectangle {
-      anchors.fill: parent
-      color: Color.menu.scrim
-    }
 
     MouseArea {
       anchors.fill: parent
@@ -107,138 +100,87 @@ Item {
     }
 
     Rectangle {
-      id: card
-      width: Style.space(460)
-      height: strip.height + body.implicitHeight + root.borderWidth * 2
-      anchors.centerIn: parent
+      id: strip
+      // Clear of the bar: its height plus the usual outer gap.
+      anchors { top: parent.top; topMargin: Style.bar.sizeHorizontal + Style.space(6); horizontalCenter: parent.horizontalCenter }
+      width: content.implicitWidth + Style.space(28)
+      height: Style.space(44)
       radius: Style.cornerRadius
       color: root.cardColor
       border.color: root.accent
       border.width: root.borderWidth
 
-      // Swallow clicks on the card so only the scrim cancels.
+      // Swallow clicks on the strip so only the area beside it cancels.
       MouseArea { anchors.fill: parent; onClicked: {} }
 
-      // Title strip. Rounded like the card on top, square at the bottom: a
-      // fully rounded rectangle with its lower half covered by a square one.
-      Item {
-        id: strip
-        anchors { top: parent.top; left: parent.left; right: parent.right; margins: root.borderWidth }
-        height: Style.space(30)
-
-        Rectangle {
-          anchors.fill: parent
-          radius: Math.max(0, Style.cornerRadius - root.borderWidth)
-          color: root.stripColor
-        }
-        Rectangle {
-          anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-          height: parent.height / 2
-          color: root.stripColor
-        }
-
-        Text {
-          anchors { left: parent.left; leftMargin: Style.space(14); verticalCenter: parent.verticalCenter }
-          text: "window-close-guard"
-          color: Util.alpha(root.ink, 0.5)
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.bodySmall
-        }
-        Text {
-          anchors { right: parent.right; rightMargin: Style.space(14); verticalCenter: parent.verticalCenter }
-          text: "SUPER+W"
-          color: root.accent
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.bodySmall
-        }
-      }
-
-      Column {
-        id: body
-        anchors { top: strip.bottom; left: parent.left; right: parent.right }
-        topPadding: Style.space(18)
-        bottomPadding: Style.space(16)
-        leftPadding: Style.space(20)
-        rightPadding: Style.space(20)
+      Row {
+        id: content
+        anchors.centerIn: parent
         spacing: Style.space(12)
 
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          textFormat: Text.PlainText
+          text: ""
+          color: root.accent
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.heading
+        }
+
         Row {
-          spacing: Style.space(8)
-          Text {
-            textFormat: Text.PlainText
-            text: "$"
-            color: root.accent
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.subtitle
-          }
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: Style.space(6)
+
           Text {
             textFormat: Text.PlainText
             text: root.process || "etwas"
-            color: Util.alpha(root.ink, 0.6)
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.subtitle
-          }
-          Text {
-            textFormat: Text.PlainText
-            text: "läuft noch"
-            color: Util.alpha(root.ink, 0.4)
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.subtitle
-          }
-        }
-
-        Row {
-          spacing: Style.space(8)
-          Text {
-            id: question
-            textFormat: Text.PlainText
-            text: "Fenster trotzdem schließen?"
             color: root.brightInk
             font.family: root.fontFamily
-            font.pixelSize: Style.font.title
+            font.pixelSize: Style.font.subtitle
+            font.bold: true
           }
-          Rectangle {
-            id: cursor
-            width: Style.space(8)
-            height: question.height
-            color: root.accent
-
-            Timer {
-              interval: 550
-              repeat: true
-              running: root.opened
-              onTriggered: cursor.visible = !cursor.visible
-            }
+          Text {
+            textFormat: Text.PlainText
+            text: "läuft noch. Schließen?"
+            color: root.ink
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.subtitle
           }
         }
 
         Row {
-          topPadding: Style.space(6)
-          spacing: Style.space(10)
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: Style.space(8)
 
           Repeater {
-            model: ["[ Abbrechen ]", "[ Schließen ]"]
+            model: ["Abbrechen", "Schließen"]
 
             Rectangle {
               required property int index
               required property string modelData
 
               readonly property bool isSelected: root.selected === index
-              readonly property color tint: index === 1 ? root.accent : root.ink
+              readonly property bool destructive: index === 1
 
-              width: label.implicitWidth + Style.space(24)
-              height: label.implicitHeight + Style.space(10)
-              color: isSelected ? tint : "transparent"
+              width: label.implicitWidth + Style.space(22)
+              height: Style.space(28)
+              radius: Style.space(6)
+              color: isSelected
+                ? (destructive ? Util.alpha(root.accent, 0.22) : Util.alpha(root.ink, 0.1))
+                : "transparent"
+              border.width: Math.max(1, Style.space(1))
+              border.color: destructive
+                ? (isSelected ? root.accent : Util.alpha(root.accent, 0.5))
+                : (isSelected ? root.ink : Util.alpha(root.ink, 0.35))
 
               Text {
                 id: label
                 anchors.centerIn: parent
                 textFormat: Text.PlainText
                 text: modelData
-                color: parent.isSelected ? root.cardColor : parent.tint
+                color: parent.destructive ? root.accent : (parent.isSelected ? root.brightInk : root.ink)
                 font.family: root.fontFamily
-                font.pixelSize: Style.font.subtitle
-                font.bold: true
+                font.pixelSize: Style.font.body
               }
 
               MouseArea {
@@ -250,15 +192,6 @@ Item {
               }
             }
           }
-        }
-
-        Text {
-          topPadding: Style.space(4)
-          textFormat: Text.PlainText
-          text: "tab wechselt · enter wählt · esc bricht ab"
-          color: Util.alpha(root.ink, 0.4)
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.caption
         }
       }
     }

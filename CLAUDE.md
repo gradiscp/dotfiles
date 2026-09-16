@@ -261,13 +261,17 @@ far more informative than the backtrace, since the backtrace is unsymbolized.
   on their own). The question is our own overlay plugin,
   `config/omarchy/plugins/gradiscp.closeconfirm/`, summoned as
   `omarchy-shell shell summon gradiscp.closeconfirm '{"process":"claude"}'`.
-  It draws a terminal-styled card, picked on 2026-09-12 out of three
-  mockups: a `window-close-guard` title strip, `$ claude läuft noch`, the
-  question with a blinking red block cursor, and `[ Abbrechen ]` /
-  `[ Schließen ]` with the selected one inverted (red for Schließen) -
-  theme tokens only, so it follows a theme change. Keys: **Tab /
+  It draws a **slim strip under the bar** (mockup "C", picked 2026-09-16
+  over the centred terminal card of 2026-09-12): terminal glyph, "<process>
+  läuft noch. Schließen?", then the two buttons - no dimmed backdrop, and
+  translucent like a toast, because it takes its colors from the
+  `Color.notifications.*` tokens, whose background already carries the
+  theme's 0.85 alpha. `hyprland.lua` blurs the `gradiscp-closeconfirm`
+  layer for it, exactly like `omarchy-notifications`. The surface still
+  covers the whole screen (transparent) to hold the exclusive keyboard
+  focus. Keys: **Tab /
   Shift+Tab / Left / Right** switch, Enter picks, Escape or a click beside
-  the card cancels. The first cut wrapped the shell's `Ui/ConfirmDialog.qml`
+  the strip cancels. The first cut wrapped the shell's `Ui/ConfirmDialog.qml`
   (same keys, but 10px buttons and no hierarchy). **"Abbrechen" is
   preselected on purpose**, so a stray Enter keeps the window; **SUPER+W a
   second time confirms** - through `window-close-guard` when Hyprland's bind
@@ -652,10 +656,13 @@ All three live in `config/omarchy/plugins/`, are directory-symlinked into
 `~/.config/omarchy/plugins/` by `install.sh`, and `shell.json` points the bar
 and the plugin list at them.
 
-- **`gradiscp.workspaces`** (`omarchy plugin clone omarchy.workspaces`): the
-  focused workspace shows its number in dark ink on a red pill (`bar.urgent`,
-  22x17) instead of stock's filled-square glyph; occupied/empty opacity is
-  unchanged. The clone keeps `moduleName: "omarchy.workspaces"` on purpose -
+- **`gradiscp.workspaces`** (`omarchy plugin clone omarchy.workspaces`): a dot
+  per workspace instead of numbers - focused a red capsule (`bar.urgent`),
+  occupied a filled dot, empty a hollow ring (mockup "C", 2026-09-16; the
+  2026-09-13 version was the number on a red pill, and numbers under the dots
+  were tried in between and dropped). **`text` stays set on the
+  `WidgetButton` even though `labelVisible` is false** - it renders itself at
+  opacity 0 when `text` is empty. The clone keeps `moduleName: "omarchy.workspaces"` on purpose -
   `omarchy-plugin-clone` leaves built-in ids as IPC targets and routes them
   through `clonedFrom`.
 - **`gradiscp.claude-status`** (new bar widget, right section between tray and
@@ -895,7 +902,7 @@ Scattered across several files, so listing them in one place:
 | Active theme | `omarchy/themes/crimson-core/` | `crimson-core` - custom, see the section above |
 | Bar background | generated from `crimson-core/colors.toml` `background` | `#0e0d0c`, alpha `1.0` - no `shell.toml` overlay is shipped for this theme, so the generated one is used as-is |
 | Bar transparency toggle | `omarchy/shell.json` `bar.transparent` | `false` - **double-clicking the bar's center toggles this**, which is why it seems to change on its own |
-| Bar widgets | `omarchy/shell.json` `bar.layout` | left: `gradiscp.workspaces` (red pill); center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, `gradiscp.claude-status`, agents, bluetooth, network, audio, monitor, power |
+| Bar widgets | `omarchy/shell.json` `bar.layout` | left: `gradiscp.workspaces` (dots); center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, `gradiscp.claude-status`, agents, bluetooth, network, audio, monitor, power |
 | Notification toasts | `omarchy/plugins/gradiscp.notifications` + `crimson-core/shell.notifications.toml` | 320px, background alpha 0.85 with layer blur, red border only for critical - see the bar and notification clones section |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` - both Firefox rules need `override` on every value (see the Fullscreen gotcha) |
 | Idle screensaver / lock | `omarchy/shell.json` `idle` | 240s / 300s - the idle lock blanks the panel 5s later |
