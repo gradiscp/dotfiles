@@ -1,5 +1,5 @@
 [Unit]
-Description=Keep Omarchy awake while audio is playing
+Description=Keep Omarchy awake while a fullscreen video is playing
 Documentation=file:///home/gradiscp/Projects/paulgradischnig/dotfiles/CLAUDE.md
 PartOf=graphical-session.target
 After=graphical-session.target pipewire-pulse.service

@@ -35,6 +35,12 @@ Item {
   property bool strandedLockResolved: false
   property bool noBlank: false
   readonly property string noBlankFlagPath: stateHome + "/omarchy/toggles/lock-no-blank"
+  // True from the moment idleBlankTimer turned the panel off until anything
+  // wakes it again. FullLockView uses it to let the waking keystroke do
+  // nothing but wake: it must not type a character or pull the password field
+  // up over the clock. Only this plugin blanks and wakes the panel while
+  // locked, so this flag is the whole truth about that state.
+  property bool displayBlanked: false
   property bool unlockSucceeded: false
   readonly property string screenshotPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/omarchy-lock-screenshot.png"
   property int screenshotVersion: 0
@@ -145,6 +151,7 @@ Item {
 
     resetAuthenticationState()
     lockRequested = true
+    displayBlanked = false
     refreshNoBlank()
     armBlankTimer()
     logEvent("lock-requested")
@@ -191,11 +198,13 @@ Item {
   }
 
   function runWake() {
+    displayBlanked = false
     if (!wakeProcess.running) wakeProcess.running = true
     if (lockRequested) armBlankTimer()
   }
 
   function runBlank() {
+    displayBlanked = true
     if (!blankProcess.running) blankProcess.running = true
   }
 
@@ -329,6 +338,7 @@ Item {
         authenticatingPassword: root.authenticatingPassword
         failureMessage: root.failureMessage
         failedAttempts: root.failedAttempts
+        displayBlanked: root.displayBlanked
         inputEnabled: root.lockRequested && !root.noBlank
         loadBackground: root.locked && !root.noBlank
         passwordText: root.enteredPassword

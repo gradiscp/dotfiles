@@ -23,6 +23,9 @@ Item {
   property bool loadBackground: true
   property string passwordText: ""
   property bool syncingPasswordText: false
+  // Set by Service.qml while the panel is off (5s after locking). The input
+  // that wakes it must only wake it - see wakeFromBlank below.
+  property bool displayBlanked: false
 
   // Set by a keystroke or click, cleared by concealTimer. The field is also
   // held up while there is text in it or a password check is in flight, so
@@ -78,6 +81,19 @@ Item {
     if (!inputEnabled) return
     fieldRevealed = true
     concealTimer.restart()
+  }
+
+  // Waking the panel and asking for the password are two separate moments.
+  // The keystroke (or click) that turns the display back on is swallowed
+  // here: it wakes, and what comes up is the clock - the field only follows
+  // once there is a second, deliberate keystroke. Returns true when this
+  // input was the wake-up and the caller must not act on it any further.
+  // The check has to read displayBlanked *before* wakeRequested(), which
+  // clears the flag in Service.qml as it turns the panel on.
+  function wakeFromBlank() {
+    var wasBlanked = displayBlanked
+    wakeRequested()
+    return wasBlanked
   }
 
   function syncPasswordText() {
@@ -149,7 +165,11 @@ Item {
     MouseArea {
       anchors.fill: parent
       hoverEnabled: true
-      onClicked: { root.wakeRequested(); root.forcePasswordFocus(); root.revealField() }
+      onClicked: {
+        var waking = root.wakeFromBlank()
+        root.forcePasswordFocus()
+        if (!waking) root.revealField()
+      }
       onPositionChanged: root.wakeRequested()
     }
 
@@ -270,7 +290,12 @@ Item {
         }
 
         Keys.onPressed: function(event) {
-          root.wakeRequested()
+          if (root.wakeFromBlank()) {
+            // Eat it, so TextInput never inserts the character either: no
+            // text means onTextChanged cannot pull the field up behind this.
+            event.accepted = true
+            return
+          }
           root.revealField()
           if (event.key === Qt.Key_Escape || (event.modifiers & Qt.ControlModifier && event.key === Qt.Key_U)) {
             root.passwordTextEdited("")

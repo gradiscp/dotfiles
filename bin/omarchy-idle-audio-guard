@@ -1,7 +1,11 @@
 #!/bin/bash
-# Hold Omarchy's "stay awake" flag for as long as audio is actually playing,
-# so watching a film/series does not get interrupted by the 2-minute
-# screensaver or the 5-minute idle lock.
+# Hold Omarchy's "stay awake" flag for as long as a film is actually playing,
+# so watching a film/series does not get interrupted by the screensaver or
+# the idle lock. "A film" means: audio is playing AND a window is in real
+# fullscreen on a workspace that is on screen. Audio alone is not enough
+# (2026-09-20, on request): music, or a video in a normal tab, used to hold
+# the lock off for as long as it played, which read as "the laptop never
+# locks any more" - the lock is the point, a film is the one exception.
 #
 # Why this exists at all: Firefox *does* try to inhibit the screensaver while
 # a video plays, but on this machine it cannot succeed. Firefox 154's Linux
@@ -43,23 +47,41 @@ audio_playing() {
   pactl list short sinks 2>/dev/null | grep -qw RUNNING
 }
 
+# A window in real fullscreen (`fullscreen` 2 - SUPER+F, or a video that
+# went fullscreen by itself; 1 is merely maximized, SUPER+ALT+F) on a
+# workspace some monitor is currently showing. Probed 2026-09-20 on Hyprland
+# 0.56.2 with a foot window: `hl.dsp.window.fullscreen({ mode = "fullscreen" })`
+# reads 2/2, `mode = "maximized"` 1/1. hyprctl works from the systemd user
+# session because uwsm imports HYPRLAND_INSTANCE_SIGNATURE into it.
+fullscreen_visible() {
+  local active
+  active="$(hyprctl monitors -j 2>/dev/null | jq -c '[.[] | .activeWorkspace.id]' 2>/dev/null)" || return 1
+  [[ -n $active && $active != "[]" ]] || return 1
+  hyprctl clients -j 2>/dev/null | jq -e --argjson ws "$active" \
+    'any(.[]; .mapped and .fullscreen == 2 and (.workspace.id as $w | $ws | index($w) != null))' >/dev/null 2>&1
+}
+
+film_playing() {
+  audio_playing && fullscreen_visible
+}
+
 acquire() {
   toggle_idle stay-awake
   mkdir -p "$STATE_DIR"
   touch "$OWNED"
-  echo "idle-audio-guard: audio playing - staying awake"
+  echo "idle-audio-guard: fullscreen audio playing - staying awake"
 }
 
 release() {
   rm -f "$OWNED"
   if [[ -f $FLAG ]]; then
     toggle_idle allow-idle
-    echo "idle-audio-guard: audio stopped - idle allowed again"
+    echo "idle-audio-guard: film over (audio stopped or fullscreen left) - idle allowed again"
   fi
 }
 
 check() {
-  if audio_playing; then
+  if film_playing; then
     if [[ -f $FLAG ]]; then
       : # already awake - either ours, or the user's own toggle. Leave it.
     elif [[ -f $OWNED ]]; then
