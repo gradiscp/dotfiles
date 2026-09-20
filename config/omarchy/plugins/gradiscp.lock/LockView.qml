@@ -23,6 +23,13 @@ Item {
   readonly property int fieldFontSize: Math.round(Style.font.heading * 1.125)
   readonly property bool showPasswordCursor: inputEnabled && !authenticatingPassword && failureMessage.length === 0
 
+  // The light lock never blanks the panel, so without this it sits on the
+  // same still screenshot for hours. MatrixRain.qml says why the real ttfx
+  // screensaver cannot be shown over a session lock. Three minutes, matching
+  // what the desktop screensaver would have done.
+  property bool screensaverActive: false
+  readonly property int screensaverDelay: 180000
+
   signal submitPassword(string password)
   signal passwordTextEdited(string password)
   signal clearFailureRequested()
@@ -45,6 +52,37 @@ Item {
     passwordTextEdited("")
   }
 
+  // Any input ends the screensaver and starts the three minutes over.
+  // Returns true when it was the input that ended it - that one is swallowed,
+  // exactly like the real screensaver, whose first keystroke only exits it
+  // instead of landing in the password.
+  function dismissScreensaver(reason) {
+    var wasActive = screensaverActive
+    if (wasActive) console.log("omarchy lock screensaver dismissed: " + reason)
+    screensaverActive = false
+    if (inputEnabled) screensaverTimer.restart()
+    return wasActive
+  }
+
+  // `positionChanged` is not the same as "the mouse moved": Qt Quick also
+  // delivers a hover event at the *unchanged* cursor position whenever the
+  // scene under the cursor changes - and the screensaver fading in is such
+  // a change. That one event ended every screensaver a second after it
+  // started (seen 2026-09-20 in the journal: a single `pointer x,y` dismiss,
+  // no hand on the mouse). So the pointer only counts once it has actually
+  // travelled a few pixels from where it was last seen.
+  property real lastPointerX: -1
+  property real lastPointerY: -1
+
+  function pointerMoved(x, y) {
+    var moved = lastPointerX >= 0 && (Math.abs(x - lastPointerX) > 3 || Math.abs(y - lastPointerY) > 3)
+    lastPointerX = x
+    lastPointerY = y
+    if (!moved) return
+    wakeRequested()
+    dismissScreensaver("pointer " + x + "," + y)
+  }
+
   function syncPasswordText() {
     if (passwordInput.text === passwordText) return
     syncingPasswordText = true
@@ -54,11 +92,27 @@ Item {
 
   onPasswordTextChanged: syncPasswordText()
   onInputEnabledChanged: {
-    if (inputEnabled) Qt.callLater(forcePasswordFocus)
+    if (inputEnabled) {
+      Qt.callLater(forcePasswordFocus)
+      screensaverTimer.restart()
+    } else {
+      screensaverTimer.stop()
+      screensaverActive = false
+    }
   }
   Component.onCompleted: {
     syncPasswordText()
-    if (inputEnabled) Qt.callLater(forcePasswordFocus)
+    if (inputEnabled) {
+      Qt.callLater(forcePasswordFocus)
+      screensaverTimer.restart()
+    }
+  }
+
+  Timer {
+    id: screensaverTimer
+    interval: root.screensaverDelay
+    repeat: false
+    onTriggered: if (root.inputEnabled) root.screensaverActive = true
   }
 
   Rectangle {
@@ -93,8 +147,8 @@ Item {
     MouseArea {
       anchors.fill: parent
       hoverEnabled: true
-      onClicked: { root.wakeRequested(); root.forcePasswordFocus() }
-      onPositionChanged: root.wakeRequested()
+      onClicked: { root.wakeRequested(); root.dismissScreensaver("click"); root.forcePasswordFocus() }
+      onPositionChanged: root.pointerMoved(mouseX, mouseY)
     }
 
     // Just the lock-in-a-circle over the blurred screenshot. Typing is
@@ -131,6 +185,28 @@ Item {
         height: 36
         source: "lock-icon.svg"
         sourceSize: Qt.size(36, 36)
+      }
+    }
+
+    // Screensaver: fades the screenshot and the icon out behind black and
+    // rains over it. Loaded only while it is on screen, so an untouched lock
+    // carries no idle columns around. Input dismisses it, see
+    // dismissScreensaver().
+    Rectangle {
+      id: screensaverCover
+      anchors.fill: parent
+      color: "black"
+      opacity: root.screensaverActive ? 1 : 0
+      visible: opacity > 0
+
+      Behavior on opacity {
+        NumberAnimation { duration: root.screensaverActive ? 1200 : 400; easing.type: Easing.InOutQuad }
+      }
+
+      Loader {
+        anchors.fill: parent
+        active: screensaverCover.visible
+        sourceComponent: MatrixRain { running: root.screensaverActive }
       }
     }
 
@@ -172,6 +248,12 @@ Item {
 
         Keys.onPressed: function(event) {
           root.wakeRequested()
+          if (root.dismissScreensaver("key")) {
+            // Eat it, so TextInput inserts no character: the key that ends
+            // the screensaver must not become the first password character.
+            event.accepted = true
+            return
+          }
           if (event.key === Qt.Key_Escape || (event.modifiers & Qt.ControlModifier && event.key === Qt.Key_U)) {
             root.passwordTextEdited("")
             event.accepted = true

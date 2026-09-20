@@ -59,8 +59,8 @@
     "omarchy.notifications"
   ],
   "idle": {
-    "lock": 300,
-    "screensaver": 240
+    "lock": 180,
+    "screensaver": 120
   },
   "plugins": [
     {

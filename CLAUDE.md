@@ -350,6 +350,17 @@ lock by the `noBlank` flag (see below):
     the clock fades and sinks out, with the same timings mirrored, and
     comes back when the field hides. Both hang off one `fieldShown`
     binding, so they cannot get out of step.
+  - **the keystroke that wakes the blanked panel only wakes it** (added
+    2026-09-20 on request: "erst die Uhr und nicht direkt das Passwortfeld").
+    `Service.qml` tracks the panel state in `displayBlanked` (set in
+    `runBlank()`, cleared in `runWake()`); `FullLockView`'s `wakeFromBlank()`
+    reads that flag *before* emitting `wakeRequested`, because the wake
+    clears it in the same call. When it was set, the key is swallowed
+    (`event.accepted = true`, so `TextInput` inserts nothing and
+    `onTextChanged` cannot pull the field up behind it) - you get the clock,
+    and only the next key starts the password. Same for a click. The
+    5s blank timer is unchanged and re-arms on the wake, so an untouched
+    lock goes dark again 5s after you looked at the clock.
 
   The password logic itself (dots, `Checking…`, error text, fingerprint
   hint) is stock and unchanged; if this is ever re-synced from a newer
@@ -360,6 +371,48 @@ lock by the `noBlank` flag (see below):
   takes no input (`omarchy-shell lock hidePreview` or a click closes it).
 - **`LockView.qml`** - for `SUPER+L` only, deliberately minimal. Everything
   below about the screenshot, the icon and blind typing is this view.
+  Since 2026-09-20 it also carries the light lock's **own screensaver**
+  (`MatrixRain.qml`): after **3 min** without input (`screensaverDelay`, a
+  plain constant in `LockView.qml` - not `idle.screensaver` from
+  `shell.json`, which belongs to the desktop) the screenshot and the icon
+  fade out behind black and a matrix rain starts; any key or mouse movement
+  ends it and restarts the three minutes, and the key that ends it is
+  swallowed, exactly like the real screensaver's first keystroke. **"Mouse
+  movement" means the pointer travelled more than 3px from where the
+  `MouseArea` last saw it** (`pointerMoved()`), not `positionChanged` as
+  such: Qt Quick delivers a hover event at the unchanged cursor position
+  whenever the scene under the cursor changes, and the rain fading in is
+  such a change - the first version was dismissed by exactly one such
+  synthetic event a second after it appeared ("geht nach kurzer Zeit wieder
+  aus"), reproduced with a `console.log` in `dismissScreensaver()`, which is
+  still there: `journalctl --user | grep 'screensaver dismissed'` names the
+  cause of every dismiss. The columns themselves never restart as a whole:
+  each one loops on its own random period, so the rain is continuous until
+  something dismisses it. The panel
+  is never blanked, so this stays out of the DRM crash's blanked-panel
+  state. **The real Omarchy screensaver cannot be used here**: it is
+  `ttfx --random-effect` in a foot window (`omarchy-launch-screensaver`),
+  i.e. an ordinary Hyprland window, and a session lock renders nothing but
+  its own surface - which is why `gradiscp.idle` guards it with
+  `omarchy-shell lock isLocked` and `omarchy-lock-light` kills ttfx before
+  locking. So of ttfx's ~40 effects only `matrix` was rebuilt in QML; don't
+  go looking for a way to show the real one over the lock.
+
+  **Every per-column value in `MatrixRain.qml` is rolled once, at creation,
+  and never touched again while the column falls** - length, speed, gap and
+  the random first-fall offset that keeps the columns from starting as one
+  synchronized wave. Only the glyphs change, from one 140ms timer. The first
+  cut re-rolled all of it from a `ScriptAction` inside the falling
+  animation: assigning to a running animation's properties restarts that
+  animation, which ran the `ScriptAction` again, until the QML engine threw
+  `RangeError: Maximum call stack size exceeded` and the whole shell hung -
+  with the full-screen preview overlay (exclusive keyboard focus) stuck on
+  screen and no way to type past it. `pkill -f quickshell` is the way out;
+  `omarchy-launch-shell` respawns it. Before that the durations were plain
+  bindings, which QML reported as binding loops for the same reason. Also:
+  the trail is `Text.StyledText` markup, so `<`, `>` and `&` must stay out
+  of the glyph set or they are parsed instead of drawn (they showed up as
+  literal `</font><br>` runs in the rain).
 
 Both sit inside the session lock surface; only the visible one gets
 `inputEnabled`, so they never compete for keyboard focus. `noBlank`
@@ -442,8 +495,25 @@ old SUPER+L complaint from returning. The `shell.idleConfig` fallback on
 15s and hold Omarchy's own stay-awake flag
 (`~/.local/state/omarchy/indicators/stay-awake`, the same one
 `omarchy toggle idle` and the bar indicator use) while any sink reports
-`RUNNING`. Sink-level detection means it covers speakers, the headphone
+`RUNNING` **and a window is in real fullscreen on a workspace that is on
+screen**. Sink-level detection means it covers speakers, the headphone
 jack, Bluetooth and HDMI alike, and every app, not just the browser.
+
+**The fullscreen half was added 2026-09-20.** Until then audio alone held
+the flag, and Firefox playing music to the JBL Flip 3 kept the laptop from
+ever locking - reported as "geht nicht mehr gelockt", and the idle log
+(`journalctl --user | grep 'omarchy idle'`) showed nothing but
+`stay-awake: enabled state-file` / `idle-cycle-cancel: stay-awake` all
+afternoon, with `stay-awake-by-audio` next to the flag. **So when the
+machine "never locks", check `ls ~/.local/state/omarchy/indicators/` and
+`omarchy-shell idle status` (`enabled:false, stayAwake:true`) before
+suspecting the idle or lock plugins.** Fullscreen means `hyprctl clients -j`
+`.fullscreen == 2` (SUPER+F, or a video that went fullscreen by itself);
+`1` is maximized (SUPER+ALT+F) and does not count - probed on Hyprland
+0.56.2 with a foot window, see the comment in the script. Music, or a video
+in a normal tab, now locks after the idle time like anything else; if that
+is ever wanted awake, `omarchy toggle idle` by hand is the way (the guard
+respects it, see below).
 
 **Why a homegrown guard and not just Firefox's own inhibit:** Firefox *does*
 try, and cannot succeed here. Firefox 154's Linux wakelock has exactly two
@@ -465,10 +535,11 @@ off by hand mid-playback it stands down until playback restarts. The unit's
 `ExecStop` releases the flag, so a logout can't leave the machine pinned
 awake. To watch it: `journalctl --user -u omarchy-idle-audio-guard -f`.
 
-`idle.screensaver` in `shell.json` is 240s (4 min) - triggers Omarchy's
+`idle.screensaver` in `shell.json` is 120s (2 min) - triggers Omarchy's
 built-in `ttfx`-based terminal screensaver, unrelated to the lock screen
-above. `idle.lock` is 300s (5 min). History: 120s / 300s stock, 60s / 180s
-from 2026-09-10, 240s / 300s from 2026-09-12. The lock has to stay *after*
+above. `idle.lock` is 180s (3 min). History: 120s / 300s stock, 60s / 180s
+from 2026-09-10, 240s / 300s from 2026-09-12, 120s / 180s from 2026-09-20
+("nach 3 min nichts machen soll gelockt werden"). The lock has to stay *after*
 the screensaver, or the screensaver is never seen - the lock blanks the
 panel 5s later.
 Both count from the moment idle began, not from each other.
@@ -479,9 +550,10 @@ log, because it is genuinely confusing from the outside:
 | Trigger | What runs | Lock view | Display |
 |---|---|---|---|
 | `SUPER+L` | `omarchy-lock-light` (sets the `noBlank` flag) | minimal (`LockView`) | **stays on** |
+| 3 min in that lock | `MatrixRain.qml`, drawn inside the lock surface | minimal + rain | **stays on** |
 | `SUPER+SHIFT+L` | `omarchy-system-lock` | full, with clock | off after 5s |
-| 4 min idle | `ttfx` screensaver | - | stays on |
-| 5 min idle | `omarchy-system-lock` (skipped if already locked) | full, with clock | off after 5s |
+| 2 min idle | `ttfx` screensaver | - | stays on |
+| 3 min idle | `omarchy-system-lock` (skipped if already locked) | full, with clock | off after 5s |
 
 Between 2026-08-28 and 2026-09-10 the last row was `omarchy-lock-light` /
 **stays on**, and only `SUPER+SHIFT+L` blanked. If a non-blanking idle lock
@@ -497,7 +569,7 @@ confirmed rather than assumed.
 
 Locking is orthogonal to the display either way - see the "never affects
 background processes" note above. The remaining knob is `idle.lock` in
-`shell.json` (how long until it locks at all), currently 300s.
+`shell.json` (how long until it locks at all), currently 180s.
 
 ### Plugin hot-reload gotcha (cost real debugging time)
 
@@ -918,7 +990,7 @@ Scattered across several files, so listing them in one place:
 | Bar widgets | `omarchy/shell.json` `bar.layout` | left: `gradiscp.workspaces` (dots); center: clock (`ddd d MMM HH:mm`), keyboard-layout, system-update - **weather removed**; right: tray, `gradiscp.claude-status`, agents, bluetooth, network, audio, monitor, power |
 | Notification toasts | `omarchy/plugins/gradiscp.notifications` + `crimson-core/shell.notifications.toml` | 320px, background alpha 0.85 with layer blur, red border only for critical - see the bar and notification clones section |
 | Per-window opacity | `hypr/hyprland.lua` | foot `0.85/0.80`, Nautilus `0.85/0.75`, Firefox `0.80/0.70/**1.0 fullscreen**` + a title rule forcing streaming sites to `1.0` - both Firefox rules need `override` on every value (see the Fullscreen gotcha) |
-| Idle screensaver / lock | `omarchy/shell.json` `idle` | 240s / 300s - the idle lock blanks the panel 5s later |
+| Idle screensaver / lock | `omarchy/shell.json` `idle` | 120s / 180s - the idle lock blanks the panel 5s later; held off only by a fullscreen window with audio (`omarchy-idle-audio-guard`) |
 | Boot / login screen | `omarchy/themes/crimson-core/unlock.png` + `colors.toml`, applied with `omarchy plymouth set by theme crimson-core` | `CRIMSON CORE` wordmark in `#e4212d` on `#0e0d0c` - styles Plymouth **and** SDDM, see the boot screen section |
 
 Firefox opacity has to target the **`firefox-based-browser` tag**, not the
