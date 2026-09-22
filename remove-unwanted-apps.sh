@@ -60,13 +60,13 @@ sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d -exec rm -rf
 # 2026-09-13 and emptied both theme directories on the next omarchy-settings
 # upgrade (4.0.4, 2026-09-16): pacman skips extracting NoExtract'd files, but
 # still removes the old package's copies, so the LUKS prompt fell back to
-# text mode and SDDM showed a black screen after logout. Instead
-# omarchy-drift-check re-applies `omarchy plymouth set by theme crimson-core`
-# after every update. This block only removes the old rule if it is present.
+# text mode and SDDM showed a black screen after logout. The boot screen is
+# stock Omarchy now (the crimson-core restyle was dropped 2026-09-21); this
+# block only removes the old rule if it is still present.
 if grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf; then
   sudo cp -a /etc/pacman.conf "/etc/pacman.conf.bak.$(date +%s)"
   sudo sed -i '/keep updates from resetting it/d; /^NoExtract *= *usr\/share\/plymouth\/themes\/omarchy/d' /etc/pacman.conf
-  echo "Removed the Plymouth/SDDM NoExtract rule - run 'sudo pacman -S omarchy-settings' and then 'omarchy plymouth set by theme crimson-core'."
+  echo "Removed the Plymouth/SDDM NoExtract rule - run 'sudo pacman -S omarchy-settings' to restore the boot screen."
 fi
 
 echo "Done. Run 'pacman -Qtdq' afterwards to check for newly-orphaned deps."

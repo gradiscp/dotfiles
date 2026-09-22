@@ -22,21 +22,20 @@ debugging time, live in [CLAUDE.md](CLAUDE.md). This file is the overview.
    stock apps (`remove-unwanted-apps.sh`), applies the theme, and checks
    that all links point into the repo.
 3. Do the manual steps it prints at the end: monitor scale for a different
-   panel, SSH key, `sudo tailscale up`, the boot screen
-   (`omarchy plymouth set by theme crimson-core`), Firefox Sync.
+   panel, SSH key, `sudo tailscale up`, Firefox Sync.
 
 ## Keeping it in sync
 
 Omarchy's own tools sometimes replace a linked config with a plain file.
 `omarchy-drift-check` re-links those (when nothing was changed), and reports
-real differences, a reset boot screen or lost `NoExtract` lines as a
+real differences or lost `NoExtract` lines as a
 notification. It runs after every `omarchy update`; run it by hand after
 changing settings through Omarchy's menus.
 
 ## What's customized
 
-- **Look:** crimson-core theme (colors sampled from the wallpaper), matching
-  boot screen, `scrolling` layout, JetBrains Mono, Bibata cursor, scale 1.25,
+- **Look:** crimson-core theme (colors sampled from the wallpaper),
+  `scrolling` layout, JetBrains Mono, Bibata cursor, scale 1.25,
   translucent foot/Nautilus/Firefox (streaming sites stay solid).
 - **Bar:** red pill on the active workspace; a terminal icon that turns red
   with a count while Claude Code sessions wait for a permission.

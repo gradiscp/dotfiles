@@ -180,12 +180,5 @@ Done. Manual steps still needed on this machine:
   4. Fingerprint: skipped on purpose (see CLAUDE.md). If the new laptop
      has different hardware, check `libfprint`'s supported-devices list
      before bothering to set it up.
-  5. Boot/login screen - not done automatically, because it writes to
-     /usr/share and rebuilds the initramfs. Run by hand:
-         omarchy plymouth set by theme crimson-core
-     That styles both the Plymouth LUKS unlock prompt and the SDDM
-     greeter from crimson-core's colors.toml + unlock.png. Until then the
-     stock screen stays, because remove-unwanted-apps.sh already froze the
-     Plymouth/SDDM files against package updates (NoExtract).
-  6. Firefox: sign in to Firefox Sync for add-ons (Bitwarden, uBlock).
+  5. Firefox: sign in to Firefox Sync for add-ons (Bitwarden, uBlock).
 EOF

@@ -4,9 +4,8 @@
 #
 # Why this exists: Omarchy's own tools replace symlinks with plain files when
 # they write (omarchy-shell-config mv's a temp file over shell.json,
-# omarchy-hyprland-monitor-scaling runs sed -i without --follow-symlinks), and
-# omarchy-settings package updates overwrite the Plymouth/SDDM boot screen.
-# Both bit this machine in 2026-09 and were only noticed by accident.
+# omarchy-hyprland-monitor-scaling runs sed -i without --follow-symlinks).
+# That bit this machine in 2026-09 and was only noticed by accident.
 #
 # Runs after every `omarchy update` (linked into
 # ~/.config/omarchy/hooks/post-update.d/ by install.sh); run it by hand any time.
@@ -16,9 +15,8 @@
 #             whose content equals the repo copy is re-linked (nothing lost);
 #             one that differs is only reported, with which side is newer.
 #   plugins   every plugin id in shell.json exists under ~/.config/omarchy/plugins
-#   plymouth  `omarchy plymouth current` still reports crimson-core
-#   pacman    both NoExtract lines are still in /etc/pacman.conf, and the
-#             stock theme directory is still empty
+#   pacman    the stock-theme NoExtract is still in /etc/pacman.conf, the
+#             harmful Plymouth one is not, and the stock theme dir is empty
 #
 # Usage: omarchy-drift-check [--quiet]   (--quiet: no notification when clean)
 
@@ -81,27 +79,11 @@ if [[ -f $CONFIG_DIR/omarchy/shell.json ]]; then
   done < <(jq -r '[.plugins[]?.id, .bar.layout[]?[]?.id] | .[]' "$CONFIG_DIR/omarchy/shell.json" 2>/dev/null | sort -u)
 fi
 
-# ---- boot screen ------------------------------------------------------------
-# omarchy-settings updates put the stock screen back (or, under a NoExtract
-# rule, delete it - see remove-unwanted-apps.sh). Re-applying needs sudo and
-# rebuilds the initramfs, so it is only attempted with a terminal attached -
-# which the post-update hook has, since `omarchy update` runs in one and its
-# sudo credentials are usually still cached. Without a terminal, just report.
-if command -v omarchy-plymouth-current >/dev/null 2>&1; then
-  current=$(omarchy-plymouth-current 2>/dev/null || true)
-  if [[ $current != crimson-core ]]; then
-    if [[ -t 0 ]] && omarchy-plymouth-set-by-theme crimson-core </dev/tty; then
-      fixed "boot screen re-applied (was '${current:-empty}')"
-    else
-      problem "boot screen is '${current:-empty}', not crimson-core - run: omarchy plymouth set by theme crimson-core"
-    fi
-  fi
-fi
-
 # ---- pacman NoExtract + stock themes ----------------------------------------
 grep -qF 'usr/share/omarchy/themes/*' /etc/pacman.conf || problem "NoExtract for stock themes is gone from /etc/pacman.conf - re-run remove-unwanted-apps.sh"
 # The reverse of the stock-theme rule: a NoExtract on the Plymouth/SDDM theme
-# makes the next omarchy-settings upgrade DELETE the boot screen (2026-09-16).
+# makes the next omarchy-settings upgrade DELETE the boot screen, leaving a
+# bare-text LUKS prompt and a greeter-less logout (2026-09-16).
 grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf && problem "harmful NoExtract for the Plymouth/SDDM theme is still in /etc/pacman.conf - run remove-unwanted-apps.sh"
 if [[ -n $(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -1) ]]; then
   problem "stock Omarchy themes are back in /usr/share/omarchy/themes - re-run remove-unwanted-apps.sh"
