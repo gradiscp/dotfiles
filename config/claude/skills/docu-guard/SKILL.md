@@ -15,8 +15,9 @@ Goal: after this pass, a fresh session that reads only the project's
 documentation knows everything this session knew. Nothing lives only in the
 chat any more.
 
-Language: follow the project (valiora docs are German, its vault is
-English; dotfiles CLAUDE.md is English). Talk to the user in German.
+Language: follow the project - each project's guideline says which language
+its docs and its vault use (dotfiles CLAUDE.md is English). Talk to the user
+in German.
 
 ## 1. Collect what happened - from evidence, not memory
 
@@ -41,7 +42,7 @@ Look, do not assume:
   `CONTRIBUTING.md`, a "Docs" section in CLAUDE.md. **If one exists it is
   binding** - it decides where a topic goes, naming, language, and how the
   index is kept. Read it before writing anything.
-- An Obsidian vault: a directory with `.obsidian/` (valiora: `docs/vault/`).
+- An Obsidian vault: a directory with `.obsidian/` (often under `docs/`).
   Notes there are atomic, titled in Title Case, linked with `[[Wikilinks]]`,
   with `tags:`/`date:` frontmatter - copy the shape of an existing note.
 - `docs/` subfolders (features, guides, technical, handoffs, roadmap,
