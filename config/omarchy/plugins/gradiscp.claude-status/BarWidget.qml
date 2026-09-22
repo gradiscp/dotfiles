@@ -34,10 +34,12 @@ BarWidget {
     }
   }
 
-  // herdr offers no push event for agent state, so poll. Two seconds keeps the
-  // badge in step with the permission toast without being noticeable.
+  // herdr offers no push event for agent state, so poll. Five seconds
+  // (2026-09-21, was two): the toast is what announces a waiting session,
+  // the badge only has to catch up - and each poll is five forks
+  // (bash, herdr, hyprctl, jq x2), so this is 17k fewer a day.
   Timer {
-    interval: 2000
+    interval: 5000
     running: true
     repeat: true
     triggeredOnStart: true

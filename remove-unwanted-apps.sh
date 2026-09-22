@@ -15,15 +15,11 @@ unwanted=(
   qemu-user-static qemu-user-static-binfmt
   cups cups-filters cups-pk-helper system-config-printer
 )
-# Only names that are actually installed: pacman aborts the whole -Rns
-# transaction if a single one is missing, so the old fixed list followed by
-# `|| true` silently removed nothing at all on every re-run.
-installed=$(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)
-if [[ -n $installed ]]; then
-  # -Rns also takes the dependencies nothing else needs any more (opencv, deno, ...).
-  # shellcheck disable=SC2086
-  sudo pacman -Rns --noconfirm $installed
-fi
+# omarchy-pkg-drop filters the list down to what is actually installed, then
+# `sudo pacman -Rns --noconfirm` (dependencies nothing else needs go too).
+# The filter matters: pacman aborts the whole transaction if one name is
+# missing, which is why an earlier fixed list removed nothing on re-runs.
+omarchy-pkg-drop "${unwanted[@]}"
 
 rm -f ~/.local/share/applications/Basecamp.desktop \
       ~/.local/share/applications/HEY.desktop \
