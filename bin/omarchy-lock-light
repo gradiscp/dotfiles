@@ -2,22 +2,12 @@
 # Light lock (SUPER+L): same lock as SUPER+SHIFT+L, but the display is never
 # blanked/turned off, and gradiscp.lock shows its minimal view (blurred
 # screenshot + lock icon) instead of the normal lock screen with the clock.
-# Both hinge on the flag file below.
+# Both hinge on the flag file below; the lock itself is the stock command,
+# so its keyboard-layout reset and screensaver cleanup stay in sync with
+# Omarchy instead of being a hand-copied duplicate (which this was until
+# 2026-09-21).
 
 mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles"
 touch "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles/lock-no-blank"
 
-omarchy-shell lock lock >/dev/null
-
-hyprctl switchxkblayout all 0 > /dev/null 2>&1
-
-if pgrep -x "1password" >/dev/null && omarchy-cmd-present 1password; then
-  (
-    flock -n 9 || exit 0
-    timeout --kill-after=1s 3s 1password --lock >/dev/null 2>&1 || true
-  ) 9>"${XDG_RUNTIME_DIR:-/tmp}/omarchy-1password-lock.lock" &
-fi
-
-pkill -x ttfx 2>/dev/null || true
-timeout 1s pidwait -x ttfx 2>/dev/null || true
-pkill -f '[o]rg.omarchy.screensaver' 2>/dev/null || true
+exec omarchy-system-lock
