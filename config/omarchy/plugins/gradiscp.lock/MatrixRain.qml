@@ -33,7 +33,11 @@ Item {
   readonly property int glyphSize: Math.round(Style.font.heading * 1.25)
   readonly property int lineHeight: Math.round(glyphSize * 1.15)
   readonly property int columnWidth: Math.max(1, Math.ceil(glyphMetrics.advanceWidth))
-  readonly property int columnCount: Math.max(1, Math.floor(width / columnWidth))
+  // Every second glyph column carries a drop (2026-09-21, was every one):
+  // half the animated Text items, and the rain reads more like rain than a
+  // wall of type. ~64 columns on this 1536px-wide (logical) panel.
+  readonly property int columnPitch: columnWidth * 2
+  readonly property int columnCount: Math.max(1, Math.floor(width / columnPitch))
 
   // StyledText takes plain "#rrggbb" only, so the trail is faded against the
   // black background here rather than with an alpha channel.
@@ -78,7 +82,7 @@ Item {
 
       width: root.columnWidth
       height: root.height
-      x: index * root.columnWidth
+      x: index * root.columnPitch
 
       // Length, speed and phase are rolled once per column and then left
       // alone. Nothing may re-roll them while the column falls: touching a

@@ -1,18 +1,15 @@
 import QtQuick
 import QtQuick.Effects
 import qs.Commons
-import qs.Ui
 
 Item {
   id: root
 
   property string backgroundPath: ""
   property int backgroundVersion: 0
-  property bool fingerprintConfigured: false
   property bool authenticatingPassword: false
   property bool unlockSucceeded: false
   property string failureMessage: ""
-  property int failedAttempts: 0
   property bool inputEnabled: true
   property bool loadBackground: true
   property string passwordText: ""
@@ -21,7 +18,6 @@ Item {
   readonly property int fieldWidth: 220
   readonly property int fieldHeight: 84
   readonly property int fieldFontSize: Math.round(Style.font.heading * 1.125)
-  readonly property bool showPasswordCursor: inputEnabled && !authenticatingPassword && failureMessage.length === 0
 
   // The light lock never blanks the panel, so without this it sits on the
   // same still screenshot for hours. MatrixRain.qml says why the real ttfx
@@ -29,6 +25,10 @@ Item {
   // what the desktop screensaver would have done.
   property bool screensaverActive: false
   readonly property int screensaverDelay: 180000
+  // After this long the rain stops and the still icon comes back: a lock
+  // left alone for the night should not render ~64 animations at 60fps
+  // until morning. Input still restarts the cycle. Panel stays on either way.
+  readonly property int screensaverMaxRun: 1800000
 
   signal submitPassword(string password)
   signal passwordTextEdited(string password)
@@ -46,10 +46,6 @@ Item {
 
   function forcePasswordFocus() {
     passwordInput.forceActiveFocus()
-  }
-
-  function clearPassword() {
-    passwordTextEdited("")
   }
 
   // Any input ends the screensaver and starts the three minutes over.
@@ -113,6 +109,17 @@ Item {
     interval: root.screensaverDelay
     repeat: false
     onTriggered: if (root.inputEnabled) root.screensaverActive = true
+  }
+
+  Timer {
+    id: screensaverStopTimer
+    interval: root.screensaverMaxRun
+    repeat: false
+    running: root.screensaverActive
+    onTriggered: {
+      console.log("omarchy lock screensaver stopped after " + (root.screensaverMaxRun / 60000) + " min")
+      root.screensaverActive = false
+    }
   }
 
   Rectangle {

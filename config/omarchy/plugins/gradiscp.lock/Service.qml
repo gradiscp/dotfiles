@@ -314,11 +314,9 @@ Item {
         visible: root.noBlank
         backgroundPath: root.screenshotPath
         backgroundVersion: root.screenshotVersion
-        fingerprintConfigured: root.fingerprintConfigured
         authenticatingPassword: root.authenticatingPassword
         failureMessage: root.failureMessage
         unlockSucceeded: root.unlockSucceeded
-        failedAttempts: root.failedAttempts
         inputEnabled: root.lockRequested && root.noBlank
         loadBackground: root.locked && root.noBlank && root.screenshotReady
         passwordText: root.enteredPassword
@@ -380,6 +378,14 @@ Item {
       anchors.fill: parent
       acceptedButtons: Qt.LeftButton | Qt.RightButton
       onClicked: root.previewVisible = false
+    }
+
+    // The preview holds exclusive keyboard focus and is NOT a lock - without
+    // this a keyboard-only user was stuck until a mouse click.
+    Item {
+      anchors.fill: parent
+      focus: root.previewVisible
+      Keys.onEscapePressed: root.previewVisible = false
     }
   }
 
