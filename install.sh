@@ -71,6 +71,16 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omar
 # on a stock theme, it is its own theme). omarchy-theme-list globs both
 # dirs and symlinks, so linking the directory is enough.
 link "$REPO_DIR/config/omarchy/themes/crimson-core" "$CONFIG_DIR/omarchy/themes/crimson-core"
+# Menu overrides: hides the Share submenu (localsend is gone), Learn pages
+# open in the browser instead of the Chromium-only webapp launcher.
+link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
+
+echo "== Text size =="
+# One knob for shell font base-size, GTK text-scaling-factor and the terminal
+# font (see omarchy-display-text-size). 10 is what this laptop runs. Runs
+# BEFORE foot.ini is linked: it edits that file with a plain `sed -i`, which
+# would turn a fresh symlink straight back into a copy.
+omarchy display text size 10 || true
 
 echo "== Foot terminal =="
 link "$REPO_DIR/config/foot/foot.ini" "$CONFIG_DIR/foot/foot.ini"
@@ -89,13 +99,13 @@ link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
 # Tool versions for claude/codex/gh/node/pi; `mise install` fetches them.
 link "$REPO_DIR/config/mise/config.toml" "$CONFIG_DIR/mise/config.toml"
 if command -v mise >/dev/null; then mise install || true; fi
-# Firefox as the default browser and URL handler.
+# Firefox as the default browser and URL handler. The claude-cli:// line in
+# there points at claude-code-url-handler.desktop, which Claude Code writes
+# itself on first run (with an absolute path, so it is not in the repo).
 link "$REPO_DIR/config/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
-
-echo "== Text size =="
-# One knob for shell font base-size, GTK text-scaling-factor and the terminal
-# font (see omarchy-display-text-size). 10 is what this laptop runs.
-omarchy display text size 10 || true
+# The lazydocker launcher (SUPER+SHIFT+D's menu entry), a stock Omarchy file
+# that the webapp cleanup below does not touch.
+link "$REPO_DIR/config/applications/Docker.desktop" "$HOME/.local/share/applications/Docker.desktop"
 
 echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
@@ -158,14 +168,8 @@ omarchy restart shell || true
 hyprctl reload || true
 
 echo "== Link check =="
-# Same check bin/omarchy-drift-check runs after every update.
-broken=0
-for dst in "${LINKS[@]}"; do
-  if [[ ! -L $dst ]] || [[ "$(readlink -f "$dst")" != "$REPO_DIR"/* ]]; then
-    echo "NOT a link into the repo: $dst"; broken=1
-  fi
-done
-(( broken == 0 )) && echo "All ${#LINKS[@]} links point into the repo."
+# Re-links any copy Omarchy's tools left behind above, reports the rest.
+"$HOME/.local/bin/omarchy-drift-check" --quiet || true
 
 cat <<'EOF'
 

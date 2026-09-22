@@ -5,6 +5,10 @@
 # Official repos (pacman)
 firefox
 tailscale
+# Proxmox automation (2026-09-13); installed by hand, listed so a fresh
+# install has them too.
+ansible
+python-proxmoxer
 
 [aur]
 bibata-cursor-theme-bin
