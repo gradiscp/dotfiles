@@ -198,17 +198,19 @@ fi
 headline="Claude wartet${title:+: $title}"
 log "toast ($key): $headline"
 
-"$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" \
-  -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
-  --exec "$SELF" "${click[@]}" >/dev/null 2>&1
-
 # One state file per terminal: a token, so a watcher left over from an earlier
 # prompt in the same place cannot take down this newer toast, and the headline
-# for dismiss().
+# for dismiss(). Written BEFORE the toast goes up: a click that lands right
+# after omarchy-notification-send returns already runs dismiss() and must
+# find this headline, not the previous prompt's.
 mkdir -p "$RUN_DIR"
 token="$$.$(now_ms)"
 printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
 [[ -z $pane ]] && echo "$window" >"$LAST_WINDOW"
+
+"$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" \
+  -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
+  --exec "$SELF" "${click[@]}" >/dev/null 2>&1
 
 # Fully detached, so the hook returns at once and Claude is not held up.
 (

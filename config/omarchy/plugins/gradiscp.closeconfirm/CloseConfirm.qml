@@ -41,12 +41,24 @@ Item {
     root.process = payload.process || ""
     // Start on "Abbrechen", so a stray Enter keeps the window.
     root.selected = 0
+    pointerGate.reset()
     root.opened = true
     Qt.callLater(function() { keyCatcher.forceActiveFocus() })
   }
 
   function close() {
     root.opened = false
+  }
+
+  // Hover selects a button only after the pointer has actually moved. Qt
+  // delivers a synthetic hover when the strip appears under a resting
+  // cursor (see LockView.pointerMoved for the same effect), and with a bare
+  // onEntered that could put "Schließen" under a stray Enter - exactly what
+  // preselecting "Abbrechen" is meant to prevent. Same stock gate the menu
+  // and clipboard use.
+  PointerMoveGate {
+    id: pointerGate
+    threshold: 3
   }
 
   function answer(verb) {
@@ -184,10 +196,13 @@ Item {
               }
 
               MouseArea {
+                id: buttonArea
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onEntered: root.selected = index
+                onPositionChanged: function(mouse) {
+                  if (pointerGate.moved(buttonArea, mouse)) root.selected = index
+                }
                 onClicked: root.answer(index === 1 ? "confirm" : "cancel")
               }
             }
