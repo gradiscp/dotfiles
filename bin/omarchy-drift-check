@@ -52,10 +52,22 @@ check_link() {
     return
   fi
   # A plain file or directory in the way: safe to replace only if identical.
+  # The link is built beside it and moved over it in one rename, so there is
+  # no moment with nothing at $dst (the earlier mv-then-ln left the config
+  # gone if ln failed).
   if diff -rq "$src" "$dst" >/dev/null 2>&1; then
-    mv "$dst" "$dst.bak.$STAMP" && ln -sfn "$src" "$dst" && rm -rf "$dst.bak.$STAMP" \
-      && fixed "re-linked $dst (content was identical)" \
-      || problem "could not re-link $dst"
+    if [[ -d $dst && ! -L $dst ]]; then
+      # rename(2) cannot put a symlink over a real directory; the content was
+      # verified identical, so dropping the copy first loses nothing.
+      rm -rf "$dst" && ln -sfn "$src" "$dst" \
+        && fixed "re-linked $dst (content was identical)" \
+        || problem "could not re-link $dst"
+    elif ln -sfn "$src" "$dst.link.$STAMP" && mv -T "$dst.link.$STAMP" "$dst"; then
+      fixed "re-linked $dst (content was identical)"
+    else
+      rm -f "$dst.link.$STAMP"
+      problem "could not re-link $dst"
+    fi
   else
     newer="repo"
     [[ $dst -nt $src ]] && newer="live"

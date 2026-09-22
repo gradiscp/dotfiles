@@ -134,5 +134,10 @@ hl.unbind("SUPER + CTRL + ALT + W")
 o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")
 
 -- Reboot on SUPER+CTRL+SHIFT+R, not bare CTRL+SHIFT+R - that's hard-refresh
--- in every browser, a global bind there would break it everywhere.
+-- in every browser, a global bind there would break it everywhere. Stock has
+-- "Clear reminders" on this chord; Hyprland runs every matching bind, so
+-- without the unbind a reboot also wiped the reminders (seen in hyprctl binds).
+-- Spelled in stock's modifier order on purpose: hl.unbind matches the string
+-- as written, "SUPER + CTRL + SHIFT + R" left both binds in place.
+hl.unbind("SUPER + SHIFT + CTRL + R")
 o.bind("SUPER + CTRL + SHIFT + R", "Reboot", "omarchy-system-reboot")
