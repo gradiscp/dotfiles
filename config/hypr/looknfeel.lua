@@ -57,9 +57,7 @@ hl.config({
     layout = "scrolling",
     gaps_in = 2,
     gaps_out = 3,
-    -- Hyprland takes whole pixels only: 1 was tried on 2026-09-16 and read
-    -- as too thin, so this is back at 2 (which is also the stock value).
-    border_size = 2,
+    -- border_size stays at Omarchy's 2: 1 was tried and read as too thin.
   },
 })
 
