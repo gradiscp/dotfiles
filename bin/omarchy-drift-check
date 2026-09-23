@@ -22,7 +22,9 @@
 
 set -uo pipefail
 
-REPO_DIR="${DOTFILES_DIR:-$HOME/Projects/paulgradischnig/dotfiles}"
+# This script is itself a link into the repo (~/.local/bin and the
+# post-update hook dir), so the repo is two levels up from where it resolves.
+REPO_DIR="${DOTFILES_DIR:-$(dirname "$(dirname "$(readlink -f "$0")")")}"
 CONFIG_DIR="$HOME/.config"
 STAMP="$(date +%s)"
 LOG="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-drift-check.log"

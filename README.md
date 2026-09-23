@@ -17,8 +17,9 @@ debugging time, live in [CLAUDE.md](CLAUDE.md). This file is the overview.
    git clone https://github.com/gradiscp/dotfiles.git ~/Projects/paulgradischnig/dotfiles
    cd ~/Projects/paulgradischnig/dotfiles && ./install.sh
    ```
-   It asks for the sudo password a few times. It installs `packages.txt`,
-   links every config into place, sets the text size, removes the unwanted
+   It asks for the sudo password a few times, and yay shows each AUR
+   PKGBUILD before building it. It installs `packages.txt`, links every
+   config into place, sets the text size and GTK font/cursor, removes the unwanted
    stock apps (`remove-unwanted-apps.sh`), applies the theme, and checks
    that all links point into the repo.
 3. Do the manual steps it prints at the end: monitor scale for a different
@@ -42,8 +43,9 @@ changing settings through Omarchy's menus.
 - **Notifications:** compact and translucent; red only for critical ones.
   Claude permission requests pop up and jump back to their terminal on click.
 - **Lock and idle:** `SUPER+L` minimal lock, screen stays on; `SUPER+SHIFT+L`
-  full lock with clock, screen off. Screensaver after 4 min, lock after 5;
-  audio playback keeps the machine awake.
+  full lock with clock, screen off. Screensaver after 2 min, lock after 3;
+  a fullscreen window with audio playing (a film) keeps the machine awake -
+  audio alone does not.
 - **Apps:** Firefox only, trimmed stock set; anything heavier runs in a
   container instead of being installed.
 
@@ -75,13 +77,15 @@ config/
                        notifications, Claude status widget
     extensions/        Menu overrides (hidden/redirected dead entries)
     themes/crimson-core/
-  claude/              Claude Code settings (hook) and global rules
+  claude/              Claude Code settings (hook), global rules, own skills
+  sddm/                SDDM greeter's Hyprland config (scale, cursor)
+  bashrc               Omarchy's bashrc plus the herdr opaque-background wrapper
   foot/ fontconfig/ nvim/ herdr/ git/ mise/ systemd/ mimeapps.list
 bin/                   omarchy-lock-light, claude-notify, window-close-guard,
-                       omarchy-idle-audio-guard, omarchy-drift-check
-install.sh             Fresh-machine setup
+                       omarchy-idle-audio-guard, omarchy-drift-check,
+                       git-all (status/fetch/pull/push over every repo below)
+install.sh             Fresh-machine setup, including GTK font and cursor
 remove-unwanted-apps.sh  Removes unwanted packages, stock themes; NoExtract
-gsettings.sh           GTK font and cursor
 packages.txt           Packages added on top of Omarchy
 ```
 

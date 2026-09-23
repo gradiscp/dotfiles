@@ -7,16 +7,17 @@
 # the lock off for as long as it played, which read as "the laptop never
 # locks any more" - the lock is the point, a film is the one exception.
 #
-# Why this exists at all: Firefox *does* try to inhibit the screensaver while
-# a video plays, but on this machine it cannot succeed. Firefox 154's Linux
-# wakelock has exactly two backends (checked in libxul: WakeLockTopic::
-# DBusInhibitScreensaver and ::InhibitFreeDesktopPortal) - the DBus name
-# org.freedesktop.ScreenSaver does not exist in this session, and the portal
-# route ends at xdg-desktop-portal-gtk's GNOME-session backend, which is not
-# running either. Firefox has no Wayland zwp_idle_inhibit path in its wakelock
-# code. Meanwhile Omarchy's idle plugin (IdleMonitor { respectInhibitors:
-# true }) only ever honours *Wayland* idle inhibitors. So the two can never
-# meet, no matter which pref is flipped - the inhibit has to come from here.
+# Why this exists at all: Omarchy's idle plugin (IdleMonitor {
+# respectInhibitors: true }) only honours *Wayland* idle inhibitors, and
+# Firefox never sends one here. It does have a Wayland backend
+# (WaylandIdleInhibit, since Firefox 74, bugzilla 1587360), but its wakelock
+# tries the backends in a fixed order and only moves on after a fatal
+# failure: the xdg-desktop-portal Inhibit call "succeeds" against
+# xdg-desktop-portal-gtk, which has no session manager behind it, so Firefox
+# stops there and nothing is inhibited. MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit
+# would force the Wayland backend, but it inhibits for *any* audio - the
+# music-in-a-tab behaviour the fullscreen condition above exists to avoid -
+# so it is deliberately not set (and not verified live). See CLAUDE.md.
 #
 # It drives the same flag as `omarchy toggle idle` / the bar's stay-awake
 # indicator, so what it does is always visible in the bar, and the idle

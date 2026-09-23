@@ -691,7 +691,7 @@ and the plugin list at them.
   `omarchy-plugin-clone` leaves built-in ids as IPC targets and routes them
   through `clonedFrom`.
 - **`gradiscp.claude-status`** (new bar widget, right section between tray and
-  agents): polls `claude-notify count` every 2s - herdr agents in `blocked`
+  agents): polls `claude-notify count` every 5s - herdr agents in `blocked`
   plus the last plain terminal that asked and was not visited, so plain
   terminals add at most 1. Terminal glyph U+F489, dim at 0, red with a count
   badge otherwise; a click runs `claude-notify jump`. It polls because herdr
@@ -851,7 +851,7 @@ Scattered across several files, so listing them in one place:
 | Window gaps | `hypr/looknfeel.lua` | `gaps_in = 2`, `gaps_out = 3` - down from 3/6 on 2026-09-16 (stock 5/10); `border_size = 2` after 1 read as too thin |
 | Corner rounding | `hypr/looknfeel.lua` | `10` |
 | Fullscreen opacity | `hypr/looknfeel.lua` | `0.9` - Hyprland forces 1.0 by default, ignoring per-window opacity rules |
-| Cursor | `hypr/looknfeel.lua` + `gsettings.sh` + `config/sddm/hyprland.lua` (greeter) | Bibata-Modern-Ice, size 14 everywhere |
+| Cursor | `hypr/looknfeel.lua` + `install.sh` (gsettings) + `config/sddm/hyprland.lua` (greeter) | Bibata-Modern-Ice, size 14 everywhere |
 | Monitor scale | `hypr/monitors.lua` | `1.25` - set via CLI only, see Scaling gotchas |
 | Terminal font | `foot/foot.ini` | JetBrainsMono Nerd Font size 8 |
 | Terminal transparency | `foot/foot.ini` | `alpha=0.85` under `[colors-dark]`, NOT `[main]` |
