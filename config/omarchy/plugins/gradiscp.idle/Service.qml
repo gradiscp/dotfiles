@@ -80,8 +80,8 @@ Item {
     // The idle auto-lock is the stock full lock again (since 2026-09-10):
     // the normal lock screen with the clock, display off 5s after locking.
     // From 2026-08-28 until then it used omarchy-lock-light and never
-    // blanked - see CLAUDE.md's idle section for why that was reversed, and
-    // its crash section for what a blanked panel exposes again.
+    // blanked; that was reversed on request (git log of this file). A blanked
+    // panel re-exposes the lid-event crash - see CLAUDE.md, "Lock and idle".
     //
     // The isLocked guard stays regardless - without it, going idle while
     // already locked (e.g. by SUPER+L, whose panel must stay lit) fires a

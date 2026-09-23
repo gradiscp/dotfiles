@@ -40,8 +40,8 @@
 -- Dead default bindings, unbound because the thing behind them isn't here.
 -- Checked 2026-08-28 with `command -v`; re-check before re-adding any.
 --
--- Apps that were never installed / were removed (see the app-cleanup section
--- in CLAUDE.md). The bind existing without the app means the key does
+-- Apps that were never installed / were removed (see
+-- remove-unwanted-apps.sh). The bind existing without the app means the key does
 -- nothing at all - no error, no window - which is worse than the key being
 -- free for something else.
 hl.unbind("SUPER + SHIFT + M")          -- Spotify
