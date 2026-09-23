@@ -1,6 +1,6 @@
 #!/bin/bash
 # Strip apps from the stock Omarchy set that aren't wanted here.
-set -e
+set -euo pipefail
 
 # Anything that is really needed runs in a container instead (see CLAUDE.md).
 unwanted=(
@@ -35,9 +35,9 @@ rm -f ~/.local/share/applications/Basecamp.desktop \
 
 # NOT Docker.desktop - that one launches lazydocker in a terminal, doesn't
 # go through omarchy-launch-webapp, so it never needed Chromium at all.
-# The three above are removed because Chromium is uninstalled here (see
-# CLAUDE.md) and omarchy-launch-webapp hardcodes a Chromium-family browser
-# for every *other* webapp shortcut - they'd just error out otherwise.
+# The webapp shortcuts above are removed because Chromium is uninstalled here
+# (see CLAUDE.md) and omarchy-launch-webapp hardcodes a Chromium-family
+# browser for every one of them - they'd just error out otherwise.
 
 update-desktop-database ~/.local/share/applications 2>/dev/null || true
 

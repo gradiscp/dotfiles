@@ -37,7 +37,9 @@ mapfile -t PACMAN_PKGS < <(sed -n '/^\[aur\]/q; s/#.*//; /^\s*$/d; p' "$REPO_DIR
 mapfile -t AUR_PKGS < <(sed -n '/^\[aur\]/,$ { /^\[aur\]/d; s/#.*//; /^\s*$/d; p }' "$REPO_DIR/packages.txt")
 sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
 if command -v yay >/dev/null; then
-  yay -S --needed --noconfirm "${AUR_PKGS[@]}"
+  # No --noconfirm here: AUR packages are user-submitted build scripts, so
+  # yay should get the chance to show each PKGBUILD before it builds.
+  yay -S --needed "${AUR_PKGS[@]}"
 else
   echo "yay not found, skipping AUR packages (${AUR_PKGS[*]}) - install yay first."
 fi
@@ -160,7 +162,14 @@ sudo install -Dm 644 "$REPO_DIR/config/sddm/hyprland.lua" /usr/local/share/sddm/
 sudo install -m 644 "$REPO_DIR/config/sddm/20-greeter.conf" /etc/sddm.conf.d/20-greeter.conf
 
 echo "== GTK/GNOME settings =="
-bash "$REPO_DIR/gsettings.sh"
+# What Omarchy's own configs don't cover. gsettings set is idempotent.
+# text-scaling-factor is deliberately NOT set: `omarchy display text size`
+# above drives it together with the shell and terminal font size.
+gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11'
+gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font 11'
+gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
+gsettings set org.gnome.desktop.interface cursor-size 14
+gsettings set org.gnome.desktop.wm.preferences button-layout ''
 
 echo "== App cleanup =="
 bash "$REPO_DIR/remove-unwanted-apps.sh"

@@ -9,6 +9,8 @@ ExecStart=%h/.local/bin/omarchy-idle-audio-guard
 ExecStop=%h/.local/bin/omarchy-idle-audio-guard --release
 Restart=always
 RestartSec=5
+# It only calls pactl, hyprctl, jq and omarchy-toggle-idle - no setuid needed.
+NoNewPrivileges=yes
 
 [Install]
 WantedBy=graphical-session.target
