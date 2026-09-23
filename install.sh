@@ -103,9 +103,14 @@ if command -v mise >/dev/null; then mise install || true; fi
 # there points at claude-code-url-handler.desktop, which Claude Code writes
 # itself on first run (with an absolute path, so it is not in the repo).
 link "$REPO_DIR/config/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
-# The lazydocker launcher (SUPER+SHIFT+D's menu entry), a stock Omarchy file
-# that the webapp cleanup below does not touch.
-link "$REPO_DIR/config/applications/Docker.desktop" "$HOME/.local/share/applications/Docker.desktop"
+# The lazydocker launcher (SUPER+SHIFT+D's menu entry) stays the stock
+# Omarchy copy: Omarchy migrations `cp` over this path, so it must be a plain
+# file, not a link into the repo. Only put it back if it is missing.
+DOCKER_DESKTOP="$HOME/.local/share/applications/Docker.desktop"
+if [[ ! -f $DOCKER_DESKTOP || -L $DOCKER_DESKTOP ]]; then
+  mkdir -p "$(dirname "$DOCKER_DESKTOP")"
+  cp --remove-destination "${OMARCHY_PATH:-/usr/share/omarchy}/applications/Docker.desktop" "$DOCKER_DESKTOP"
+fi
 
 echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
