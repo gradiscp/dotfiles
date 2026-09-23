@@ -17,7 +17,7 @@
 # stops there and nothing is inhibited. MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit
 # would force the Wayland backend, but it inhibits for *any* audio - the
 # music-in-a-tab behaviour the fullscreen condition above exists to avoid -
-# so it is deliberately not set (and not verified live). See CLAUDE.md.
+# so it is deliberately not set (and not verified live).
 #
 # It drives the same flag as `omarchy toggle idle` / the bar's stay-awake
 # indicator, so what it does is always visible in the bar, and the idle

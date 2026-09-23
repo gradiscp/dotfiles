@@ -81,6 +81,14 @@ document if the project keeps one.
 - Remove or correct documentation the session proved wrong. Stale docs are
   worse than missing ones.
 - Delete handoffs whose work is done.
+- **`CLAUDE.md` / `AGENTS.md` have a size budget: at most 12 KB** (check
+  with `wc -c`). They hold only current invariants and pitfalls - what is
+  true now and what must not be done - never history, dated logs,
+  measurements or audit write-ups. The story of a change goes into its
+  commit message; a real failure goes into the incidents repo. Keybind
+  lists and component details that already live in a README or a script
+  header are linked, not repeated. If an addition would push the file over
+  budget, cut something stale first.
 - Never write private data into a repo (IPs, hostnames of private machines,
   credentials, personal e-mail addresses, other projects' contents).
 

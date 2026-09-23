@@ -5,8 +5,9 @@ Personal [Omarchy](https://omarchy.org/) config for a Samsung Galaxy Book Pro
 crimson-core theme, terminal and tools - lean, and reproducible on a new
 laptop with one script.
 
-The *why* behind every non-obvious choice, and the gotchas that cost real
-debugging time, live in [CLAUDE.md](CLAUDE.md). This file is the overview.
+The invariants and the traps that cost real debugging time live in
+[CLAUDE.md](CLAUDE.md); the *why* of each change is in its commit message.
+This file is the overview.
 
 ## New laptop
 
@@ -84,6 +85,7 @@ config/
 bin/                   omarchy-lock-light, claude-notify, window-close-guard,
                        omarchy-idle-audio-guard, omarchy-drift-check,
                        git-all (status/fetch/pull/push over every repo below)
+docs/                  Plans not carried out yet (second NVMe)
 install.sh             Fresh-machine setup, including GTK font and cursor
 remove-unwanted-apps.sh  Removes unwanted packages, stock themes; NoExtract
 packages.txt           Packages added on top of Omarchy
@@ -92,4 +94,4 @@ packages.txt           Packages added on top of Omarchy
 ## Planned
 
 Repurposing the second (ex-Windows) NVMe for games, Docker, VMs and backups -
-written up in CLAUDE.md, not done yet.
+written up in [docs/nvme-plan.md](docs/nvme-plan.md), not done yet.
