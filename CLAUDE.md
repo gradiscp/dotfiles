@@ -122,10 +122,13 @@ live, and `hyprctl reload` still reports success.
 - New wallpapers and `colors.toml` edits are only seen after
   `omarchy theme set crimson-core` (`current/theme/` is a copy). Wallpapers
   live in `themes/crimson-core/backgrounds/`, numbered in cycle order
-  (`SUPER+CTRL+SPACE`), **1920x1080 / JPEG quality 85** - the panel's size,
-  and what keeps a public repo small (a 4K original is 3-5 MB, the scaled
-  one ~200 KB). `wallpapers/` at the repo root is storage only: files there
-  are in no cycle and linked nowhere.
+  (`SUPER+CTRL+SPACE`), **added as downloaded - do not re-encode them**.
+  Scaling them to the panel's 1920x1080 at quality 85 was tried on
+  2026-09-25 to keep the repo small and rejected: visibly worse. The
+  compositor downscales a 4K file per frame and that looks better than any
+  re-compression, so a few MB per wallpaper is the accepted price (`0-` and
+  `1-` are still old 1080p/q85 files). `wallpapers/` at the repo root is
+  storage only: files there are in no cycle and linked nowhere.
 
 ## Lock and idle
 
