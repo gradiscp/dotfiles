@@ -120,7 +120,12 @@ live, and `hyprctl reload` still reports success.
   uninstalled - so webapp `.desktop` files and binds are removed. Use a
   Firefox tab, or reinstall Chromium as a runtime, if one is ever wanted.
 - New wallpapers and `colors.toml` edits are only seen after
-  `omarchy theme set crimson-core` (`current/theme/` is a copy).
+  `omarchy theme set crimson-core` (`current/theme/` is a copy). Wallpapers
+  live in `themes/crimson-core/backgrounds/`, numbered in cycle order
+  (`SUPER+CTRL+SPACE`), **1920x1080 / JPEG quality 85** - the panel's size,
+  and what keeps a public repo small (a 4K original is 3-5 MB, the scaled
+  one ~200 KB). `wallpapers/` at the repo root is storage only: files there
+  are in no cycle and linked nowhere.
 
 ## Lock and idle
 
