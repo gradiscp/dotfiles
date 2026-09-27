@@ -1,8 +1,13 @@
 {
   "permissions": {
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Edit(~/.ssh/**)",
+      "Read(~/.claude/.credentials.json)",
+      "Edit(~/.claude/.credentials.json)"
+    ],
     "defaultMode": "default"
   },
-  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -30,6 +35,9 @@
   },
   "modelSettings": {
     "claude-opus-5": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5-5": {
       "effortLevel": "high"
     }
   },
