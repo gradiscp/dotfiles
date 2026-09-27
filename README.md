@@ -7,7 +7,8 @@ laptop with one script.
 
 The invariants and the traps that cost real debugging time live in
 [CLAUDE.md](CLAUDE.md); the *why* of each change is in its commit message.
-This file is the overview.
+Everyday commands (updating the system and more) are in
+[CHEATSHEET.md](CHEATSHEET.md). This file is the overview.
 
 ## New laptop
 
