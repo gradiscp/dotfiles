@@ -62,7 +62,7 @@ o.window("org.gnome.Nautilus", { opacity = "0.85 0.75" })
 -- out as 1.0 x 0.9 - measured 2026-09-13 on a white fullscreen window: centre
 -- pixel 231 without override, 255 with it. active/inactive_opacity are 1.0
 -- globally, so override changes nothing for the first two values.
-o.window({ tag = "firefox-based-browser" }, { opacity = "0.80 override 0.70 override 1.0 override" })
+o.window({ tag = "firefox-based-browser" }, { opacity = "1.0 override 0.70 override 1.0 override" })
 
 -- ...and the same for a *windowed* video: streaming sites are matched by
 -- window title (Firefox puts the page title in it) and forced fully opaque,
