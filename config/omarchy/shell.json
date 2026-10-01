@@ -4,9 +4,9 @@
     "layout": {
       "center": [
         {
-          "format": "ddd d MMM HH:mm",
-          "formatAlt": "d MMMM 'W'ww yyyy",
           "id": "omarchy.clock",
+          "format": "yyyy-MM-dd HH:mm",
+          "formatAlt": "d MMMM 'W'ww yyyy",
           "verticalFormat": "HH\n—\nmm"
         },
         {
@@ -32,16 +32,17 @@
           "id": "omarchy.bluetooth"
         },
         {
-          "id": "omarchy.network"
+          "id": "omarchy.audio"
         },
         {
-          "id": "omarchy.audio"
+          "id": "omarchy.network"
         },
         {
           "id": "omarchy.monitor"
         },
         {
-          "id": "omarchy.power"
+          "id": "omarchy.power",
+          "showPercentage": false
         }
       ]
     },
@@ -59,8 +60,8 @@
     "omarchy.notifications"
   ],
   "idle": {
-    "lock": 180,
-    "screensaver": 120
+    "lock": 420,
+    "screensaver": 300
   },
   "plugins": [
     {
