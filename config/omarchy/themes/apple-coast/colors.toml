@@ -1,0 +1,51 @@
+# Apple Coast - derived from backgrounds/0-big-sur-coast.jpg: dusk over a
+# fogged coastline. Built for long sessions: a deep blue-black like the sea
+# (not pure black), a warm cream foreground instead of white, and every hue
+# pulled down in saturation so nothing glares. Values were sampled from the
+# image (sky #2d3d59, sky glow #d19083 / #f3c39a, sea #22242a / #070e16,
+# rock #4f3833) and then lifted or softened for contrast on the background.
+mode = "dark"
+
+# The coral band of the afterglow (sampled #d19083), kept as the one accent.
+accent = "#d19083"
+# Selection = the dusk-purple of the sky (#6c5b69) sunk into the background.
+selection = "#363043"
+# Fog-grey between the clouds and the sea.
+muted = "#585663"
+
+# The sea at dusk: sampled #22242a / #070e16, mixed and lifted a notch.
+background = "#151921"
+dark_background = "#0f131a"
+darker_background = "#0a0d13"
+lighter_background = "#1e232d"
+
+# Cloud-lit cream, warm and off-white (about 11:1 on the background).
+foreground = "#ddd3ca"
+dark_foreground = "#7b7a84"
+light_foreground = "#e9e0d7"
+bright_foreground = "#f5eee6"
+
+# Warm axis: the sunset and the sunlit rock.
+red = "#d6796f"
+orange = "#df9c76"
+yellow = "#e4bf8f"
+magenta = "#b08ca3"
+brown = "#6b4a41"
+
+# Cool axis: the sky's blue, the fog-green of the hills, the sea's teal.
+green = "#9cab94"
+cyan = "#85a9ae"
+blue = "#7f9bc0"
+
+bright_red = "#ec9086"
+bright_orange = "#f2b48e"
+bright_yellow = "#f3d3a4"
+bright_magenta = "#c8a5bb"
+bright_green = "#b6c5ad"
+bright_cyan = "#a3c6cb"
+bright_blue = "#9db5d8"
+
+# Window borders: one flat coral on all four sides, same as crimson-core
+# (a single color makes the templates emit a plain string, not a gradient).
+hyprland_active_border = "rgba(d19083ff)"
+hyprland_inactive_border = "rgba(2a2f3aaa)"

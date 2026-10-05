@@ -73,6 +73,7 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omar
 # on a stock theme, it is its own theme). omarchy-theme-list globs both
 # dirs and symlinks, so linking the directory is enough.
 link "$REPO_DIR/config/omarchy/themes/crimson-core" "$CONFIG_DIR/omarchy/themes/crimson-core"
+link "$REPO_DIR/config/omarchy/themes/apple-coast" "$CONFIG_DIR/omarchy/themes/apple-coast"
 # Menu overrides: hides the Share submenu (localsend is gone), Learn pages
 # open in the browser instead of the Chromium-only webapp launcher.
 link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
