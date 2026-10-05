@@ -30,3 +30,9 @@
 	name = Paul Gradischnig
 	email = 92756104+gradiscp@users.noreply.github.com
 	useConfigOnly = true
+
+# Work repos get the work address. The file lives outside the dotfiles
+# (~/.config/git/config-arbeit) so the address stays out of this repo;
+# if it is missing on a machine, git skips the include silently.
+[includeIf "gitdir:~/Projects/svag/"]
+	path = ~/.config/git/config-arbeit
