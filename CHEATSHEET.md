@@ -12,6 +12,8 @@ anhängen.
 | danach, kurz | Clone-Check, siehe unten | Zeigt, ob Omarchy Plugins geändert hat, die hier als Kopie liegen. |
 | alle paar Wochen | `docker pull redis:7-alpine python:3.12-slim` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
 | alle paar Monate | `omarchy-update-firmware` | BIOS/SSD-Firmware über fwupd. Der erste Lauf installiert fwupd. |
+|jedes mal bei einem neuen Git Repo | git remote set-url origin git@github.com-privat:gradiscp/portfolio.git | setzt git url auf lokale config |
+
 
 **Nicht** `sudo pacman -Syu` direkt: Omarchy blockt das mit einem pacman-Hook
 ("Woah partner"), und dabei fehlten Snapshot, Migrationen, AUR und mise.
