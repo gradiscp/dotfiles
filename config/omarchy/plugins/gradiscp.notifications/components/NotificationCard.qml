@@ -26,6 +26,8 @@ BorderSurface {
   property int urgency: 1
   property double timestamp: 0
   property int cornerRadius: 0
+  // How many more toasts wait behind this one (shown as a "+N" badge).
+  property int extraCount: 0
 
   // System monospace font injected by the container.
   property string fontFamily: ""
@@ -92,6 +94,29 @@ BorderSurface {
       } else {
         root.cardClicked()
       }
+    }
+  }
+
+  Rectangle {
+    visible: root.extraCount > 0
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.topMargin: root.borderTop + Style.space(6)
+    anchors.rightMargin: root.borderRight + Style.space(8)
+    width: extraLabel.implicitWidth + Style.space(12)
+    height: extraLabel.implicitHeight + Style.space(4)
+    radius: height / 2
+    color: Util.alpha(root.alertColor, 0.25)
+
+    Text {
+      id: extraLabel
+      anchors.centerIn: parent
+      textFormat: Text.PlainText
+      text: "+" + root.extraCount
+      color: root.alertColor
+      font.family: root.fontFamily
+      font.pixelSize: Style.font.caption
+      font.bold: true
     }
   }
 

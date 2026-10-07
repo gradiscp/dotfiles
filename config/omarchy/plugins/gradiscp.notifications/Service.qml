@@ -983,7 +983,14 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: popupWindow.popupPlacement.margins.top
         anchors.rightMargin: popupWindow.popupPlacement.margins.right
-        spacing: Style.space(8)
+        spacing: expanded ? Style.space(8) : 0
+
+        // Toasts do not run down the screen: only the newest card shows, with
+        // a "+N" badge for the ones waiting behind it. Pointing at it opens
+        // the full column, so any card can still be read and clicked.
+        readonly property bool expanded: stackHover.hovered
+
+        HoverHandler { id: stackHover }
 
         Repeater {
           model: popupModel
@@ -1006,13 +1013,21 @@ Item {
 
             // Each card sizes itself based on mode (text vs media); the slot
             // tracks the card so the column auto-fits to whichever is widest.
+            // Hidden behind the front card (index > 0) while the column is
+            // closed; an invisible slot takes no room in the layout.
+            readonly property bool behind: !popupColumn.expanded && cardSlot.index > 0
+
+            visible: !behind
+
             Layout.preferredWidth: card.implicitWidth
             Layout.alignment: Qt.AlignRight
             implicitHeight: card.implicitHeight
 
             readonly property real lifetime: service.durationFor(cardSlot.urgency, cardSlot.expireTimeout)
             property real remainingLifetime: 1.0
-            readonly property bool ticking: cardSlot.lifetime > 0 && !card.hovered
+            // A card hidden behind the pile keeps its full time until it is
+            // in front (or the pile is opened), so it cannot run out unseen.
+            readonly property bool ticking: cardSlot.lifetime > 0 && !card.hovered && !behind
 
             // A client updating this notification in place rewrites the row
             // under the card (see refreshPopup). New text deserves a full look,
@@ -1041,6 +1056,7 @@ Item {
             NotificationCard {
               id: card
               anchors.right: parent.right
+              extraCount: !popupColumn.expanded && cardSlot.index === 0 ? popupModel.count - 1 : 0
               app: cardSlot.app
               appIcon: cardSlot.appIcon
               summary: cardSlot.summary
