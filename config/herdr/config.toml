@@ -10,6 +10,12 @@ name = "terminal"
 # The active tab is drawn as panel_bg text on an accent background, so panel_bg
 # has to be dark for it to read - same colors as status-left's "#[fg=black,bg=blue]"
 panel_bg = "black"
+# The agent dots take red (blocked: needs an approval) and yellow (working) from
+# these tokens. With the terminal palette they came out as two similar salmon
+# tones, so an approval was easy to miss. Fixed values: unmistakably red vs.
+# clearly yellow, independent of the Omarchy theme.
+red = "#ff3b30"
+yellow = "#ffd60a"
 
 [terminal]
 # Matches -c "#{pane_current_path}" on every split, window, and session
