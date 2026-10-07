@@ -3,8 +3,11 @@
 # whenever Claude Code stops to ask for permission, and jump straight back to
 # that exact terminal when it is clicked.
 #
-# Wired up as a Claude Code Notification hook with matcher
-# "permission_prompt" in config/claude/settings.json. Two kinds of terminal:
+# Wired up in config/claude/settings.json as two hooks: PermissionRequest
+# (fires as the dialog opens, so the toast is immediate) and Notification with
+# matcher "permission_prompt" (the original; arrives later, so it is only a
+# fallback - skipped when a PermissionRequest toast for the same terminal went
+# up in the last 20s). Two kinds of terminal:
 #
 # - Inside herdr: the hook inherits HERDR_PANE_ID from the pane Claude runs
 #   in, so a click focuses herdr's window *and* that pane - no guessing which
@@ -161,7 +164,10 @@ jump)
 esac
 
 input=$(cat)
+event=$(jq -r '.hook_event_name // empty' <<<"$input")
 message=$(jq -r '.message // empty' <<<"$input")
+[[ $event == PermissionRequest ]] &&
+  message="Braucht eine Genehmigung: $(jq -r '.tool_name // "Tool"' <<<"$input")"
 # HERDR_PANE_ID alone proves little: a terminal window opened from a shell
 # inside herdr inherits it too. Trust it only with herdr up the process tree.
 pane=
@@ -187,6 +193,14 @@ else
 fi
 [[ -n $title ]] || title=$(basename "$(jq -r '.cwd // empty' <<<"$input")")
 
+# The late Notification hook for a prompt PermissionRequest already announced.
+marker="$RUN_DIR/$key.request"
+if [[ $event == Notification && -f $marker ]] &&
+  (($(now_ms) - $(cat "$marker" 2>/dev/null || echo 0) < 20000)); then
+  log "skip ($key): Notification after PermissionRequest"
+  exit 0
+fi
+
 # Already looking at that very terminal: a toast would only be noise.
 if ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; then
   log "skip ($key): already looking at it"
@@ -196,7 +210,9 @@ fi
 # The headline doubles as the handle for dismissing the toast later, so it
 # carries the terminal's title to tell two waiting sessions apart.
 headline="Claude wartet${title:+: $title}"
-log "toast ($key): $headline"
+log "toast ($key, ${event:-?}): $headline"
+mkdir -p "$RUN_DIR"
+[[ $event == PermissionRequest ]] && now_ms >"$marker"
 
 # One state file per terminal: a token, so a watcher left over from an earlier
 # prompt in the same place cannot take down this newer toast, and the headline
