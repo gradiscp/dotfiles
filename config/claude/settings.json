@@ -8,7 +8,7 @@
     ],
     "defaultMode": "default"
   },
-  "model": "sonnet",
+  "model": "opus",
   "hooks": {
     "PermissionRequest": [
       {
@@ -49,7 +49,7 @@
       "effortLevel": "high"
     },
     "claude-opus-5-5": {
-      "effortLevel": "high"
+      "effortLevel": "xhigh"
     }
   },
   "theme": "dark-daltonized"
