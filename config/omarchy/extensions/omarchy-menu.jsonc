@@ -5,4 +5,6 @@
   // Share: every entry ends in localsend, which is not installed. Hiding the
   // parent hides its children too; it comes back once localsend is installed.
   "trigger.share": {"icon":"","label":"Share","aliases":["share"],"when":"omarchy-cmd-present localsend"},
+  // Tmux keybindings help: tmux is removed (herdr instead).
+  "learn.tmux-keybindings": {"icon":"","label":"Tmux","action":"omarchy-menu-tmux-keybindings","when":"omarchy-cmd-present tmux"},
 }

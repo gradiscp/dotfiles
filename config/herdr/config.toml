@@ -1,5 +1,5 @@
 onboarding = false
-# Mirrors the Omarchy tmux config in config/tmux/tmux.conf
+# Mirrors Omarchy's stock tmux keys (tmux itself is removed: herdr does the job)
 # tmux session -> herdr workspace, tmux window -> herdr tab, tmux pane -> herdr pane
 
 [theme]
