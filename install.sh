@@ -77,6 +77,26 @@ echo "== Text size =="
 # font (see omarchy-display-text-size). 10 is what this laptop runs.
 omarchy display text size 10 || echo "WARN: 'omarchy display text size 10' failed - run it by hand"
 
+echo "== Cursor (Bibata-Modern-Ice, single variant) =="
+# 1.7 MB from the upstream release instead of the 322 MB AUR package that
+# bundles every variant. Pinned version and checksum; the archive holds only
+# cursors/, index.theme and cursor.theme (checked 2026-10-15).
+CURSOR_DIR="$HOME/.local/share/icons/Bibata-Modern-Ice"
+CURSOR_URL="https://github.com/ful1e5/Bibata_Cursor/releases/download/v2.0.7/Bibata-Modern-Ice.tar.xz"
+CURSOR_SHA256="a68cae60c4dc706350e194ebc91c5fe48bc7bc9d59e119555834a2a7ee5078ef"
+if [[ ! -f $CURSOR_DIR/index.theme ]]; then
+  tmp="$(mktemp -d)"
+  if curl -fsSL -o "$tmp/cursor.tar.xz" "$CURSOR_URL" \
+    && echo "$CURSOR_SHA256  $tmp/cursor.tar.xz" | sha256sum -c --quiet \
+    && mkdir -p "$(dirname "$CURSOR_DIR")" \
+    && tar -xJf "$tmp/cursor.tar.xz" -C "$(dirname "$CURSOR_DIR")"; then
+    echo "Installed $CURSOR_DIR"
+  else
+    echo "WARN: cursor theme download or checksum failed - stock cursor stays"
+  fi
+  rm -rf "$tmp"
+fi
+
 echo "== Fontconfig (JetBrains Mono everywhere) =="
 link "$REPO_DIR/config/fontconfig/conf.d/51-jetbrains.conf" "$CONFIG_DIR/fontconfig/conf.d/51-jetbrains.conf"
 fc-cache -f >/dev/null 2>&1 || echo "WARN: fc-cache failed"
@@ -157,6 +177,8 @@ echo "== GTK/GNOME settings =="
 # above drives it together with the shell and terminal font size.
 gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11'
 gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font 11'
+gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
+gsettings set org.gnome.desktop.interface cursor-size 14
 gsettings set org.gnome.desktop.wm.preferences button-layout ''
 
 echo "== App cleanup =="

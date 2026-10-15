@@ -196,6 +196,9 @@ live, and `hyprctl reload` still reports success.
 - Firefox follows the system scale; a `layout.css.devPixelsPerPx` in a
   `user.js` (profile under `~/.config/mozilla/`) would override `prefs.js` on
   every start. There is none - keep it that way.
+- The cursor is one Bibata variant fetched by `install.sh` from a pinned
+  release URL with a checksum into `~/.local/share/icons` (1.7 MB); the AUR
+  `bibata-cursor-theme-bin` (322 MB, every variant) was dropped on purpose.
 - JetBrains Mono serves `sans-serif`/`serif` too: `51-jetbrains.conf` hooks
   in after Omarchy's `50-omarchy.conf` (which assigns Liberation first).
   Delete its two `match` blocks to get normal web fonts back.

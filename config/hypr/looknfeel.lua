@@ -1,5 +1,5 @@
 -- Personal look'n'feel on top of Omarchy's defaults. Everything not listed
--- here is stock: square corners, no blur, no custom opacity, stock cursor.
+-- here is stock: square corners, no blur, no custom opacity.
 
 -- Niri-like side-scrolling layout instead of dwindle, with thinner gaps
 -- (stock is 5/10; 2026-09-16 down from 3/6).
@@ -33,3 +33,11 @@ hl.config({
 -- Omarchy gives popped-out windows (tag "pop") rounding = 8 in
 -- default/hypr/apps/system.lua; square those too.
 o.window({ tag = "pop" }, { rounding = 0 })
+
+-- Bibata-Modern-Ice at 14 instead of the stock Adwaita at 24. Installed by
+-- install.sh as a 1.7 MB XCursor theme under ~/.local/share/icons (the AUR
+-- package is 322 MB of every variant). No hyprcursor variant exists, so
+-- Hyprland falls back to XCursor for it, which is fine.
+hl.env("XCURSOR_THEME", "Bibata-Modern-Ice")
+hl.env("XCURSOR_SIZE", "14")
+hl.env("HYPRCURSOR_SIZE", "14")

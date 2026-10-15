@@ -21,7 +21,7 @@ Everyday commands (updating the system and more) are in
    ```
    It asks for the sudo password a few times and refuses to run as root.
    It installs `packages.txt`, links every config into place, sets the text
-   size and GTK font, keeps only Claude Code of the coding agents Omarchy
+   size, GTK font and cursor, keeps only Claude Code of the coding agents Omarchy
    installs via mise, removes the unwanted stock apps and themes
    (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
    point into the repo.
@@ -43,7 +43,8 @@ Omarchy's menus.
 
 - **Look:** Tokyo Night (stock), square corners, no blur or transparency,
   `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
-  everything (UI, terminal, and the generic sans/serif families).
+  everything (UI, terminal, and the generic sans/serif families), Bibata
+  cursor at 14 (one 1.7 MB variant, not the 322 MB package).
   Two own themes, `crimson-core` and `apple-coast`, stay selectable.
 - **Bar:** the active workspace as a capsule in the theme's urgent colour; a
   terminal icon that lights up with a count while Claude Code sessions wait
