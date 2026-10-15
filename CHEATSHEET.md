@@ -32,6 +32,7 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 |---|---|
 | `brave://settings/shields` | Tracker & Werbung auf "Aggressiv"; "Store contact information for broken site reports" aus |
 | `brave://settings/appearance` | Page zoom 80 % (Seiten passen so zur Oberfläche bei Scale 1; keine Policy dafür) |
+| `brave://settings/search` | Suchmaschine nach Wahl (absichtlich keine Policy, sonst gesperrt) |
 | `brave://settings/extensions/v2` | uBlock Origin einschalten (Brave hostet die volle Manifest-V2-Version) |
 | uBlock-Dashboard, Reiter Settings | "Restore from file": `config/brave/ublock-origin-backup.txt` (Filterlisten-Auswahl) |
 | `brave://settings/extensions` | Bitwarden |
