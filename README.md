@@ -62,7 +62,7 @@ Omarchy's menus.
 
 | Key | Action |
 |---|---|
-| `SUPER+L` | Lock (stock `SUPER+CTRL+L` still works) |
+| `SUPER+L` | Lock (stock `SUPER+CTRL+L` unbound) |
 | `SUPER+H` | Toggle workspace layout (was on `SUPER+L`) |
 | `SUPER+P` | Jump to the Claude session waiting for a permission |
 | `SUPER+W` | Close window - asks first if a terminal still runs something |

@@ -49,9 +49,10 @@ hl.workspace_rule({ workspace = "6", persistent = true })
 hl.workspace_rule({ workspace = "7", persistent = true })
 hl.workspace_rule({ workspace = "8", persistent = true })
 
--- SUPER+L: lock (the stock lock, also on stock's SUPER+CTRL+L).
+-- SUPER+L: lock, instead of stock's SUPER+CTRL+L (unbound: one lock key).
 -- Was: SUPER+L -> Toggle workspace layout, which moved to SUPER+H (unused).
 hl.unbind("SUPER + L")
+hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + L", "Lock", "omarchy-system-lock")
 o.bind("SUPER + H", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")
 
