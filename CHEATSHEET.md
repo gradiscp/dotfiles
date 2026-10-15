@@ -10,9 +10,9 @@ anhängen.
 | wöchentlich | `omarchy update` | Snapshot, `pacman -Syu`, AUR, mise-Tools, Omarchy-Migrationen, Drift-Check. Neustart annehmen, wenn Kernel oder Hyprland dabei war. |
 | danach, kurz | `sudo pacdiff` | Geänderte Configs in `/etc` (`.pacnew`) zusammenführen. Meist leer. |
 | danach, kurz | Clone-Check, siehe unten | Zeigt, ob Omarchy Plugins geändert hat, die hier als Kopie liegen. |
-| alle paar Wochen | `docker pull redis:7-alpine python:3.12-slim` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
+| alle paar Wochen | `docker pull <Basis-Images der Projekte>` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
 | alle paar Monate | `omarchy-update-firmware` | BIOS/SSD-Firmware über fwupd. Der erste Lauf installiert fwupd. |
-|jedes mal bei einem neuen Git Repo | git remote set-url origin git@github.com:gradiscp/<repo>.git | setzt git url auf lokale config |
+| bei jedem neuen Git-Repo | `git remote set-url origin git@<ssh-alias>:gradiscp/<repo>.git` | Remote auf den SSH-Host-Alias aus `~/.ssh/config` umstellen, damit der richtige Key greift. |
 
 
 **Nicht** `sudo pacman -Syu` direkt: Omarchy blockt das mit einem pacman-Hook

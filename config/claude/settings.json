@@ -4,11 +4,21 @@
       "Read(~/.ssh/**)",
       "Edit(~/.ssh/**)",
       "Read(~/.claude/.credentials.json)",
-      "Edit(~/.claude/.credentials.json)"
+      "Edit(~/.claude/.credentials.json)",
+      "Read(~/.gnupg/**)",
+      "Edit(~/.gnupg/**)",
+      "Read(~/.local/share/keyrings/**)",
+      "Edit(~/.local/share/keyrings/**)",
+      "Read(~/.config/gh/**)",
+      "Edit(~/.config/gh/**)",
+      "Read(~/.config/git/config.local)",
+      "Edit(~/.config/git/config.local)",
+      "Read(~/.config/git/config-arbeit)",
+      "Edit(~/.config/git/config-arbeit)"
     ],
     "defaultMode": "default"
   },
-  "model": "opus",
+  "model": "fable",
   "hooks": {
     "PermissionRequest": [
       {
@@ -43,14 +53,6 @@
         ]
       }
     ]
-  },
-  "modelSettings": {
-    "claude-opus-5": {
-      "effortLevel": "high"
-    },
-    "claude-opus-5-5": {
-      "effortLevel": "xhigh"
-    }
   },
   "theme": "dark-daltonized"
 }

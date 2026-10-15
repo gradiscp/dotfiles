@@ -1,2 +1,5 @@
 # Claude Code per-machine permission cache - full of local paths, never shared.
 .claude/settings.local.json
+# Machine-specific Claude rules (work accounts etc.): loaded through the
+# ~/.claude/rules link, never tracked.
+config/claude/rules/*.local.md

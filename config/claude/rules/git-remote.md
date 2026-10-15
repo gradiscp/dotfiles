@@ -1,4 +1,4 @@
-# Kein push, pull oder fetch; `gh` nur lesend
+# Kein push, pull oder fetch über SSH
 
 Gilt in jedem Projekt.
 
@@ -18,23 +18,7 @@ läuft kein ssh-agent (`SSH_AUTH_SOCK` leer). `git push`, `git pull`,
   einrichten (auch nicht `gh auth setup-git`), nicht nach der Passphrase
   fragen.
 - `origin/...` im lokalen Repo kann veraltet sein, weil nie gefetcht wird.
-  Den Stand auf GitHub mit `gh` prüfen (siehe unten), wo das geht; sonst
+  Den Stand auf GitHub mit `gh` prüfen, wo ein lesender Token dafür
+  eingerichtet ist (steht in einer lokalen `*.local.md`-Regel); sonst
   Aussagen wie "ist schon gepusht" oder "ahead by N" als ungeprüft
   kennzeichnen.
-
-## `gh`: nur lesen, nur ein Repo
-
-Seit 2026-10-06 ist `gh` angemeldet (Account `***REMOVED***`) mit einem
-fine-grained Token, das nur `***REMOVED***/***REMOVED***`
-sieht, nur lesend: Actions, Contents, Pull requests (Metadata automatisch).
-Kein Lesezugriff auf Commit-Statuses, daher geht `gh pr checks` nicht:
-stattdessen `gh run list` / `gh run view`. Das Token läuft am 2026-11-05 ab.
-
-- Erlaubt: lesende Befehle für dieses Repo, z. B. `gh pr list`, `gh pr view`,
-  `gh run list`, `gh run view --log-failed`, `gh api` mit GET.
-- Nicht: schreibende `gh`-Befehle (Merge, Kommentar, Review, Branch löschen,
-  Workflow starten) - das Token kann es nicht, und es ist Sache des Nutzers.
-- Andere Repos (auch das alte `***REMOVED***`) sieht das Token nicht; dort gilt
-  weiter: kein Zugriff auf GitHub.
-- Schlägt `gh` mit 401 fehl, ist das Token abgelaufen: dem Nutzer sagen, nicht
-  selbst ein neues besorgen.
