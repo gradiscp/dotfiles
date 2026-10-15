@@ -155,6 +155,10 @@ live, and `hyprctl reload` still reports success.
   (`/exit` + `claude --resume` does). Change renderer settings between
   sessions, not under running ones. Postmortem:
   `~/Projects/paulgradischnig/incidents/2026-09-12-herdr-claude-fullscreen-garbled.md`.
+- `herdr integration install claude` writes a SessionStart hook with an
+  absolute home path into `settings.json`; `install.sh` runs it only before
+  the link exists and only if its hook script is missing. Never re-run it by
+  hand through the link.
 - Running sessions keep the hook command they loaded. After changing a hook
   path in `settings.json`, restart the sessions or leave something at the
   old path.

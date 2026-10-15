@@ -85,8 +85,8 @@ link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarc
 
 echo "== Text size =="
 # One knob for shell font base-size, GTK text-scaling-factor and the terminal
-# font (see omarchy-display-text-size). 10 is what this laptop runs.
-omarchy display text size 10 || echo "WARN: 'omarchy display text size 10' failed - run it by hand"
+# font (see omarchy-display-text-size). 12 = Omarchy's stock size.
+omarchy display text size 12 || echo "WARN: 'omarchy display text size 12' failed - run it by hand"
 
 echo "== Cursor (Bibata-Modern-Ice, single variant) =="
 # 1.7 MB from the upstream release instead of the 322 MB AUR package that
@@ -157,6 +157,15 @@ link "$REPO_DIR/bin/omarchy-drift-check" "$HOME/.local/bin/omarchy-drift-check"
 link "$REPO_DIR/bin/omarchy-drift-check" "$CONFIG_DIR/omarchy/hooks/post-update.d/50-dotfiles-drift-check"
 
 echo "== Claude Code =="
+# herdr's Claude hook: reports each session's id so herdr can `claude --resume`
+# it after a reboot. It writes ~/.claude/hooks/herdr-agent-state.sh AND a
+# SessionStart entry with an absolute home path into ~/.claude/settings.json -
+# so it runs BEFORE settings.json is linked (the repo copy already carries the
+# same hook with $HOME) and only when its script is missing. Through the link
+# it would write that absolute path into the public repo (happened 2026-10-15).
+if command -v herdr >/dev/null && [[ ! -f $HOME/.claude/hooks/herdr-agent-state.sh ]]; then
+  herdr integration install claude || echo "WARN: 'herdr integration install claude' failed"
+fi
 # Carries the hooks that run claude-notify above - see the header of
 # bin/claude-notify. Claude Code rewrites this file through the link
 # (/model, /config, "always allow"): diff it before committing.
@@ -167,12 +176,6 @@ link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
 link "$REPO_DIR/config/claude/rules" "$HOME/.claude/rules"
 # Own skills, one directory each (the Omarchy ones are linked by Omarchy itself).
 link "$REPO_DIR/config/claude/skills/docu-guard" "$HOME/.claude/skills/docu-guard"
-# herdr's Claude hook: reports each session's id so herdr can `claude --resume`
-# it after a reboot. Writes ~/.claude/hooks/herdr-agent-state.sh and the
-# SessionStart entry in settings.json (through the link above).
-if command -v herdr >/dev/null; then
-  herdr integration install claude || echo "WARN: 'herdr integration install claude' failed"
-fi
 
 echo "== GTK/GNOME settings =="
 # What Omarchy's own configs don't cover. gsettings set is idempotent.
