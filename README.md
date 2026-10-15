@@ -34,9 +34,9 @@ Everyday commands (updating the system and more) are in
 ## Keeping it in sync
 
 Omarchy's own tools sometimes replace a linked config with a plain file, and
-`omarchy update` can reinstall base packages that were removed on purpose.
+a removed package can come back through any install command or menu.
 `omarchy-drift-check` re-links the copies (when nothing was changed) and
-reports real differences and reinstalled packages as a notification. It runs
+reports real differences and returned packages as a notification. It runs
 after every `omarchy update`; run it by hand after changing settings through
 Omarchy's menus.
 

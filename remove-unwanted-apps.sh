@@ -1,8 +1,8 @@
 #!/bin/bash
 # Strip packages from the stock Omarchy set that aren't wanted here, and keep
-# the stock themes down to Tokyo Night. Re-runnable; `omarchy update` can
-# reinstall base packages (LibreOffice came back on 2026-09-24), which
-# omarchy-drift-check reports via `--check`.
+# the stock themes down to Tokyo Night. Re-runnable: a listed package can
+# come back (LibreOffice was installed again by hand on 2026-09-24 and sat
+# there for three weeks), which omarchy-drift-check reports via `--check`.
 #
 # Usage: remove-unwanted-apps.sh          remove what is installed
 #        remove-unwanted-apps.sh --check  only list unwanted packages that are

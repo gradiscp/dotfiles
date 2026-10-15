@@ -17,8 +17,8 @@
 #   plugins   every plugin id in shell.json exists under ~/.config/omarchy/plugins
 #   pacman    the stock-theme NoExtract (Tokyo Night excepted) is still in
 #             /etc/pacman.conf, only tokyo-night is left under
-#             /usr/share/omarchy/themes, and no unwanted stock package was
-#             reinstalled by an update (remove-unwanted-apps.sh --check)
+#             /usr/share/omarchy/themes, and no package from the removal
+#             list is installed again (remove-unwanted-apps.sh --check)
 #
 # Usage: omarchy-drift-check [--quiet]   (--quiet: no notification when clean)
 
@@ -115,10 +115,11 @@ grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf && problem "harm
 extra_themes=$(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night -printf '%f ' 2>/dev/null)
 [[ -n $extra_themes ]] && problem "stock Omarchy themes are back in /usr/share/omarchy/themes ($extra_themes) - re-run remove-unwanted-apps.sh"
 [[ -d /usr/share/omarchy/themes/tokyo-night ]] || problem "tokyo-night is missing from /usr/share/omarchy/themes - sudo pacman -S omarchy"
-# `omarchy update` can reinstall base packages that were removed on purpose
-# (LibreOffice came back on 2026-09-24).
+# A package removed on purpose can come back through any `pacman -S`, typed
+# or clicked in Omarchy's Install menu (LibreOffice, 2026-09-24, unnoticed
+# for three weeks - incidents repo).
 reinstalled=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>/dev/null | tr '\n' ' ')
-[[ -n $reinstalled ]] && problem "an update reinstalled unwanted packages: ${reinstalled}- run remove-unwanted-apps.sh"
+[[ -n $reinstalled ]] && problem "unwanted packages are installed again: ${reinstalled}- run remove-unwanted-apps.sh"
 
 # ---- report -----------------------------------------------------------------
 say "run finished: ${#repaired[@]} repaired, ${#problems[@]} problems"

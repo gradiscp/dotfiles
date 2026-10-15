@@ -43,9 +43,10 @@ live, and `hyprctl reload` still reports success.
   `hyprctl binds` / `hyprctl configerrors` - never assume. It re-links copies
   identical to the repo and reports ones that differ; a differing copy
   usually holds a change made through Omarchy's UI - copy it into the repo,
-  then re-run. It also runs as an `omarchy update` post-update hook, where it
-  additionally reports stock packages the update reinstalled
-  (`remove-unwanted-apps.sh --check`; LibreOffice came back on 2026-09-24).
+  then re-run. It also runs as an `omarchy update` post-update hook and
+  reports packages from the removal list that are installed again
+  (`remove-unwanted-apps.sh --check`; LibreOffice came back by hand on
+  2026-09-24 and went unnoticed for three weeks).
 - `~/.claude/settings.json` is a link too, and Claude Code rewrites it
   (`/model`, `/config`, "always allow"): `git diff` it before every commit and
   commit only what was meant. A plain file there goes back into
@@ -192,8 +193,9 @@ live, and `hyprctl reload` still reports success.
   exception for `tokyo-night`) is intended; `remove-unwanted-apps.sh` writes
   it and the drift check verifies it. Undo by deleting the line and
   `sudo pacman -S omarchy`.
-- `omarchy update` can reinstall removed base packages; `remove-unwanted-apps.sh`
-  is re-runnable and the drift check reports what came back.
+- Any `pacman -S` (typed, or Omarchy's Install menu) can bring a removed
+  package back; `remove-unwanted-apps.sh` is re-runnable and the drift check
+  reports what came back.
 - Keep the pacman cache at two versions (`omarchy update` runs
   `paccache -rk2` as the downgrade path).
 - `packages.txt` installs with `-S --needed`, never `-Sy` (partial upgrade).
