@@ -27,8 +27,5 @@
   "IPFSEnabled": false,
   "PasswordManagerEnabled": false,
   "AutofillAddressEnabled": false,
-  "AutofillCreditCardEnabled": false,
-  "DefaultSearchProviderEnabled": true,
-  "DefaultSearchProviderName": "Brave Search",
-  "DefaultSearchProviderSearchURL": "https://search.brave.com/search?q={searchTerms}"
+  "AutofillCreditCardEnabled": false
 }
