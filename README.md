@@ -50,10 +50,9 @@ Omarchy's menus.
   for a permission. No tray.
 - **Notifications:** compact; the accent border only on critical ones.
   Claude permission requests pop up and jump back to their terminal on click.
-- **Lock and idle:** `SUPER+L` minimal lock, screen stays on; `SUPER+SHIFT+L`
-  full lock with clock, screen off. Screensaver after 5 min, lock after 7;
-  a fullscreen window with audio playing (a film) keeps the machine awake -
-  audio alone does not.
+- **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
+  after 7; a fullscreen window with audio playing (a film) keeps the machine
+  awake - audio alone does not.
 - **Apps:** Firefox only, trimmed stock set (no LibreOffice, Obsidian, mpv,
   Disks, CJK input); anything heavier runs in a container instead of being
   installed. Only Claude Code as a coding agent.
@@ -62,8 +61,7 @@ Omarchy's menus.
 
 | Key | Action |
 |---|---|
-| `SUPER+L` | Lock, screen stays on |
-| `SUPER+SHIFT+L` | Lock with clock, screen off after 5s |
+| `SUPER+L` | Lock (stock `SUPER+CTRL+L` still works) |
 | `SUPER+H` | Toggle workspace layout (was on `SUPER+L`) |
 | `SUPER+P` | Jump to the Claude session waiting for a permission |
 | `SUPER+W` | Close window - asks first if a terminal still runs something |
@@ -83,13 +81,13 @@ config/
   hypr/                Hyprland overrides (bindings, looknfeel, monitors)
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
-    plugins/           gradiscp.* - lock, close dialog, workspaces,
+    plugins/           gradiscp.* - close dialog, workspaces,
                        notifications, Claude status widget
     extensions/        Menu overrides (hidden/redirected dead entries)
     themes/            crimson-core, apple-coast (own themes, selectable)
   claude/              Claude Code settings (hooks), global rules, own skills
   fontconfig/ herdr/ git/ mise/ systemd/ mimeapps.list
-bin/                   omarchy-lock-light, claude-notify, window-close-guard,
+bin/                   claude-notify, window-close-guard,
                        omarchy-idle-audio-guard, omarchy-drift-check,
                        git-all (status/fetch/pull/push over every repo below)
 install.sh             Fresh-machine setup

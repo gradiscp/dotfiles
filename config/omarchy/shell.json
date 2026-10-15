@@ -58,11 +58,9 @@
     "transparent": false
   },
   "cloneSourceRestores": [
-    "gradiscp.lock",
     "gradiscp.notifications"
   ],
   "disabledPlugins": [
-    "omarchy.lock",
     "omarchy.notifications"
   ],
   "idle": {
@@ -70,9 +68,6 @@
     "screensaver": 300
   },
   "plugins": [
-    {
-      "id": "gradiscp.lock"
-    },
     {
       "id": "gradiscp.closeconfirm"
     },

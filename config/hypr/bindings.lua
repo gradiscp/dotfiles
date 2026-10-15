@@ -49,12 +49,10 @@ hl.workspace_rule({ workspace = "6", persistent = true })
 hl.workspace_rule({ workspace = "7", persistent = true })
 hl.workspace_rule({ workspace = "8", persistent = true })
 
--- SUPER+L: real lock - password required, display never blanks (the
--- omarchy.lock clone below suppresses the usual 5s auto-blank via a flag
--- file this script sets). Was: SUPER+L -> Toggle workspace layout.
--- For a lock that blanks the display after 5s, use SUPER+SHIFT+L below.
+-- SUPER+L: lock (the stock lock, also on stock's SUPER+CTRL+L).
+-- Was: SUPER+L -> Toggle workspace layout.
 hl.unbind("SUPER + L")
-o.bind("SUPER + L", "Lock (screen stays on)", "omarchy-lock-light")
+o.bind("SUPER + L", "Lock", "omarchy-system-lock")
 
 -- The old SUPER+L action (toggle dwindle/master workspace layout) moved to
 -- SUPER+H, which was unused.
@@ -69,13 +67,6 @@ o.bind("SUPER + H", "Toggle workspace layout", "omarchy-hyprland-workspace-layou
 hl.unbind("PRINT")
 hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy")
-
--- SUPER+SHIFT+L: full lock - the normal Omarchy lock screen plus a clock
--- (FullLockView in the gradiscp.lock clone), display blanks after 5s. Same
--- lock the idle timer takes. Replaces the default SUPER+CTRL+L for this -
--- that one's unbound now, only SHIFT+L is used.
-hl.unbind("SUPER + CTRL + L")
-o.bind("SUPER + SHIFT + L", "Lock (screen off)", "omarchy-system-lock")
 
 -- SUPER+P: jump to the Claude session (herdr pane or plain terminal) that is
 -- waiting for a permission - the keyboard half of the claude-notify toast,

@@ -90,7 +90,7 @@ live, and `hyprctl reload` still reports success.
 ## Omarchy shell and plugins
 
 - **`service`/`panel`/overlay plugins do not hot-reload.** After editing
-  `gradiscp.lock`, `.notifications` or `.closeconfirm`, run
+  `gradiscp.notifications` or `.closeconfirm`, run
   `omarchy restart shell`; otherwise the old code keeps running without an
   error. (`rescanPlugins` only updates the registry.) Bar widgets and
   `shell.json` do hot-reload.
@@ -104,8 +104,9 @@ live, and `hyprctl reload` still reports success.
   `/usr/share/omarchy/shell/plugins/<clonedFrom>/` (CHEATSHEET). Partial
   clones are not possible. `gradiscp.workspaces` keeps
   `moduleName: "omarchy.workspaces"` on purpose (IPC routing via `clonedFrom`).
-  The idle plugin is stock since 2026-10-15: the clone only added an
-  `isLocked` guard that the lock IPC already has.
+  Idle and lock are stock since 2026-10-15 (the idle clone only added a
+  guard the lock IPC already has; the lock clone was ~1500 lines of
+  password-handling code for a no-blank variant and a clock).
 - **Theme `shell.toml` vs `shell.<section>.toml`:** a theme's `shell.toml`
   *replaces* the generated file (~200 lines to own forever). The two custom
   themes ship only `shell.notifications.toml`, which replaces that one
@@ -132,21 +133,20 @@ live, and `hyprctl reload` still reports success.
 - **Never build a passwordless lock or "privacy cover" without asking
   explicitly.** One was built from a misread request and deleted; it is a
   security decision, not styling.
-- The idle lock command has flipped twice (`omarchy-system-lock` <->
-  `omarchy-lock-light`); it is `omarchy-system-lock` (blanks the panel) now,
-  by request. Ask before swapping it. The light-lock flag is
-  `$XDG_RUNTIME_DIR/omarchy-lock-no-blank` (tmpfs, cannot survive a crash).
+- Lock is stock `omarchy-system-lock` everywhere (SUPER+L, idle). A
+  "screen stays on" light lock existed until 2026-10-15 and was dropped
+  with its plugin clone; ask before bringing one back.
 - Known upstream crash: Hyprland can segfault on a lid/hotplug event while
-  the panel is *blanked* under a lock. Accepted; `SUPER+L` never blanks
+  the panel is *blanked* under a lock. Accepted
   (`~/.cache/hyprland/hyprlandCrashReport*.txt`).
 - **"Never locks"**: check `ls ~/.local/state/omarchy/indicators/` and
   `omarchy-shell idle status` before suspecting the plugins -
   `omarchy-idle-audio-guard` holds `stay-awake` only for audio *and* a real
   fullscreen window (`fullscreen == 2`). Do not set
   `MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit` instead: it inhibits for any audio.
-- `MatrixRain.qml`: never assign to a running animation's properties from
+- QML animations: never assign to a running animation's properties from
   inside it (restarts it, recursion, shell hang; `pkill -f quickshell`
-  recovers). Keep `<`, `>`, `&` out of the glyph set (StyledText).
+  recovers). Keep `<`, `>`, `&` out of StyledText.
 - SUPER+W (close guard) cannot be tested with `wtype`; it needs a real keyboard.
 
 ## Claude Code
