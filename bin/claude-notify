@@ -143,7 +143,8 @@ focus)
   exit 0
   ;;
 focus-window)
-  focus_plain "${2:?usage: claude-notify focus-window <address>}"
+  valid_address "${2:?usage: claude-notify focus-window <address>}" || exit 0
+  focus_plain "$2"
   exit 0
   ;;
 count)

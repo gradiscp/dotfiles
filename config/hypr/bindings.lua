@@ -84,6 +84,8 @@ o.bind("SUPER + W", "Close window", "window-close-guard")
 -- only works while the weather widget is in the bar - it was removed.
 hl.unbind("SUPER + CTRL + S")
 hl.unbind("SUPER + CTRL + ALT + W")
+-- SUPER+CTRL+PRINT (extract text, OCR) needs tesseract, which is removed.
+hl.unbind("SUPER + CTRL + PRINT")
 
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).

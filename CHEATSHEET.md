@@ -7,7 +7,7 @@ anhängen.
 
 | Wann | Befehl | Was es tut |
 |---|---|---|
-| wöchentlich | `omarchy update` | Snapshot, `pacman -Syu`, AUR, mise-Tools, Omarchy-Migrationen, Drift-Check. Neustart annehmen, wenn Kernel oder Hyprland dabei war. |
+| wöchentlich | `omarchy update` | Snapshot, `pacman -Syu`, Omarchy-Migrationen, Drift-Check, dann AUR und mise-Tools. Neustart annehmen, wenn Kernel oder Hyprland dabei war. |
 | danach, kurz | `sudo pacdiff` | Geänderte Configs in `/etc` (`.pacnew`) zusammenführen. Meist leer. |
 | nach Änderungen über Omarchy-Menüs | `omarchy-drift-check` | Läuft nach `omarchy update` automatisch; von Hand prüfen, ob alle Configs noch ins Repo zeigen, Theme-Sperre und Pakete stimmen. Ergebnis als Toast, Log in `~/.local/state/omarchy-drift-check.log`. |
 | alle paar Wochen | `docker pull <Basis-Images der Projekte>` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
@@ -36,6 +36,7 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 | uBlock-Dashboard, Reiter Settings | "Restore from file": `config/brave/ublock-origin-backup.txt` (Filterlisten-Auswahl) |
 | `brave://settings/extensions` | Bitwarden |
 | Omarchy-Netzwerk-Panel | DNS-Provider Cloudflare oder Quad9 (gilt systemweit, nicht nur im Browser) |
+| vor jedem Push | `git grep -niE 'svag\|fortnitepro\|privat\|/home/' HEAD` muss leer sein (öffentliches Repo) |
 
 ### Wenn nach einem Update etwas nicht stimmt
 

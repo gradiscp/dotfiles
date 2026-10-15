@@ -1,12 +1,13 @@
 #!/bin/bash
 # Strip packages from the stock Omarchy set that aren't wanted here, and keep
 # the stock themes down to Tokyo Night. Re-runnable: a listed package can
-# come back (LibreOffice was installed again by hand on 2026-09-24 and sat
-# there for three weeks), which omarchy-drift-check reports via `--check`.
+# come back through any `pacman -S` or Omarchy's Install menu (LibreOffice,
+# 2026-09-24, unnoticed for three weeks), which omarchy-drift-check reports
+# via `--check`.
 #
 # Usage: remove-unwanted-apps.sh          remove what is installed
-#        remove-unwanted-apps.sh --check  only list unwanted packages that are
-#                                         installed; exit 1 if any
+#        remove-unwanted-apps.sh --check  list unwanted packages and launchers
+#                                         that are present; exit 1 if any
 set -euo pipefail
 
 # Anything that is really needed runs in a container instead.
@@ -16,8 +17,6 @@ unwanted=(
   dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
   # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere)
   noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
-  # Brave Origin is the browser; chromium-widevine only installs into /usr/lib/chromium
-  chromium chromium-widevine
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
   # 90 packages, ~1.8 GiB, nothing from Omarchy, Hyprland, the shell or the boot chain)
   libreoffice-fresh clang llvm dotnet-runtime ruby tobi-try mariadb-libs postgresql-libs
@@ -25,14 +24,24 @@ unwanted=(
   qemu-user-static qemu-user-static-binfmt
   cups cups-filters cups-pk-helper system-config-printer
 )
+# Chromium only once Brave Origin is there, so a failed browser install never
+# leaves the machine without any browser.
+command -v brave-origin >/dev/null && unwanted+=(chromium chromium-widevine)
+
+# Stock webapp launchers for services not used here (their keybinds are
+# unbound in config/hypr/bindings.lua). Omarchy's omarchy-refresh-applications
+# can put them back. Docker.desktop stays: it launches lazydocker in a terminal.
+launchers=(Basecamp HEY Zoom "Google Contacts" "Google Maps" "Google Messages" "Google Photos"
+  X Discord WhatsApp YouTube "Disk Usage" mpv)
+APPS="$HOME/.local/share/applications"
 
 mapfile -t installed < <(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)
+present=()
+for l in "${launchers[@]}"; do [[ -e $APPS/$l.desktop ]] && present+=("$l.desktop"); done
 if [[ ${1:-} == --check ]]; then
-  if (( ${#installed[@]} > 0 )); then
-    printf '%s\n' "${installed[@]}"
-    exit 1
-  fi
-  exit 0
+  (( ${#installed[@]} + ${#present[@]} == 0 )) && exit 0
+  printf '%s\n' "${installed[@]}" "${present[@]}"
+  exit 1
 fi
 
 if (( ${#installed[@]} > 0 )); then
@@ -47,23 +56,8 @@ fi
 # fcitx5 is gone, so its user service must not fail at every login.
 systemctl --user disable --now omarchy-fcitx5.service 2>/dev/null || true
 
-# Stock webapp launchers for services not used here (their keybinds are
-# unbound in config/hypr/bindings.lua). Docker.desktop stays: it launches
-# lazydocker in a terminal.
-rm -f ~/.local/share/applications/Basecamp.desktop \
-      ~/.local/share/applications/HEY.desktop \
-      ~/.local/share/applications/Zoom.desktop \
-      ~/.local/share/applications/"Google Contacts.desktop" \
-      ~/.local/share/applications/"Google Maps.desktop" \
-      ~/.local/share/applications/"Google Messages.desktop" \
-      ~/.local/share/applications/"Google Photos.desktop" \
-      ~/.local/share/applications/X.desktop \
-      ~/.local/share/applications/Discord.desktop \
-      ~/.local/share/applications/WhatsApp.desktop \
-      ~/.local/share/applications/YouTube.desktop \
-      ~/.local/share/applications/"Disk Usage.desktop" \
-      ~/.local/share/applications/mpv.desktop
-update-desktop-database ~/.local/share/applications 2>/dev/null || true
+for l in "${launchers[@]}"; do rm -f "$APPS/$l.desktop"; done
+update-desktop-database "$APPS" 2>/dev/null || true
 
 # Stock themes: only Tokyo Night is used (plus the two themes in this repo),
 # so the other 21 shipped ones (~115MB) go. There is no supported way to
@@ -83,7 +77,10 @@ if ! grep -qxF "$noextract" /etc/pacman.conf; then
     sudo sed -i "/^\[options\]/a # Stock Omarchy themes except Tokyo Night are deleted here; keep updates from restoring them.\n$noextract" /etc/pacman.conf
   fi
 fi
-sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night -exec rm -rf {} + \
-  || echo "WARN: could not delete the stock themes"
+# Only ask for sudo when there is something to delete.
+if [[ -n $(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night 2>/dev/null | head -1) ]]; then
+  sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night -exec rm -rf {} + \
+    || echo "WARN: could not delete the stock themes"
+fi
 
 echo "Done. Run 'pacman -Qtdq' afterwards to check for newly-orphaned deps."

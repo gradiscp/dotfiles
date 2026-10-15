@@ -4,13 +4,14 @@
 #   ~/Projects/paulgradischnig/dotfiles/install.sh
 # REPO_DIR is derived from this file's own location, so the clone path is
 # free - but the symlinks it creates bake it in. Moving the repo afterwards
-# leaves them dangling; re-run this script then.
+# leaves them dangling; re-run this script then. Re-running is safe.
 set -euo pipefail
 (( EUID == 0 )) && { echo "Run as your user, not root; sudo is called where needed." >&2; exit 1; }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="$HOME/.config"
 STAMP="$(date +%s)"
+OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 
 # Every `link` call stays on one line: omarchy-drift-check parses them (plus
 # the config/hypr/*.lua loop) as the one list of what must point into the repo.
@@ -28,10 +29,10 @@ link() {
 echo "== Packages =="
 # packages.txt: one name per line, "#" comments, an [aur] header switches to
 # the AUR list. -S without -y: a plain -Sy refreshes the database without
-# upgrading, which is the partial-upgrade trap on Arch; keep updating to
-# `omarchy update`.
-mapfile -t PACMAN_PKGS < <(sed -n '/^\[aur\]/q; s/#.*//; /^\s*$/d; p' "$REPO_DIR/packages.txt")
-mapfile -t AUR_PKGS < <(sed -n '/^\[aur\]/,$ { /^\[aur\]/d; s/#.*//; /^\s*$/d; p }' "$REPO_DIR/packages.txt")
+# upgrading, which is the partial-upgrade trap on Arch; run `omarchy update`
+# first on an installation that is more than a few days old.
+mapfile -t PACMAN_PKGS < <(sed -n '/^\[aur\]/q; s/\s*#.*//; s/\s+$//; /^\s*$/d; p' "$REPO_DIR/packages.txt")
+mapfile -t AUR_PKGS < <(sed -n '/^\[aur\]/,$ { /^\[aur\]/d; s/\s*#.*//; s/\s+$//; /^\s*$/d; p }' "$REPO_DIR/packages.txt")
 sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
 if (( ${#AUR_PKGS[@]} > 0 )); then
   if command -v yay >/dev/null; then
@@ -45,14 +46,18 @@ fi
 
 echo "== Browser (Brave Origin) =="
 # Omarchy's own installer: AUR package brave-origin-bin, Wayland flags, theme
-# policy. Privacy defaults go in as a second policy file next to Omarchy's
-# color.json (that is the only file Omarchy rewrites there). The default
-# browser itself comes from the linked mimeapps.list below.
-command -v brave-origin >/dev/null || omarchy install browser brave-origin || echo "WARN: 'omarchy install browser brave-origin' failed"
+# policy. It `cp -f`s its flags file, which would write through an existing
+# link into the repo - so the link goes first (re-run after a failed install).
+# Privacy defaults go in as a second policy file next to Omarchy's color.json
+# (the only file Omarchy rewrites there). The default browser itself comes
+# from the linked mimeapps.list below.
+if ! command -v brave-origin >/dev/null; then
+  [[ -L $CONFIG_DIR/brave-origin-flags.conf ]] && rm "$CONFIG_DIR/brave-origin-flags.conf"
+  omarchy install browser brave-origin || echo "WARN: 'omarchy install browser brave-origin' failed - no browser until it is installed"
+fi
 sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json
 # Omarchy's launch flags (Wayland, libsecret) minus its --load-extension line:
-# the Copy-URL, yt-dlp and WhatsApp-slim extensions are not wanted. Linked
-# after the installer, which would otherwise cp its stock copy over it.
+# the Copy-URL, yt-dlp and WhatsApp-slim extensions are not wanted.
 link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-flags.conf"
 
 echo "== Tailscale =="
@@ -82,57 +87,80 @@ link "$REPO_DIR/config/omarchy/themes/crimson-core" "$CONFIG_DIR/omarchy/themes/
 link "$REPO_DIR/config/omarchy/themes/apple-coast" "$CONFIG_DIR/omarchy/themes/apple-coast"
 # Menu override: hides the Share submenu (every entry needs localsend).
 link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
+# Default coding agent for Omarchy's menu and SUPER+CTRL+SHIFT+A. Written
+# directly: `omarchy default agent` would run `mise use -g` through the linked
+# mise config and launch the agent.
+mkdir -p "$CONFIG_DIR/omarchy/defaults" && printf 'claude\n' >"$CONFIG_DIR/omarchy/defaults/agent"
 
 echo "== Text size =="
 # One knob for shell font base-size, GTK text-scaling-factor and the terminal
-# font (see omarchy-display-text-size). 12 = Omarchy's stock size.
+# font (see omarchy-display-text-size). 12 is Omarchy's stock size; this only
+# resets a machine that was set to something else.
 omarchy display text size 12 || echo "WARN: 'omarchy display text size 12' failed - run it by hand"
 
 echo "== Cursor (Bibata-Modern-Ice, single variant) =="
-# 1.7 MB from the upstream release instead of the 322 MB AUR package that
-# bundles every variant. Pinned version and checksum; the archive holds only
-# cursors/, index.theme and cursor.theme (checked 2026-10-15).
+# 1.7 MB download (27 MB unpacked) from the upstream release instead of the
+# 322 MB AUR package that bundles every variant. Pinned version and checksum;
+# the archive holds only cursors/, index.theme and cursor.theme (checked
+# 2026-10-15). Unpacked in a temp dir and moved into place in one step, so an
+# interrupted run cannot leave a half theme that the check below would accept.
 CURSOR_DIR="$HOME/.local/share/icons/Bibata-Modern-Ice"
 CURSOR_URL="https://github.com/ful1e5/Bibata_Cursor/releases/download/v2.0.7/Bibata-Modern-Ice.tar.xz"
 CURSOR_SHA256="a68cae60c4dc706350e194ebc91c5fe48bc7bc9d59e119555834a2a7ee5078ef"
-if [[ ! -f $CURSOR_DIR/index.theme ]]; then
+if [[ ! -d $CURSOR_DIR/cursors || ! -f $CURSOR_DIR/index.theme ]]; then
   tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
   if curl -fsSL -o "$tmp/cursor.tar.xz" "$CURSOR_URL" \
     && echo "$CURSOR_SHA256  $tmp/cursor.tar.xz" | sha256sum -c --quiet \
+    && tar -xJf "$tmp/cursor.tar.xz" -C "$tmp" \
     && mkdir -p "$(dirname "$CURSOR_DIR")" \
-    && tar -xJf "$tmp/cursor.tar.xz" -C "$(dirname "$CURSOR_DIR")"; then
+    && rm -rf "$CURSOR_DIR" && mv "$tmp/Bibata-Modern-Ice" "$CURSOR_DIR"; then
     echo "Installed $CURSOR_DIR"
   else
     echo "WARN: cursor theme download or checksum failed - stock cursor stays"
   fi
-  rm -rf "$tmp"
+  rm -rf "$tmp"; trap - EXIT
 fi
 
 echo "== Fontconfig (JetBrains Mono everywhere) =="
 link "$REPO_DIR/config/fontconfig/conf.d/51-jetbrains.conf" "$CONFIG_DIR/fontconfig/conf.d/51-jetbrains.conf"
 fc-cache -f >/dev/null 2>&1 || echo "WARN: fc-cache failed"
 
+echo "== Environment =="
+# Omarchy's /usr/lib/environment.d/10-omarchy-fcitx.conf points Qt, SDL and
+# XWayland at the fcitx5 input method, which remove-unwanted-apps.sh removes.
+# A user file of the same name masks it (empty on purpose). Takes effect at
+# the next login.
+link "$REPO_DIR/config/environment.d/10-omarchy-fcitx.conf" "$CONFIG_DIR/environment.d/10-omarchy-fcitx.conf"
+
 echo "== herdr, git, mise, default apps =="
 link "$REPO_DIR/config/herdr/config.toml" "$CONFIG_DIR/herdr/config.toml"
 link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"
 link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
-# Tool versions for claude and gh; `mise install` fetches them. Omarchy's own
-# installer and migrations (omarchy-mise-install) also drop lazy wrappers for
-# other coding agents into ~/.local/bin that install the agent on first run;
-# only Claude Code is wanted here, so those go again, installed or not.
+# Tool versions for claude and gh (plus upgrade.auto_prune = false, which
+# Omarchy sets for a reason: `mise up` must not prune the Claude binary that
+# running sessions started from). Omarchy's installer and migrations also
+# drop lazy wrappers for other coding agents into ~/.local/bin that run
+# `mise use -g <tool>` on first call - through the link that would write the
+# tool into this repo. Only Claude Code is wanted, so those go, installed or
+# not; only files carrying Omarchy's wrapper marker are deleted. node is not
+# needed either (claude is a native binary; pnpm brings system nodejs).
 link "$REPO_DIR/config/mise/config.toml" "$CONFIG_DIR/mise/config.toml"
 if command -v mise >/dev/null; then
   mise install || echo "WARN: mise install failed - run 'mise install' by hand"
-  for tool in codex copilot crush cursor-agent gemini grok hermes muse omp opencode pi; do
+  for tool in codex copilot crush cursor-agent gemini grok hermes muse omp opencode pi node playwright ghui; do
     mise uninstall --all "$tool" >/dev/null 2>&1 || true
-    rm -f "$HOME/.local/bin/$tool"
+    if [[ -f $HOME/.local/bin/$tool ]] && grep -q 'mise use -g' "$HOME/.local/bin/$tool"; then
+      rm -f "$HOME/.local/bin/$tool"
+    fi
   done
   echo "mise tools now: $(mise ls 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ')"
 fi
-# Brave Origin as the default browser and URL handler (xdg-settings writes
-# through this link, so a change via Omarchy's menu lands in the repo). The
-# claude-cli:// line points at claude-code-url-handler.desktop, which Claude
-# Code writes itself on first run (absolute path, so it is not in the repo).
+# Brave Origin as the default browser and URL handler. Omarchy's "default
+# browser" menu writes this file (through the link on 2026-10-15, so the
+# change landed in the repo; if it replaces the link, the drift check
+# re-links). The claude-cli:// line points at claude-code-url-handler.desktop,
+# which Claude Code writes itself on first run.
 link "$REPO_DIR/config/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
 # The lazydocker launcher (SUPER+SHIFT+D's menu entry) stays the stock
 # Omarchy copy: Omarchy migrations `cp` over this path, so it must be a plain
@@ -140,7 +168,7 @@ link "$REPO_DIR/config/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
 DOCKER_DESKTOP="$HOME/.local/share/applications/Docker.desktop"
 if [[ ! -f $DOCKER_DESKTOP || -L $DOCKER_DESKTOP ]]; then
   mkdir -p "$(dirname "$DOCKER_DESKTOP")"
-  cp --remove-destination "${OMARCHY_PATH:-/usr/share/omarchy}/applications/Docker.desktop" "$DOCKER_DESKTOP"
+  cp --remove-destination "$OMARCHY_PATH/applications/Docker.desktop" "$DOCKER_DESKTOP" || echo "WARN: could not restore Docker.desktop"
 fi
 
 echo "== Scripts =="
@@ -150,9 +178,8 @@ link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
 # Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
 link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
 # Repairs links Omarchy's tools turned into plain files, and reports the rest
-# (including stock packages an update reinstalled). Linked a second time into
-# the post-update hook dir, so it runs after every `omarchy update` - that is
-# when the drift happens.
+# (returned packages and launchers, the Brave policy copy). Linked a second
+# time into the post-update hook dir, so it runs after every `omarchy update`.
 link "$REPO_DIR/bin/omarchy-drift-check" "$HOME/.local/bin/omarchy-drift-check"
 link "$REPO_DIR/bin/omarchy-drift-check" "$CONFIG_DIR/omarchy/hooks/post-update.d/50-dotfiles-drift-check"
 
@@ -160,10 +187,12 @@ echo "== Claude Code =="
 # herdr's Claude hook: reports each session's id so herdr can `claude --resume`
 # it after a reboot. It writes ~/.claude/hooks/herdr-agent-state.sh AND a
 # SessionStart entry with an absolute home path into ~/.claude/settings.json -
-# so it runs BEFORE settings.json is linked (the repo copy already carries the
-# same hook with $HOME) and only when its script is missing. Through the link
-# it would write that absolute path into the public repo (happened 2026-10-15).
-if command -v herdr >/dev/null && [[ ! -f $HOME/.claude/hooks/herdr-agent-state.sh ]]; then
+# so it runs only BEFORE settings.json is linked (the repo copy already
+# carries the same hook with $HOME) and only when its script is missing.
+# Through the link it would write that absolute path into the public repo
+# (happened 2026-10-15). To upgrade the hook later: run it, then
+# `git checkout -- config/claude/settings.json`.
+if command -v herdr >/dev/null && [[ ! -f $HOME/.claude/hooks/herdr-agent-state.sh && ! -L $HOME/.claude/settings.json ]]; then
   herdr integration install claude || echo "WARN: 'herdr integration install claude' failed"
 fi
 # Carries the hooks that run claude-notify above - see the header of
@@ -178,14 +207,17 @@ link "$REPO_DIR/config/claude/rules" "$HOME/.claude/rules"
 link "$REPO_DIR/config/claude/skills/docu-guard" "$HOME/.claude/skills/docu-guard"
 
 echo "== GTK/GNOME settings =="
-# What Omarchy's own configs don't cover. gsettings set is idempotent.
+# What Omarchy's own configs don't cover. gsettings set is idempotent and
+# needs a session bus (fails harmlessly on a bare TTY).
 # text-scaling-factor is deliberately NOT set: `omarchy display text size`
 # above drives it together with the shell and terminal font size.
-gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11'
-gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font 11'
-gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
-gsettings set org.gnome.desktop.interface cursor-size 14
-gsettings set org.gnome.desktop.wm.preferences button-layout ''
+{
+  gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11' &&
+  gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font 11' &&
+  gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice' &&
+  gsettings set org.gnome.desktop.interface cursor-size 14 &&
+  gsettings set org.gnome.desktop.wm.preferences button-layout ''
+} || echo "WARN: gsettings failed (no session bus?) - re-run inside the desktop"
 
 echo "== App cleanup =="
 bash "$REPO_DIR/remove-unwanted-apps.sh" || echo "WARN: app cleanup reported a problem (see above)"
@@ -205,18 +237,19 @@ echo "== Link check =="
 cat <<'EOT'
 
 Done. Manual steps still needed on this machine:
-  1. Review config/hypr/monitors.lua - the laptop scale (1 on a 1920x1080
+  1. Log out and in again: cursor and environment variables reach apps only
+     from a fresh session.
+  2. Review config/hypr/monitors.lua - the laptop scale (1 on a 1920x1080
      panel) may need adjusting for a different panel. Use
      `omarchy hyprland monitor scaling <N>`, not a raw file edit - see
      CLAUDE.md for why. The external monitors keep their own literal scale.
-  2. Copy your SSH key into ~/.ssh (chmod 600 the private key, 644 the
-     .pub) for git push/pull over SSH.
-  3. Tailscale login: `sudo tailscale up --accept-routes`.
-  4. Fingerprint: skipped on purpose. Check libfprint's supported-devices
-     list for this laptop's sensor before bothering to set it up.
-  5. Brave Origin: enable uBlock Origin under brave://settings/extensions/v2
-     and restore config/brave/ublock-origin-backup.txt in its dashboard;
-     install Bitwarden; set Shields to Aggressive (see CHEATSHEET).
+  3. SSH: copy the key into ~/.ssh (chmod 600 / 644), add the host alias to
+     ~/.ssh/config, then `git remote set-url origin` to it (CHEATSHEET).
+  4. Logins: `sudo tailscale up --accept-routes`, `gh auth login`, `claude`.
+  5. Brave Origin: the hand-set items in CHEATSHEET.md (uBlock Origin from
+     config/brave/ublock-origin-backup.txt, Bitwarden, Shields, zoom, DNS).
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra
-     git identities) and config/claude/rules/*.local.md (private rules).
+     git identities and their include files) and
+     config/claude/rules/*.local.md (private rules).
+  7. Fingerprint: skipped on purpose; check libfprint's device list first.
 EOT
