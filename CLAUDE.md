@@ -96,15 +96,14 @@ live, and `hyprctl reload` still reports success.
   error. (`rescanPlugins` only updates the registry.) Bar widgets and
   `shell.json` do hot-reload.
 - **Cloning a `kind: bar` plugin is broken** in this Omarchy version: a
-  byte-identical clone makes the whole bar disappear (its `required
-  property`s are set after creation by `Loader`). Widget and service clones
-  work.
+  byte-identical clone makes the whole bar disappear. Widget and service
+  clones work.
 - **Plugin clones drift silently** (a clone never follows stock updates;
   partial clones are not possible). The only clone left is the 117-line
   `gradiscp.workspaces`, which keeps `moduleName: "omarchy.workspaces"` on
   purpose (IPC routing via `clonedFrom`). Idle, lock and notifications are
-  stock since 2026-10-15: the clones carried ~3700 lines (password code
-  included) for a no-blank lock, a clock and a toast style.
+  stock since 2026-10-15 (the clones were ~3700 lines for a no-blank lock,
+  a clock and a toast style).
 - **Theme `shell.toml` vs `shell.<section>.toml`:** a theme's `shell.toml`
   *replaces* the generated file (~200 lines to own forever). The two own
   themes ship only `shell.notifications.toml`, which replaces that one
@@ -156,10 +155,9 @@ live, and `hyprctl reload` still reports success.
   (`/exit` + `claude --resume` does). Change renderer settings between
   sessions, not under running ones. Postmortem:
   `~/Projects/paulgradischnig/incidents/2026-09-12-herdr-claude-fullscreen-garbled.md`.
-- `herdr integration install claude` writes a SessionStart hook with an
-  absolute home path into `settings.json`; `install.sh` runs it only before
-  the link exists and only if its hook script is missing. Never re-run it by
-  hand through the link.
+- `herdr integration install claude` writes a hook with an absolute home
+  path into `settings.json`; `install.sh` runs it only before the link exists
+  and only if its script is missing. Never re-run it through the link.
 - Running sessions keep the hook command they loaded. After changing a hook
   path in `settings.json`, restart the sessions or leave something at the
   old path.
@@ -196,8 +194,7 @@ live, and `hyprctl reload` still reports success.
 - Any `pacman -S` (typed, or Omarchy's Install menu) can bring a removed
   package back; `remove-unwanted-apps.sh` is re-runnable and the drift check
   reports what came back.
-- Keep the pacman cache at two versions (`omarchy update` runs
-  `paccache -rk2` as the downgrade path).
+- Keep the pacman cache at two versions (`paccache -rk2`, the downgrade path).
 - `packages.txt` installs with `-S --needed`, never `-Sy` (partial upgrade).
 - No fingerprint (the old laptop's EgisTec EH57E has no libfprint driver);
   check libfprint's device list before setting one up on another machine.
