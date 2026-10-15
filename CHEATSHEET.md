@@ -9,6 +9,7 @@ anhängen.
 |---|---|---|
 | wöchentlich | `omarchy update` | Snapshot, `pacman -Syu`, AUR, mise-Tools, Omarchy-Migrationen, Drift-Check. Neustart annehmen, wenn Kernel oder Hyprland dabei war. |
 | danach, kurz | `sudo pacdiff` | Geänderte Configs in `/etc` (`.pacnew`) zusammenführen. Meist leer. |
+| nach Änderungen über Omarchy-Menüs | `omarchy-drift-check` | Läuft nach `omarchy update` automatisch; von Hand prüfen, ob alle Configs noch ins Repo zeigen, Theme-Sperre und Pakete stimmen. Ergebnis als Toast, Log in `~/.local/state/omarchy-drift-check.log`. |
 | alle paar Wochen | `docker pull <Basis-Images der Projekte>` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
 | alle paar Monate | `omarchy-update-firmware` | BIOS/SSD-Firmware über fwupd. Der erste Lauf installiert fwupd. |
 | bei jedem neuen Git-Repo | `git remote set-url origin git@<ssh-alias>:gradiscp/<repo>.git` | Remote auf den SSH-Host-Alias aus `~/.ssh/config` umstellen, damit der richtige Key greift. |
