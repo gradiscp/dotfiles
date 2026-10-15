@@ -1,6 +1,6 @@
 # dotfiles
 
-Omarchy config for my laptop (built-in 1920x1080 panel at scale 1.25). This
+Omarchy config for my laptop (built-in 1920x1080 panel at scale 1). This
 file holds only what is true now and must not be broken: the invariants and
 the traps. History lives in commit messages and in the incidents repo
 (`~/Projects/paulgradischnig/incidents`); the overview and the keybind table
@@ -60,7 +60,7 @@ live, and `hyprctl reload` still reports success.
 - **Laptop scale only via `omarchy hyprland monitor scaling <N>`**, never a
   hand edit of the `omarchy_monitor_scale` line in `monitors.lua` (hand
   edits got reset; the catch-all monitor rule also pulls a stale value back
-  when an external display is plugged in). Intended value: 1.25. Run the
+  when an external display is plugged in). Intended value: 1. Run the
   drift check afterwards. The external monitors in that file carry literal
   `scale =` values on purpose: the command rewrites the variable, and a
   shared variable dragged the laptop to the 4K monitor's 1.6 once.
@@ -90,7 +90,7 @@ live, and `hyprctl reload` still reports success.
 ## Omarchy shell and plugins
 
 - **`service`/`panel`/overlay plugins do not hot-reload.** After editing
-  `gradiscp.notifications` or `.closeconfirm`, run
+  `gradiscp.closeconfirm`, run
   `omarchy restart shell`; otherwise the old code keeps running without an
   error. (`rescanPlugins` only updates the registry.) Bar widgets and
   `shell.json` do hot-reload.
@@ -98,20 +98,16 @@ live, and `hyprctl reload` still reports success.
   byte-identical clone makes the whole bar disappear (its `required
   property`s are set after creation by `Loader`). Widget and service clones
   work.
-- **Plugin clones drift silently.** The unchanged file in a clone
-  (`gradiscp.notifications/NotificationLogic.js`) does not follow stock
-  updates. After an `omarchy update`, `diff` it against
-  `/usr/share/omarchy/shell/plugins/<clonedFrom>/` (CHEATSHEET). Partial
-  clones are not possible. `gradiscp.workspaces` keeps
-  `moduleName: "omarchy.workspaces"` on purpose (IPC routing via `clonedFrom`).
-  Idle and lock are stock since 2026-10-15 (the idle clone only added a
-  guard the lock IPC already has; the lock clone was ~1500 lines of
-  password-handling code for a no-blank variant and a clock).
+- **Plugin clones drift silently** (a clone never follows stock updates;
+  partial clones are not possible). The only clone left is the 117-line
+  `gradiscp.workspaces`, which keeps `moduleName: "omarchy.workspaces"` on
+  purpose (IPC routing via `clonedFrom`). Idle, lock and notifications are
+  stock since 2026-10-15: the clones carried ~3700 lines (password code
+  included) for a no-blank lock, a clock and a toast style.
 - **Theme `shell.toml` vs `shell.<section>.toml`:** a theme's `shell.toml`
-  *replaces* the generated file (~200 lines to own forever). The two custom
+  *replaces* the generated file (~200 lines to own forever). The two own
   themes ship only `shell.notifications.toml`, which replaces that one
-  section and therefore repeats *every* key of it: holding only
-  `background-alpha` would drop `border`, `text` and `countdown`.
+  section and therefore repeats *every* key of it.
 - **`bar.transparent` is toggled by double-clicking the bar's centre** - a
   stock gesture, not drift.
 - **There is no `omarchy bar remove`**; delete the entry from `bar.layout`.

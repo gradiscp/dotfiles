@@ -43,13 +43,13 @@ Omarchy's menus.
 
 - **Look:** Tokyo Night (stock), square corners, no blur or transparency,
   `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
-  everything (UI, terminal, and the generic sans/serif families), scale 1.25.
+  everything (UI, terminal, and the generic sans/serif families).
   Two own themes, `crimson-core` and `apple-coast`, stay selectable.
 - **Bar:** the active workspace as a capsule in the theme's urgent colour; a
   terminal icon that lights up with a count while Claude Code sessions wait
   for a permission. No tray.
-- **Notifications:** compact; the accent border only on critical ones.
-  Claude permission requests pop up and jump back to their terminal on click.
+- **Notifications:** stock. Claude permission requests pop up and jump back
+  to their terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
   after 7; a fullscreen window with audio playing (a film) keeps the machine
   awake - audio alone does not.
@@ -81,8 +81,7 @@ config/
   hypr/                Hyprland overrides (bindings, looknfeel, monitors)
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
-    plugins/           gradiscp.* - close dialog, workspaces,
-                       notifications, Claude status widget
+    plugins/           gradiscp.* - close dialog, workspaces, Claude status
     extensions/        Menu overrides (hidden/redirected dead entries)
     themes/            crimson-core, apple-coast (own themes, selectable)
   claude/              Claude Code settings (hooks), global rules, own skills

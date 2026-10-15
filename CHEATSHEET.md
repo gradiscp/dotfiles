@@ -9,7 +9,6 @@ anhängen.
 |---|---|---|
 | wöchentlich | `omarchy update` | Snapshot, `pacman -Syu`, AUR, mise-Tools, Omarchy-Migrationen, Drift-Check. Neustart annehmen, wenn Kernel oder Hyprland dabei war. |
 | danach, kurz | `sudo pacdiff` | Geänderte Configs in `/etc` (`.pacnew`) zusammenführen. Meist leer. |
-| danach, kurz | Clone-Check, siehe unten | Zeigt, ob Omarchy Plugins geändert hat, die hier als Kopie liegen. |
 | alle paar Wochen | `docker pull <Basis-Images der Projekte>` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
 | alle paar Monate | `omarchy-update-firmware` | BIOS/SSD-Firmware über fwupd. Der erste Lauf installiert fwupd. |
 | bei jedem neuen Git-Repo | `git remote set-url origin git@<ssh-alias>:gradiscp/<repo>.git` | Remote auf den SSH-Host-Alias aus `~/.ssh/config` umstellen, damit der richtige Key greift. |
@@ -22,17 +21,6 @@ anhängen.
 Omarchys getesteten Stand - etwas später als Arch selbst, aber vollständig.
 Kanal ansehen: `omarchy-channel-current` (`stable`; `rc`/`edge` wären neuer,
 aber ungetestet).
-
-### Clone-Check
-
-Diese Dateien in den eigenen Plugin-Kopien sind identisch mit Omarchys
-Original und gehen dessen Updates nicht mit. Keine Ausgabe = alles gleich;
-eine `differ`-Zeile = Omarchy hat die Datei geändert, dann nachziehen.
-
-```bash
-P=~/.config/omarchy/plugins; S=/usr/share/omarchy/shell/plugins
-diff -q $P/gradiscp.notifications/NotificationLogic.js $S/notifications/NotificationLogic.js
-```
 
 ### Wenn nach einem Update etwas nicht stimmt
 

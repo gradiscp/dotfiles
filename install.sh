@@ -59,11 +59,9 @@ echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
 # SUPER+W's "close anyway?" dialog, summoned by bin/window-close-guard.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarchy/plugins/gradiscp.closeconfirm"
-# Clones of omarchy.workspaces / omarchy.notifications (dot workspaces, calmer
-# toasts) and the Claude waiting-count widget. shell.json above already points
-# the bar and the plugin list at these ids.
+# Clone of omarchy.workspaces (dot workspaces) and the Claude waiting-count
+# widget. shell.json above already points the bar at these ids.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.workspaces" "$CONFIG_DIR/omarchy/plugins/gradiscp.workspaces"
-link "$REPO_DIR/config/omarchy/plugins/gradiscp.notifications" "$CONFIG_DIR/omarchy/plugins/gradiscp.notifications"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.claude-status"
 # Own themes (whole directories: each is its own theme, not an overlay).
 # omarchy-theme-list globs both dirs and symlinks, so linking is enough. They
@@ -76,7 +74,7 @@ link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarc
 
 echo "== Text size =="
 # One knob for shell font base-size, GTK text-scaling-factor and the terminal
-# font (see omarchy-display-text-size). 10 fits a 1080p panel at scale 1.25.
+# font (see omarchy-display-text-size). 10 is what this laptop runs.
 omarchy display text size 10 || echo "WARN: 'omarchy display text size 10' failed - run it by hand"
 
 echo "== Fontconfig (JetBrains Mono everywhere) =="
@@ -179,8 +177,8 @@ echo "== Link check =="
 cat <<'EOT'
 
 Done. Manual steps still needed on this machine:
-  1. Review config/hypr/monitors.lua - the laptop scale (1.25 for a
-     1920x1080 panel) may need adjusting for a different panel. Use
+  1. Review config/hypr/monitors.lua - the laptop scale (1 on a 1920x1080
+     panel) may need adjusting for a different panel. Use
      `omarchy hyprland monitor scaling <N>`, not a raw file edit - see
      CLAUDE.md for why. The external monitors keep their own literal scale.
   2. Copy your SSH key into ~/.ssh (chmod 600 the private key, 644 the
