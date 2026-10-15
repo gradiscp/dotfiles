@@ -23,7 +23,6 @@
   //
   // Only use provider when a provider_name function or command named "name"
   // returns JSON rows. Static submenus only need dotted ids.
-  //
 
   // ---- gradiscp overrides (2026-09-13 audit, see CLAUDE.md) ----
   // A user entry REPLACES the stock one completely: missing fields are filled

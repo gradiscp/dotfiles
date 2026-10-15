@@ -1,19 +1,21 @@
 # dotfiles
 
-Omarchy config for a Samsung Galaxy Book Pro 360 (eDP-1, 1920x1080, scale
-1.25). This file holds only what is true now and must not be broken: the
-invariants and the traps. History lives in commit messages and in the
-incidents repo (`~/Projects/paulgradischnig/incidents`); the overview and
-the keybind table live in `README.md`; component details live in the
-headers of the scripts and plugins themselves. Budget: 12 KB.
+Omarchy config for my laptop (built-in 1920x1080 panel at scale 1.25). This
+file holds only what is true now and must not be broken: the invariants and
+the traps. History lives in commit messages and in the incidents repo
+(`~/Projects/paulgradischnig/incidents`); the overview and the keybind table
+live in `README.md`; component details live in the headers of the scripts
+and plugins themselves. Budget: 12 KB.
 
 ## Repo rules
 
 - **Public repo: nothing private.** No IPs, hostnames, ports, user names of
   other machines, credentials, private e-mail addresses, absolute home
-  paths (`$HOME`, `%h`, `~` instead) or names of private projects. The old
-  `ssh*` aliases were dropped from `config/bashrc` for this reason; such
-  things go in a file outside the repo.
+  paths (`$HOME`, `%h`, `~` instead), employer or private project names.
+  Machine-specific things go in untracked files: `~/.config/git/config.local`
+  (extra git identities, pulled in by a plain `[include]`) and
+  `config/claude/rules/*.local.md` (gitignored, still loaded through the
+  `~/.claude/rules` link).
 - **Git identity is the global one** (`Paul Gradischnig` /
   `92756104+gradiscp@users.noreply.github.com`). Never set a local
   `user.name`/`user.email` in this repo and never "fix" the global one;
@@ -22,6 +24,11 @@ headers of the scripts and plugins themselves. Budget: 12 KB.
   parses them (plus the `config/hypr/*.lua` loop), so that is the one list.
 - **A repo edit is a live edit** - most of `~/.config` links here. After a
   Hyprland edit, `hyprctl configerrors` must be empty.
+- **Files identical to Omarchy's stock copy are not kept in the repo.**
+  `hypr/hyprland.lua`, `hypr/autostart.lua`, `hypr/input.lua`, `foot.ini`,
+  `.bashrc` and `Docker.desktop` are stock plain files live. `Docker.desktop`
+  must stay a plain file: Omarchy migrations `cp` onto that path, and through
+  a link they wrote into this repo.
 
 ## Symlink drift
 
@@ -36,44 +43,37 @@ live, and `hyprctl reload` still reports success.
   `hyprctl binds` / `hyprctl configerrors` - never assume. It re-links copies
   identical to the repo and reports ones that differ; a differing copy
   usually holds a change made through Omarchy's UI - copy it into the repo,
-  then re-run. It also runs as an `omarchy update` post-update hook.
-- `install.sh` runs `omarchy display text size` *before* linking `foot.ini`
-  for the same reason.
+  then re-run. It also runs as an `omarchy update` post-update hook, where it
+  additionally reports stock packages the update reinstalled
+  (`remove-unwanted-apps.sh --check`; LibreOffice came back on 2026-09-24).
 - `~/.claude/settings.json` is a link too, and Claude Code rewrites it
-  (`/model`, `/config`, "always allow"). A plain file there goes back into
+  (`/model`, `/config`, "always allow"): `git diff` it before every commit and
+  commit only what was meant. A plain file there goes back into
   `config/claude/` and gets relinked.
 - A dangling theme link does not show: the desktop keeps rendering the
   generated copy in `~/.local/state/omarchy/current/theme/`. If a
   theme-dir-reading command behaves oddly, check
   `ls -laL ~/.config/omarchy/themes/` first.
-- Files identical to Omarchy's stock copy are not kept in the repo
-  (`hypr/autostart.lua`, `hypr/input.lua`, `Docker.desktop` are stock plain
-  files live). `Docker.desktop` must stay a plain file: Omarchy migrations
-  `cp` onto that path, and through a link they wrote into this repo.
 
 ## Hyprland
 
-- **Monitor scale only via `omarchy hyprland monitor scaling <N>`**, never a
-  hand edit of `monitors.lua` (hand edits got reset; the catch-all monitor
-  rule also pulls a stale value back when an external display is plugged in).
-  Intended value: 1.25. Run the drift check afterwards.
+- **Laptop scale only via `omarchy hyprland monitor scaling <N>`**, never a
+  hand edit of the `omarchy_monitor_scale` line in `monitors.lua` (hand
+  edits got reset; the catch-all monitor rule also pulls a stale value back
+  when an external display is plugged in). Intended value: 1.25. Run the
+  drift check afterwards. The external monitors in that file carry literal
+  `scale =` values on purpose: the command rewrites the variable, and a
+  shared variable dragged the laptop to the 4K monitor's 1.6 once.
 - **`~/.local/state/omarchy/workspace-layouts/` beats the global layout.**
   `SUPER+H` (toggle layout) writes a per-workspace override there that
   silently beats `layout = "scrolling"` and survives reboots. When windows
   tile or resize wrongly on some workspaces only, `ls` that directory first;
   fix with `rm ~/.local/state/omarchy/workspace-layouts/*.lua && hyprctl reload`.
   This bit twice and contributed to the herdr incident below.
-- **Opacity rules:** up to three values (`active inactive fullscreen`, a
-  fourth errors), and each is *multiplied* by the global one unless followed
-  by `override` - Firefox and the streaming-site rule need `override` on
-  every value. `hyprctl getprop <win> opacity_fullscreen` reads `1` either
-  way, so it proves nothing; `opacity_fullscreen_override` does.
-  `decoration.fullscreen_opacity` (0.9) applies to everything else.
-- **Firefox opacity targets the `firefox-based-browser` tag**, not the class:
-  Omarchy's `default/hypr/apps/browser.lua` forces tagged windows to 1.0 and
-  loads first.
-- **Title regexes must match the whole title:** `(?i).*(prime video).*`, not
-  `(?i)(prime video)`. Title rules are re-applied on title change.
+- **`rounding = 0` stays explicit** in `looknfeel.lua`: a theme's own
+  `hyprland.lua` loads before it and may set a radius (stock solitude: 6).
+  The shell reads the radius only at start: `omarchy restart shell` after
+  changing it. No blur, no opacity rules: everything else is stock.
 - **`hl.unbind` matches the key string as written** - spell it like stock
   (`SUPER + SHIFT + CTRL + R`). Hyprland runs *every* matching bind, so a
   reused chord must be unbound first. Reboot is not on bare `CTRL+SHIFT+R`
@@ -81,15 +81,16 @@ live, and `hyprctl reload` still reports success.
 - **No bare Super-tap binding** (`SUPER + SUPER_L` with `release = true`):
   it fires on every Super press that ran no other bind. The menu is on
   `SUPER+SPACE` only. Don't re-add it without asking.
-- **Unbound stock keys** (webapps, Spotify, Signal, 1Password, cliamp, Share,
-  weather) point at things not installed here; `command -v` before re-adding
-  any. `omarchy_preinstalled_bindings = false` would also kill the working
-  Obsidian/Omawrite/herdr/lazydocker/tmux keys, hence the explicit list.
+- **Unbound stock keys** (webapps, Spotify, Signal, 1Password, Obsidian,
+  cliamp, Share, weather): stock's `{ omarchy = ... }` launchers offer to
+  *install* a missing app on keypress, which is not wanted; webapps need
+  Chromium. `omarchy_preinstalled_bindings = false` would also kill the
+  working Omawrite/herdr/lazydocker/tmux keys, hence the explicit list.
 
 ## Omarchy shell and plugins
 
 - **`service`/`panel`/overlay plugins do not hot-reload.** After editing
-  `gradiscp.lock`, `.idle`, `.notifications` or `.closeconfirm`, run
+  `gradiscp.lock`, `.notifications` or `.closeconfirm`, run
   `omarchy restart shell`; otherwise the old code keeps running without an
   error. (`rescanPlugins` only updates the registry.) Bar widgets and
   `shell.json` do hot-reload.
@@ -97,21 +98,21 @@ live, and `hyprctl reload` still reports success.
   byte-identical clone makes the whole bar disappear (its `required
   property`s are set after creation by `Loader`). Widget and service clones
   work.
-- **Plugin clones drift silently.** Unchanged files in the clones
-  (`gradiscp.notifications/{Service.qml,NotificationLogic.js}`,
-  `gradiscp.idle/IdleModel.js`) do not follow stock updates. After an
-  `omarchy update`, `diff` them against
-  `/usr/share/omarchy/shell/plugins/<clonedFrom>/`. Partial clones are not
-  possible. `gradiscp.workspaces` keeps `moduleName: "omarchy.workspaces"` on
-  purpose (IPC routing via `clonedFrom`).
+- **Plugin clones drift silently.** The unchanged file in a clone
+  (`gradiscp.notifications/NotificationLogic.js`) does not follow stock
+  updates. After an `omarchy update`, `diff` it against
+  `/usr/share/omarchy/shell/plugins/<clonedFrom>/` (CHEATSHEET). Partial
+  clones are not possible. `gradiscp.workspaces` keeps
+  `moduleName: "omarchy.workspaces"` on purpose (IPC routing via `clonedFrom`).
+  The idle plugin is stock since 2026-10-15: the clone only added an
+  `isLocked` guard that the lock IPC already has.
 - **Theme `shell.toml` vs `shell.<section>.toml`:** a theme's `shell.toml`
-  *replaces* the generated file (~200 lines to own forever - crimson-core
-  ships none). `shell.<section>.toml` replaces only that section, so it must
-  repeat *every* key of it: `shell.notifications.toml` holding only
+  *replaces* the generated file (~200 lines to own forever). The two custom
+  themes ship only `shell.notifications.toml`, which replaces that one
+  section and therefore repeats *every* key of it: holding only
   `background-alpha` would drop `border`, `text` and `countdown`.
 - **`bar.transparent` is toggled by double-clicking the bar's centre** - a
-  stock gesture, not drift. Partial translucency is `background-alpha` in a
-  section override instead.
+  stock gesture, not drift.
 - **There is no `omarchy bar remove`**; delete the entry from `bar.layout`.
 - **A menu override replaces the stock entry completely** (missing fields
   become defaults), so `omarchy-menu.jsonc` entries carry every stock field.
@@ -119,16 +120,13 @@ live, and `hyprctl reload` still reports success.
   `chromium.desktop` for any non-Chromium default browser, and Chromium is
   uninstalled - so webapp `.desktop` files and binds are removed. Use a
   Firefox tab, or reinstall Chromium as a runtime, if one is ever wanted.
-- New wallpapers and `colors.toml` edits are only seen after
-  `omarchy theme set crimson-core` (`current/theme/` is a copy). Wallpapers
-  live in `themes/crimson-core/backgrounds/`, numbered in cycle order
-  (`SUPER+CTRL+SPACE`), **added as downloaded - do not re-encode them**.
-  Scaling them to the panel's 1920x1080 at quality 85 was tried on
-  2026-09-25 to keep the repo small and rejected: visibly worse. The
-  compositor downscales a 4K file per frame and that looks better than any
-  re-compression, so a few MB per wallpaper is the accepted price (`0-` and
-  `1-` are still old 1080p/q85 files). `wallpapers/` at the repo root is
-  storage only: files there are in no cycle and linked nowhere.
+- **Themes:** Tokyo Night (the one stock theme kept on disk) is the default;
+  `crimson-core` and `apple-coast` in `config/omarchy/themes/` stay
+  selectable. Their `colors.toml`/wallpaper edits are only seen after
+  `omarchy theme set <name>` (`current/theme/` is a copy). Wallpapers are
+  **added as downloaded - do not re-encode them**: scaling to 1080p/q85 was
+  tried on 2026-09-25 and rejected, the compositor downscales a 4K file
+  better than any re-compression.
 
 ## Lock and idle
 
@@ -137,9 +135,8 @@ live, and `hyprctl reload` still reports success.
   security decision, not styling.
 - The idle lock command has flipped twice (`omarchy-system-lock` <->
   `omarchy-lock-light`); it is `omarchy-system-lock` (blanks the panel) now,
-  by request. Ask before swapping it. The `isLocked` guard in
-  `gradiscp.idle` stays - it keeps an idle lock from hitting a `SUPER+L`
-  session.
+  by request. Ask before swapping it. The light-lock flag is
+  `$XDG_RUNTIME_DIR/omarchy-lock-no-blank` (tmpfs, cannot survive a crash).
 - Known upstream crash: Hyprland can segfault on a lid/hotplug event while
   the panel is *blanked* under a lock. Accepted; `SUPER+L` never blanks.
   Evidence is in `~/.cache/hyprland/hyprlandCrashReport*.txt`.
@@ -149,7 +146,7 @@ live, and `hyprctl reload` still reports success.
   fullscreen window (`fullscreen == 2`). Do not set
   `MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit` instead: it inhibits for any audio.
 - `MatrixRain.qml`: never assign to a running animation's properties from
-  inside it (restarts it, recursion, the shell hangs - `pkill -f quickshell`
+  inside it (restarts it, recursion, shell hang; `pkill -f quickshell`
   recovers). Keep `<`, `>`, `&` out of the glyph set (StyledText).
 - SUPER+W (close guard) cannot be tested with `wtype`; it needs a real keyboard.
 
@@ -168,8 +165,15 @@ live, and `hyprctl reload` still reports success.
   `~/.claude/rules/`: one topic per file, no `paths:` frontmatter (it would
   make a rule load only on matching reads). Check with `/context` in a new
   session.
+- The `Read`/`Edit` deny list covers Claude's file tools, the Bash file
+  commands it recognises (`cat`, `head`, `sed`, `tee`, redirections) and
+  nothing else (`grep -r`, scripts): a guard rail, not a boundary.
 - `claude-notify` logs every decision to `$XDG_RUNTIME_DIR/claude-notify/log`;
   read it before debugging a missing toast.
+- **Only Claude Code via mise.** Omarchy's installer also puts codex, crush,
+  gemini, copilot, opencode, playwright and pi in via mise; `install.sh`
+  uninstalls them again (check `mise ls` on a new machine). node is not in
+  mise: the system `nodejs` (a pnpm dependency) is enough.
 
 ## Packages and boot
 
@@ -177,18 +181,22 @@ live, and `hyprctl reload` still reports success.
   (`usr/share/plymouth/themes/omarchy/*`): pacman still removes the old
   files, so an `omarchy-settings` upgrade left a bare-text LUKS prompt and a
   black greeter. Recovery: drop the rule, `sudo pacman -S omarchy-settings`.
-  `remove-unwanted-apps.sh` removes it, the drift check reports it.
-- The stock-theme `NoExtract` (`usr/share/omarchy/themes/*`) is intended;
-  undo it by deleting the line and `sudo pacman -S omarchy`.
+  The boot and login screens are stock Omarchy.
+- The stock-theme `NoExtract` (`usr/share/omarchy/themes/*` with a `!`
+  exception for `tokyo-night`) is intended; `remove-unwanted-apps.sh` writes
+  it and the drift check verifies it. Undo by deleting the line and
+  `sudo pacman -S omarchy`.
+- `omarchy update` can reinstall removed base packages; `remove-unwanted-apps.sh`
+  is re-runnable and the drift check reports what came back.
 - Keep the pacman cache at two versions (`omarchy update` runs
   `paccache -rk2` as the downgrade path).
 - `packages.txt` installs with `-S --needed`, never `-Sy` (partial upgrade).
-- No fingerprint: the EgisTec EH57E (`1c7a:057e`) has no packaged libfprint
-  driver. The experimental one would need a self-built libfprint - if ever,
-  isolated under `/opt`, never replacing the system one.
+- No fingerprint (the old laptop's EgisTec EH57E has no libfprint driver);
+  check libfprint's device list before setting one up on another machine.
 - Firefox follows the system scale; a `layout.css.devPixelsPerPx` in a
   `user.js` (profile under `~/.config/mozilla/`) would override `prefs.js` on
   every start. There is none - keep it that way.
-- foot's `alpha` belongs under `[colors-dark]`, not `[main]`.
-- The second NVMe plan (not done, destructive, needs an explicit go-ahead):
-  `docs/nvme-plan.md`.
+- JetBrains Mono serves the generic `sans-serif`/`serif` families too
+  (`config/fontconfig/conf.d/51-jetbrains.conf` hooks in after Omarchy's
+  `50-omarchy.conf`, which assigns them to Liberation first). Delete the two
+  `match` blocks there to get normal web fonts back.

@@ -1,8 +1,8 @@
 # dotfiles
 
-Personal [Omarchy](https://omarchy.org/) config for a Samsung Galaxy Book Pro
-360: Hyprland, the Omarchy shell (bar, notifications, lock screen, idle), the
-crimson-core theme, terminal and tools - lean, and reproducible on a new
+Personal [Omarchy](https://omarchy.org/) config: Hyprland, the Omarchy shell
+(bar, notifications, lock screen), terminal and tools - kept as close to
+stock as the few things I actually want allow, and reproducible on a new
 laptop with one script.
 
 The invariants and the traps that cost real debugging time live in
@@ -13,43 +13,50 @@ Everyday commands (updating the system and more) are in
 ## New laptop
 
 1. Install Omarchy with its own installer.
-2. Clone over HTTPS (public repo, no key needed) to the path the scripts
-   expect:
+2. Clone over HTTPS (public repo, no key needed). The clone path is free,
+   but the symlinks `install.sh` creates bake it in, so pick the final one:
    ```bash
    git clone https://github.com/gradiscp/dotfiles.git ~/Projects/paulgradischnig/dotfiles
    cd ~/Projects/paulgradischnig/dotfiles && ./install.sh
    ```
-   It asks for the sudo password a few times, and yay shows each AUR
-   PKGBUILD before building it. It installs `packages.txt`, links every
-   config into place, sets the text size and GTK font/cursor, removes the unwanted
-   stock apps (`remove-unwanted-apps.sh`), applies the theme, and checks
-   that all links point into the repo.
-3. Do the manual steps it prints at the end: monitor scale for a different
-   panel, SSH key, `sudo tailscale up`, Firefox Sync.
+   It asks for the sudo password a few times and refuses to run as root.
+   It installs `packages.txt`, links every config into place, sets the text
+   size and GTK font, keeps only Claude Code of the coding agents Omarchy
+   installs via mise, removes the unwanted stock apps and themes
+   (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
+   point into the repo.
+3. Do the manual steps it prints at the end: laptop scale for a different
+   panel, SSH key, `sudo tailscale up --accept-routes`, Firefox Sync, and
+   the untracked per-machine files (`~/.config/git/config.local`,
+   `config/claude/rules/*.local.md`).
 
 ## Keeping it in sync
 
-Omarchy's own tools sometimes replace a linked config with a plain file.
-`omarchy-drift-check` re-links those (when nothing was changed), and reports
-real differences or lost `NoExtract` lines as a
-notification. It runs after every `omarchy update`; run it by hand after
-changing settings through Omarchy's menus.
+Omarchy's own tools sometimes replace a linked config with a plain file, and
+`omarchy update` can reinstall base packages that were removed on purpose.
+`omarchy-drift-check` re-links the copies (when nothing was changed) and
+reports real differences and reinstalled packages as a notification. It runs
+after every `omarchy update`; run it by hand after changing settings through
+Omarchy's menus.
 
 ## What's customized
 
-- **Look:** crimson-core theme (colors sampled from the wallpaper),
-  `scrolling` layout, JetBrains Mono, Bibata cursor, scale 1.25,
-  translucent foot/Nautilus/Firefox (streaming sites stay solid).
-- **Bar:** red pill on the active workspace; a terminal icon that turns red
-  with a count while Claude Code sessions wait for a permission.
-- **Notifications:** compact and translucent; red only for critical ones.
+- **Look:** Tokyo Night (stock), square corners, no blur or transparency,
+  `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
+  everything (UI, terminal, and the generic sans/serif families), scale 1.25.
+  Two own themes, `crimson-core` and `apple-coast`, stay selectable.
+- **Bar:** the active workspace as a capsule in the theme's urgent colour; a
+  terminal icon that lights up with a count while Claude Code sessions wait
+  for a permission. No tray.
+- **Notifications:** compact; the accent border only on critical ones.
   Claude permission requests pop up and jump back to their terminal on click.
 - **Lock and idle:** `SUPER+L` minimal lock, screen stays on; `SUPER+SHIFT+L`
-  full lock with clock, screen off. Screensaver after 2 min, lock after 3;
+  full lock with clock, screen off. Screensaver after 5 min, lock after 7;
   a fullscreen window with audio playing (a film) keeps the machine awake -
   audio alone does not.
-- **Apps:** Firefox only, trimmed stock set; anything heavier runs in a
-  container instead of being installed.
+- **Apps:** Firefox only, trimmed stock set (no LibreOffice, Obsidian, mpv,
+  Disks, CJK input); anything heavier runs in a container instead of being
+  installed. Only Claude Code as a coding agent.
 
 ## Keybinds changed from Omarchy defaults
 
@@ -64,35 +71,29 @@ changing settings through Omarchy's menus.
 | `CTRL+SHIFT+ESC` | Shutdown |
 | `SUPER+CTRL+SHIFT+R` | Reboot |
 
-Unbound because their target isn't installed: webapp keys, Spotify, Signal,
-1Password, Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`). Full list:
+Unbound because the app is not wanted (stock would offer to install it) or
+needs Chromium: webapp keys, Spotify, Signal, 1Password, Obsidian, cliamp,
+Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`). Full list:
 `omarchy menu keybindings --print`.
 
 ## Structure
 
 ```
 config/
-  hypr/                Hyprland config (bindings, looknfeel, rules, ...)
+  hypr/                Hyprland overrides (bindings, looknfeel, monitors)
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
-    plugins/           gradiscp.* - lock, idle, close dialog, workspaces,
+    plugins/           gradiscp.* - lock, close dialog, workspaces,
                        notifications, Claude status widget
     extensions/        Menu overrides (hidden/redirected dead entries)
-    themes/crimson-core/
-  claude/              Claude Code settings (hook), global rules, own skills
-  sddm/                SDDM greeter's Hyprland config (scale, cursor)
-  bashrc               Omarchy's bashrc plus the herdr opaque-background wrapper
-  foot/ fontconfig/ nvim/ herdr/ git/ mise/ systemd/ mimeapps.list
+    themes/            crimson-core, apple-coast (own themes, selectable)
+  claude/              Claude Code settings (hooks), global rules, own skills
+  fontconfig/ herdr/ git/ mise/ systemd/ mimeapps.list
 bin/                   omarchy-lock-light, claude-notify, window-close-guard,
                        omarchy-idle-audio-guard, omarchy-drift-check,
                        git-all (status/fetch/pull/push over every repo below)
-docs/                  Plans not carried out yet (second NVMe)
-install.sh             Fresh-machine setup, including GTK font and cursor
-remove-unwanted-apps.sh  Removes unwanted packages, stock themes; NoExtract
+install.sh             Fresh-machine setup
+remove-unwanted-apps.sh  Removes unwanted packages and stock themes (--check
+                       only reports); NoExtract keeps updates from restoring them
 packages.txt           Packages added on top of Omarchy
 ```
-
-## Planned
-
-Repurposing the second (ex-Windows) NVMe for games, Docker, VMs and backups -
-written up in [docs/nvme-plan.md](docs/nvme-plan.md), not done yet.
