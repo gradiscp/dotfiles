@@ -37,7 +37,6 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 | uBlock-Dashboard, Reiter Settings | "Restore from file": `config/brave/ublock-origin-backup.txt` (Filterlisten-Auswahl) |
 | `brave://settings/extensions` | Bitwarden |
 | Omarchy-Netzwerk-Panel | DNS-Provider Cloudflare oder Quad9 (gilt systemweit, nicht nur im Browser) |
-| vor jedem Push | `git grep -niE 'svag\|fortnitepro\|privat\|/home/' HEAD` muss leer sein (öffentliches Repo) |
 
 ### Wenn nach einem Update etwas nicht stimmt
 
@@ -47,4 +46,11 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 | Hyprland-Fehler | `hyprctl configerrors` |
 | Update kaputt, zurück | Beim Booten im Limine-Menü unter „Snapshots“ den Stand vor dem Update wählen (jedes `omarchy update` legt einen an), dort `omarchy snapshot restore` - macht ihn dauerhaft |
 | Log des letzten Updates | `less /tmp/omarchy-update.log` |
-| Skript im dotfiles-Repo geändert | `shellcheck install.sh remove-unwanted-apps.sh bin/*` und `bash -n` darauf |
+
+### Dotfiles-Repo (öffentlich)
+
+| Wann | Befehl |
+|---|---|
+| Skript geändert | `shellcheck install.sh remove-unwanted-apps.sh bin/*` und `bash -n` darauf |
+| vor jedem Commit | `git diff` lesen: Tools schreiben durch die Links ins Repo (CLAUDE.md, "Write-through writers"); `git add <Pfade>`, nicht `-A` |
+| vor jedem Push | `git grep -niE 'svag\|fortnitepro\|privat\|/home/' HEAD` muss leer sein |

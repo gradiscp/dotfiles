@@ -54,14 +54,12 @@ Omarchy's menus.
 - **Notifications:** stock. Claude permission requests pop up and jump back
   to their terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
-  after 7; a
-  fullscreen browser window (a film) keeps the machine awake.
+  after 7; a fullscreen browser window (a film) keeps the machine awake.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
   stock set (no LibreOffice, Obsidian, mpv, Disks, CJK input, tmux,
-  lazydocker, lazygit, screen recorder); anything
-  heavier runs in a container instead of being installed. Only Claude Code
-  as a coding agent.
+  lazydocker, lazygit, screen recorder); anything heavier runs in a
+  container instead of being installed. Only Claude Code as a coding agent.
 
 ## Keybinds changed from Omarchy defaults
 
