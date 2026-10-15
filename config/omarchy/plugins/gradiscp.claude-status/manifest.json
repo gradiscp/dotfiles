@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "Claude status",
-    "description": "Terminal glyph that turns red with a count while Claude Code sessions wait for a permission.",
+    "description": "Terminal glyph that lights up in the bar's urgent colour with a count while Claude Code sessions wait for a permission.",
     "category": "AI",
     "allowMultiple": false
   }

@@ -57,14 +57,14 @@ act() {
     out=$(git -C "$repo" pull --ff-only 2>&1) && echo "${green}${out##*$'\n'}${reset}" || echo "${red}pull failed:${reset} ${out##*$'\n'}"
     ;;
   push)
-    while IFS=' ' read -r branch upstream; do
+    while IFS=' ' read -r branch upstream remote remoteref; do
       if [[ -z $upstream ]]; then
         echo "${yellow}${branch}: no upstream - push by hand: git push -u origin ${branch}${reset}"; continue
       fi
       ahead=$(git -C "$repo" rev-list --count "$upstream..$branch" 2>/dev/null)
       ((ahead > 0)) || continue
-      out=$(git -C "$repo" push origin "$branch" 2>&1) && echo "${green}${branch}: pushed ${ahead}${reset}" || echo "${red}${branch}: push failed:${reset} ${out##*$'\n'}"
-    done < <(git -C "$repo" for-each-ref --format='%(refname:short) %(upstream:short)' refs/heads)
+      out=$(git -C "$repo" push "$remote" "refs/heads/$branch:$remoteref" 2>&1) && echo "${green}${branch}: pushed ${ahead}${reset}" || echo "${red}${branch}: push failed:${reset} ${out##*$'\n'}"
+    done < <(git -C "$repo" for-each-ref --format='%(refname:short) %(upstream:short) %(upstream:remotename) %(upstream:remoteref)' refs/heads)
     ;;
   esac
 }

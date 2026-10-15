@@ -8,9 +8,9 @@ import qs.Ui
 // the terminal about to close still has something running in it:
 //   omarchy-shell shell summon gradiscp.closeconfirm '{"process":"claude"}'
 // A slim strip under the bar ("C" of three mockups, picked 2026-09-16 over the
-// centred terminal card): no dimmed backdrop, translucent like the
-// notification toasts - Color.notifications.background carries the theme's
-// 0.85 alpha, and hyprland.lua blurs the "gradiscp-closeconfirm" layer.
+// centred terminal card): no dimmed backdrop, same colours as the
+// notification toasts (Color.notifications.*: opaque with a stock theme,
+// translucent only when the theme's shell.notifications.toml sets an alpha).
 // Keys: Tab / Shift+Tab / Left / Right switch, Enter picks, Escape cancels,
 // SUPER+W again confirms. The answer goes back to window-close-guard, which
 // knows which window it was.

@@ -7,7 +7,7 @@
           "id": "omarchy.clock",
           "format": "yyyy-MM-dd HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
-          "verticalFormat": "HH\n—\nmm"
+          "verticalFormat": "HH\n\u2014\nmm"
         },
         {
           "id": "omarchy.system-update"
@@ -19,9 +19,6 @@
         }
       ],
       "right": [
-        {
-          "id": "omarchy.tray"
-        },
         {
           "id": "gradiscp.claude-status"
         },
@@ -51,12 +48,10 @@
   },
   "cloneSourceRestores": [
     "gradiscp.lock",
-    "gradiscp.idle",
     "gradiscp.notifications"
   ],
   "disabledPlugins": [
     "omarchy.lock",
-    "omarchy.idle",
     "omarchy.notifications"
   ],
   "idle": {
@@ -66,9 +61,6 @@
   "plugins": [
     {
       "id": "gradiscp.lock"
-    },
-    {
-      "id": "gradiscp.idle"
     },
     {
       "id": "gradiscp.closeconfirm"

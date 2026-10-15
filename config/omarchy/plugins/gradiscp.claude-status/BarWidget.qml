@@ -4,7 +4,7 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// A terminal glyph that turns red with a count badge while Claude Code
+// A terminal glyph that lights up (bar.urgent) with a count badge while Claude Code
 // sessions wait for a permission ("A" of the 2026-09-13 bar mockups). The
 // count comes from `claude-notify count`: herdr agents in "blocked", plus the
 // last plain terminal that asked and was not visited since. A click runs

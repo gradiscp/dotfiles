@@ -62,8 +62,10 @@ BarWidget {
         readonly property color accent: root.bar ? root.bar.urgent : Color.urgent
 
         bar: root.bar
-        // A dot per workspace ("C" of the 2026-09-13 mockups): focused = red
-        // capsule, occupied = filled dot, empty = hollow ring. Numbers were
+        // A dot per workspace ("C" of the 2026-09-13 mockups): focused =
+        // capsule in the bar's urgent colour (`bar.urgent`, the theme's
+        // `urgent` or the shell default), occupied = filled dot, empty =
+        // hollow ring. Numbers were
         // tried underneath on 2026-09-16 and dropped again.
         // `text` stays set even though the built-in label is hidden -
         // WidgetButton renders itself at opacity 0 when text is empty.

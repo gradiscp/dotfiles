@@ -40,8 +40,17 @@ OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
 # The click action runs from the shell's environment, whose PATH need not
 # include ~/.local/bin - so hand it an absolute path to this script.
 SELF="$(realpath -s "$0")"
-RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-notify"
+# Needs XDG_RUNTIME_DIR (always set under uwsm); no /tmp fallback. Exit 0 so
+# a hook never blocks Claude.
+[[ -n ${XDG_RUNTIME_DIR:-} ]] || { echo "claude-notify: XDG_RUNTIME_DIR unset" >&2; exit 0; }
+RUN_DIR="$XDG_RUNTIME_DIR/claude-notify"
 LAST_WINDOW="$RUN_DIR/last-window"
+mkdir -p "$RUN_DIR"
+# Only these shapes ever reach a hyprctl dispatch or become a file name:
+# a Hyprland window address, and a herdr pane id (w<N>:p<N> as observed in
+# `herdr agent list`; not a documented contract).
+valid_address() { [[ $1 =~ ^0x[0-9a-f]+$ ]]; }
+valid_pane() { [[ $1 =~ ^w[0-9]+:p[0-9]+$ ]]; }
 TOAST_MS=10000
 
 now_ms() { date +%s%3N; }
@@ -49,7 +58,6 @@ now_ms() { date +%s%3N; }
 # Every hook decision lands here, since a toast that does not appear is
 # otherwise indistinguishable from a hook that never ran. tmpfs, gone on reboot.
 log() {
-  mkdir -p "$RUN_DIR"
   printf '%s %s\n' "$(date +%T)" "$*" >>"$RUN_DIR/log"
 }
 
@@ -90,6 +98,7 @@ under_herdr() {
 }
 
 focus_window() {
+  valid_address "$1" || return 1
   hyprctl dispatch "hl.dsp.focus({ window = \"address:$1\" })" >/dev/null 2>&1 ||
     hyprctl dispatch focuswindow "address:$1" >/dev/null 2>&1
 }
@@ -129,7 +138,8 @@ focus_plain() {
 
 case ${1:-} in
 focus)
-  focus_pane "${2:?usage: claude-notify focus <pane>}"
+  valid_pane "${2:?usage: claude-notify focus <pane>}" || exit 0
+  focus_pane "$2"
   exit 0
   ;;
 focus-window)
@@ -154,7 +164,7 @@ jump)
   pane=$(herdr agent list 2>/dev/null | jq -r '
     [.result.agents[] | select(.agent_status == "blocked")]
     | max_by(.state_change_seq) | .pane_id // empty')
-  if [[ -n $pane ]]; then
+  if [[ -n $pane ]] && valid_pane "$pane"; then
     focus_pane "$pane"
   elif [[ -s $LAST_WINDOW ]]; then
     focus_plain "$(cat "$LAST_WINDOW")"
@@ -171,7 +181,7 @@ message=$(jq -r '.message // empty' <<<"$input")
 # HERDR_PANE_ID alone proves little: a terminal window opened from a shell
 # inside herdr inherits it too. Trust it only with herdr up the process tree.
 pane=
-[[ -n ${HERDR_PANE_ID:-} ]] && under_herdr "$$" && pane=$HERDR_PANE_ID
+[[ -n ${HERDR_PANE_ID:-} ]] && valid_pane "$HERDR_PANE_ID" && under_herdr "$$" && pane=$HERDR_PANE_ID
 
 if [[ -n $pane ]]; then
   agent=$(herdr agent get "$pane" 2>/dev/null | jq -c '.result.agent // {}')
@@ -195,8 +205,8 @@ fi
 
 # The late Notification hook for a prompt PermissionRequest already announced.
 marker="$RUN_DIR/$key.request"
-if [[ $event == Notification && -f $marker ]] &&
-  (($(now_ms) - $(cat "$marker" 2>/dev/null || echo 0) < 20000)); then
+stamp=$(cat "$marker" 2>/dev/null); [[ $stamp =~ ^[0-9]+$ ]] || stamp=0
+if [[ $event == Notification && -f $marker ]] && (( $(now_ms) - stamp < 20000 )); then
   log "skip ($key): Notification after PermissionRequest"
   exit 0
 fi
@@ -211,7 +221,6 @@ fi
 # carries the terminal's title to tell two waiting sessions apart.
 headline="Claude wartet${title:+: $title}"
 log "toast ($key, ${event:-?}): $headline"
-mkdir -p "$RUN_DIR"
 [[ $event == PermissionRequest ]] && now_ms >"$marker"
 
 # One state file per terminal: a token, so a watcher left over from an earlier
@@ -219,7 +228,6 @@ mkdir -p "$RUN_DIR"
 # for dismiss(). Written BEFORE the toast goes up: a click that lands right
 # after omarchy-notification-send returns already runs dismiss() and must
 # find this headline, not the previous prompt's.
-mkdir -p "$RUN_DIR"
 token="$$.$(now_ms)"
 printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
 [[ -z $pane ]] && echo "$window" >"$LAST_WINDOW"

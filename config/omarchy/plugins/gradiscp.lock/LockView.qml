@@ -21,8 +21,8 @@ Item {
 
   // The light lock never blanks the panel, so without this it sits on the
   // same still screenshot for hours. MatrixRain.qml says why the real ttfx
-  // screensaver cannot be shown over a session lock. Three minutes, matching
-  // what the desktop screensaver would have done.
+  // screensaver cannot be shown over a session lock. Three minutes; the
+  // desktop screensaver (shell.json) waits five, this timer is the lock's own.
   property bool screensaverActive: false
   readonly property int screensaverDelay: 180000
   // After this long the rain stops and the still icon comes back: a lock
@@ -145,9 +145,11 @@ Item {
       source: wallpaper
       autoPaddingEnabled: false
       blurEnabled: root.loadBackground && wallpaper.status === Image.Ready
-      blur: 0.3
-      blurMax: 32
-      blurMultiplier: 1.0
+      // Stock lock values: strong enough that window text is unreadable
+      // behind the lock (0.3/32 left it legible, which defeats a lock).
+      blur: 1.0
+      blurMax: 128
+      blurMultiplier: 1.25
       contrast: -0.03
     }
 

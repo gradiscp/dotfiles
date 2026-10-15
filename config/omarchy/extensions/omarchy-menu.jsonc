@@ -24,9 +24,6 @@
   // Only use provider when a provider_name function or command named "name"
   // returns JSON rows. Static submenus only need dotted ids.
   //
-  // Example: replace the default About action by reusing the same id. Existing
-  // fields are kept unless overridden.
-  // "about": {"icon":"","label":"About","action":"omarchy-launch-or-focus-tui \"zsh -c 'fastfetch; read -k 1'\""},
 
   // ---- gradiscp overrides (2026-09-13 audit, see CLAUDE.md) ----
   // A user entry REPLACES the stock one completely: missing fields are filled
@@ -43,4 +40,7 @@
   "learn.arch": {"icon":"󰣇","label":"Arch","action":"omarchy-launch-browser 'https://wiki.archlinux.org/title/Main_page'"},
   "learn.neovim": {"icon":"","label":"Neovim","action":"omarchy-launch-browser 'https://www.lazyvim.org/keymaps'"},
   "learn.bash": {"icon":"󱆃","label":"Bash","action":"omarchy-launch-browser 'https://devhints.io/bash'"},
+  // Community: stock runs omarchy-launch-discord-community, which falls back
+  // to the Chromium-only webapp launcher when Discord is not installed.
+  "learn.community": {"icon":"󰙯","label":"Community","action":"omarchy-launch-browser 'https://discord.gg/tXFUdasqhY'"},
 }

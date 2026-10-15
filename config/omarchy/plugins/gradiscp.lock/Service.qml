@@ -34,7 +34,7 @@ Item {
   property bool strandedLock: false
   property bool strandedLockResolved: false
   property bool noBlank: false
-  readonly property string noBlankFlagPath: stateHome + "/omarchy/toggles/lock-no-blank"
+  readonly property string noBlankFlagPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/omarchy-lock-no-blank"
   // True from the moment idleBlankTimer turned the panel off until anything
   // wakes it again. FullLockView uses it to let the waking keystroke do
   // nothing but wake: it must not type a character or pull the password field
@@ -185,6 +185,10 @@ Item {
     clearNoBlankFlagProcess.running = false
     clearNoBlankFlagProcess.running = true
     noBlank = false
+    // The desktop capture must not outlive the lock it was taken for.
+    screenshotReady = false
+    removeScreenshotProc.running = false
+    removeScreenshotProc.running = true
     runWake()
   }
 
@@ -441,7 +445,7 @@ Item {
     // screenshotPath overwrites it in-place, so anything reading the path
     // mid-capture gets a truncated PNG. rename(2) is atomic, so a reader
     // sees either the old file or the new one, never a partial one.
-    command: ["bash", "-c", "grim '" + root.screenshotPath + ".tmp' && mv -f '" + root.screenshotPath + ".tmp' '" + root.screenshotPath + "'"]
+    command: ["bash", "-c", "grim \"$1.tmp\" && mv -f \"$1.tmp\" \"$1\"", "_", root.screenshotPath]
     onExited: function(exitCode, exitStatus) {
       if (exitCode !== 0) {
         // Leave screenshotReady false: the lock screen then just keeps its
@@ -525,7 +529,7 @@ Item {
   // lock surface shows (LockView vs FullLockView). Cleared on unlock.
   Process {
     id: noBlankCheckProc
-    command: ["bash", "-c", "[[ -f '" + root.noBlankFlagPath + "' ]] && echo yes || echo no"]
+    command: ["bash", "-c", "[[ -f \"$1\" ]] && echo yes || echo no", "_", root.noBlankFlagPath]
     stdout: StdioCollector { id: noBlankCheckStdout; waitForEnd: true }
     onExited: {
       root.noBlank = String(noBlankCheckStdout.text || "").trim() === "yes"
@@ -539,7 +543,12 @@ Item {
 
   Process {
     id: clearNoBlankFlagProcess
-    command: ["bash", "-c", "rm -f '" + root.noBlankFlagPath + "'"]
+    command: ["rm", "-f", root.noBlankFlagPath]
+  }
+
+  Process {
+    id: removeScreenshotProc
+    command: ["rm", "-f", root.screenshotPath, root.screenshotPath + ".tmp"]
   }
 
   Timer {

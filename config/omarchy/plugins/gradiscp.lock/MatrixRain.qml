@@ -7,8 +7,8 @@ import qs.Commons
 // `ttfx --random-effect` inside a foot window (see omarchy-launch-screensaver),
 // i.e. an ordinary Hyprland window - and while an ext-session-lock is up the
 // compositor renders nothing but the lock surface. That is also why
-// gradiscp.idle guards the screensaver with `omarchy-shell lock isLocked` and
-// why omarchy-lock-light kills ttfx outright before locking. Of ttfx's ~40
+// the idle plugin skips the screensaver while locked (`omarchy-shell lock
+// isLocked`) and why omarchy-system-lock kills ttfx before locking. Of ttfx's ~40
 // effects this copies the one that survives a rewrite: `matrix`.
 //
 // Cheap on purpose, since it may run for hours on battery: the falling is one

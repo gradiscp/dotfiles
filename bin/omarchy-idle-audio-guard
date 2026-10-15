@@ -19,9 +19,11 @@
 # music-in-a-tab behaviour the fullscreen condition above exists to avoid -
 # so it is deliberately not set (and not verified live).
 #
-# It drives the same flag as `omarchy toggle idle` / the bar's stay-awake
-# indicator, so what it does is always visible in the bar, and the idle
-# plugin picks the change up instantly (it watches that directory).
+# It drives the same flag as `omarchy toggle idle` (the stay-awake indicator
+# under ~/.local/state/omarchy/indicators/), and the idle plugin picks the
+# change up instantly (it watches that directory). This bar carries no
+# omarchy.indicators widget, so the state shows only in
+# `omarchy-shell idle status` or that directory.
 #
 # Manual toggles win: if the flag is already set by hand the guard keeps its
 # hands off, and if it is switched off mid-playback the guard stands down for

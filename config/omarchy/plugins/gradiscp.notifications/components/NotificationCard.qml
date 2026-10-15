@@ -51,9 +51,9 @@ BorderSurface {
   readonly property color dimColor: Qt.darker(Color.notifications.text, 1.4)
   readonly property color bodyColor: Qt.darker(Color.notifications.text, 1.15)
   readonly property color accentColor: urgency === 2 ? Color.urgent : (urgency === 0 ? dimColor : Color.notifications.countdown)
-  // Only critical toasts wear the theme's red border ("B" of the 2026-09-13
-  // mockups); everything else gets a quiet steel one, so red means "act now"
-  // again instead of "something happened".
+  // Only critical toasts wear the theme's active-border colour ("B" of the
+  // 2026-09-13 mockups); everything else gets a quiet dim one, so the accent
+  // means "act now" instead of "something happened".
   readonly property bool critical: urgency === 2
   readonly property color alertColor: Color.notifications.border
   readonly property var cardBorderSpec: critical
@@ -165,7 +165,7 @@ BorderSurface {
 
         // Glyph fallback (Nerd Font character) when no image icon is
         // available. Used by omarchy-notification-send's `-g` flag.
-        // Critical: red glyph on a dark-red tile; otherwise a dimmed glyph.
+        // Critical: glyph in the border colour on a tinted tile; otherwise a dimmed glyph.
         Rectangle {
           anchors.fill: parent
           visible: root.critical && root.hasGlyph && smallIconImage.status !== Image.Ready

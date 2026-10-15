@@ -31,9 +31,7 @@ eine `differ`-Zeile = Omarchy hat die Datei geändert, dann nachziehen.
 
 ```bash
 P=~/.config/omarchy/plugins; S=/usr/share/omarchy/shell/plugins
-diff -q $P/gradiscp.notifications/Service.qml        $S/notifications/Service.qml
 diff -q $P/gradiscp.notifications/NotificationLogic.js $S/notifications/NotificationLogic.js
-diff -q $P/gradiscp.idle/IdleModel.js                $S/services/idle/IdleModel.js
 ```
 
 ### Wenn nach einem Update etwas nicht stimmt

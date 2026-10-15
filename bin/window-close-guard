@@ -21,11 +21,16 @@
 set -uo pipefail
 
 OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
-PENDING="${XDG_RUNTIME_DIR:-/tmp}/window-close-guard/pending"
+: "${XDG_RUNTIME_DIR:?window-close-guard: XDG_RUNTIME_DIR unset}"
+PENDING="$XDG_RUNTIME_DIR/window-close-guard/pending"
 TERMINALS='^(foot|footclient|Alacritty|kitty|com\.mitchellh\.ghostty|org\.omarchy\..*|TUI\.float)$'
 DIALOG=gradiscp.closeconfirm
 
+# Only a Hyprland window address ever reaches a dispatch.
+valid_address() { [[ $1 =~ ^0x[0-9a-f]+$ ]]; }
+
 close() {
+  valid_address "$1" || return 1
   hyprctl dispatch "hl.dsp.window.close({ window = \"address:$1\" })" >/dev/null 2>&1 ||
     hyprctl dispatch closewindow "address:$1" >/dev/null 2>&1
 }
@@ -60,7 +65,7 @@ esac
 
 read -r address pid class < <(hyprctl activewindow -j 2>/dev/null |
   jq -r '"\(.address // "") \(.pid // "") \(.class // "")"')
-[[ -n $address ]] || exit 0
+valid_address "$address" || exit 0
 
 # Second SUPER+W while the question about this same window is open: yes.
 if [[ $(fresh_pending) == "$address" ]]; then
