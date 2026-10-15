@@ -65,7 +65,7 @@ live, and `hyprctl reload` still reports success.
   `scale =` values on purpose: the command rewrites the variable, and a
   shared variable dragged the laptop to the 4K monitor's 1.6 once.
 - **`~/.local/state/omarchy/workspace-layouts/` beats the global layout.**
-  `SUPER+L` (toggle layout, stock) writes a per-workspace override there that
+  `SUPER+H` (toggle layout) writes a per-workspace override there that
   silently beats `layout = "scrolling"` and survives reboots. When windows
   tile or resize wrongly on some workspaces only, `ls` that directory first;
   fix with `rm ~/.local/state/omarchy/workspace-layouts/*.lua && hyprctl reload`.

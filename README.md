@@ -51,7 +51,8 @@ Omarchy's menus.
   for a permission. No tray.
 - **Notifications:** stock. Claude permission requests pop up and jump back
   to their terminal on click.
-- **Lock and idle:** stock. Screensaver after 5 min, lock after 7; a
+- **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
+  after 7; a
   fullscreen Firefox (a film) keeps the machine awake.
 - **Apps:** Firefox only, trimmed stock set (no LibreOffice, Obsidian, mpv,
   Disks, CJK input); anything heavier runs in a container instead of being
@@ -61,6 +62,8 @@ Omarchy's menus.
 
 | Key | Action |
 |---|---|
+| `SUPER+L` | Lock (stock `SUPER+CTRL+L` still works) |
+| `SUPER+H` | Toggle workspace layout (was on `SUPER+L`) |
 | `SUPER+P` | Jump to the Claude session waiting for a permission |
 | `SUPER+W` | Close window - asks first if a terminal still runs something |
 | `SUPER+SHIFT+S` | Screenshot to clipboard (was `PRINT`) |
