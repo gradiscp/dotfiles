@@ -83,9 +83,9 @@ live, and `hyprctl reload` still reports success.
   `SUPER+SPACE` only. Don't re-add it without asking.
 - **Unbound stock keys** (webapps, Spotify, Signal, 1Password, Obsidian,
   cliamp, Share, weather): stock's `{ omarchy = ... }` launchers offer to
-  *install* a missing app on keypress, which is not wanted; webapps need
-  Chromium. `omarchy_preinstalled_bindings = false` would also kill the
-  working Omawrite/herdr/lazydocker/tmux keys, hence the explicit list.
+  *install* a missing app on keypress, which is not wanted.
+  `omarchy_preinstalled_bindings = false` would also kill the working
+  Omawrite/herdr/lazydocker/tmux keys, hence the explicit list.
 
 ## Omarchy shell and plugins
 
@@ -113,9 +113,12 @@ live, and `hyprctl reload` still reports success.
 - **There is no `omarchy bar remove`**; delete the entry from `bar.layout`.
 - **A menu override replaces the stock entry completely** (missing fields
   become defaults), so `omarchy-menu.jsonc` entries carry every stock field.
-- **Webapps need Chromium.** `omarchy-launch-webapp` falls back to
-  `chromium.desktop`, and Chromium is uninstalled - so webapp `.desktop`
-  files and binds are removed. Use a Firefox tab instead.
+- **Browser is Brave Origin** (Omarchy's `omarchy install browser
+  brave-origin`, AUR). Privacy defaults are managed policies from
+  `config/brave/privacy.json`; what no policy covers is in the CHEATSHEET.
+  Omarchy's browser regex does not know the `brave-origin` class, so
+  `looknfeel.lua` tags it `chromium-based-browser` itself. The stock webapps
+  work with it but are not wanted: launchers deleted, keys unbound.
 - **Themes:** Tokyo Night (the one stock theme kept on disk) is the default;
   `crimson-core` and `apple-coast` in `config/omarchy/themes/` stay
   selectable. Their `colors.toml`/wallpaper edits are only seen after
@@ -136,10 +139,9 @@ live, and `hyprctl reload` still reports success.
   the panel is *blanked* under a lock. Accepted
   (`~/.cache/hyprland/hyprlandCrashReport*.txt`).
 - **"Never locks"**: check `omarchy-shell idle status` (stay-awake toggle,
-  stock `SUPER+CTRL+I`) and `hyprctl clients` for a fullscreen Firefox: the
-  `idle_inhibit = "fullscreen"` rule in `looknfeel.lua` is what keeps a film
-  from locking. Firefox sends no Wayland idle inhibitor itself, and
-  `MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit` would inhibit for any audio.
+  stock `SUPER+CTRL+I`) and `hyprctl clients` for a fullscreen browser: the
+  `idle_inhibit = "fullscreen"` rule on the `chromium-based-browser` tag in
+  `looknfeel.lua` is what keeps a film from locking.
 - QML animations: never assign to a running animation's properties from
   inside it (restarts it, recursion, shell hang; `pkill -f quickshell`
   recovers). Keep `<`, `>`, `&` out of StyledText.
@@ -193,9 +195,6 @@ live, and `hyprctl reload` still reports success.
 - `packages.txt` installs with `-S --needed`, never `-Sy` (partial upgrade).
 - No fingerprint (the old laptop's EgisTec EH57E has no libfprint driver);
   check libfprint's device list before setting one up on another machine.
-- Firefox follows the system scale; a `layout.css.devPixelsPerPx` in a
-  `user.js` (profile under `~/.config/mozilla/`) would override `prefs.js` on
-  every start. There is none - keep it that way.
 - The cursor is one Bibata variant fetched by `install.sh` from a pinned
   release URL with a checksum into `~/.local/share/icons` (1.7 MB); the AUR
   `bibata-cursor-theme-bin` (322 MB, every variant) was dropped on purpose.

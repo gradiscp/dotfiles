@@ -16,7 +16,7 @@ unwanted=(
   dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
   # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere)
   noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
-  # Firefox is the browser; chromium-widevine only installs into /usr/lib/chromium
+  # Brave Origin is the browser; chromium-widevine only installs into /usr/lib/chromium
   chromium chromium-widevine
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
   # 90 packages, ~1.8 GiB, nothing from Omarchy, Hyprland, the shell or the boot chain)
@@ -47,10 +47,9 @@ fi
 # fcitx5 is gone, so its user service must not fail at every login.
 systemctl --user disable --now omarchy-fcitx5.service 2>/dev/null || true
 
-# Webapp launchers: Chromium is uninstalled here (see CLAUDE.md) and
-# omarchy-launch-webapp hardcodes a Chromium-family browser for every one of
-# them, so they would just error out. Docker.desktop stays: it launches
-# lazydocker in a terminal and never needed Chromium.
+# Stock webapp launchers for services not used here (their keybinds are
+# unbound in config/hypr/bindings.lua). Docker.desktop stays: it launches
+# lazydocker in a terminal.
 rm -f ~/.local/share/applications/Basecamp.desktop \
       ~/.local/share/applications/HEY.desktop \
       ~/.local/share/applications/Zoom.desktop \

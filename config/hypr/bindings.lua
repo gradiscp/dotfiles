@@ -19,12 +19,9 @@ hl.unbind("SUPER + SHIFT + G")          -- Signal
 hl.unbind("SUPER + SHIFT + SLASH")      -- 1Password
 hl.unbind("SUPER + SHIFT + O")          -- Obsidian (removed 2026-10-15)
 
--- Every webapp bind. These all route through omarchy-launch-webapp, which
--- only recognizes Chromium-family browsers and otherwise falls back to
--- chromium.desktop - and Chromium is uninstalled here, so all of them fail
--- with `Path "--app=..." does not exist!`. This is the same root cause that
--- already got the WhatsApp/Discord/YouTube .desktop files deleted; these are
--- the keyboard half of the same problem. Use a normal Firefox tab instead.
+-- Every webapp bind. The webapps themselves (HEY, WhatsApp, X, ...) are not
+-- wanted here; remove-unwanted-apps.sh deletes their launchers, these are the
+-- keyboard half. Open such sites in a normal browser tab instead.
 hl.unbind("SUPER + SHIFT + A")          -- ChatGPT
 hl.unbind("SUPER + SHIFT + ALT + A")    -- Grok
 hl.unbind("SUPER + SHIFT + C")          -- HEY Calendar

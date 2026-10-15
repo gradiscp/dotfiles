@@ -3,7 +3,6 @@
 # separate [aur] section and are installed with yay.
 
 # Official repos (pacman)
-firefox
 tailscale
 # Lints the scripts in this repo: shellcheck install.sh remove-unwanted-apps.sh bin/*
 shellcheck

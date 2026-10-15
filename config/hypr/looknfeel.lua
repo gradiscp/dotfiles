@@ -34,10 +34,15 @@ hl.config({
 -- default/hypr/apps/system.lua; square those too.
 o.window({ tag = "pop" }, { rounding = 0 })
 
--- A fullscreen Firefox (a film) holds the idle screensaver and lock off, the
--- same way Omarchy does it for Steam and Moonlight. Any fullscreen Firefox
--- counts, playing or not; a video in a normal window does not.
-o.window({ tag = "firefox-based-browser" }, { idle_inhibit = "fullscreen" })
+-- A fullscreen browser (a film) holds the idle screensaver and lock off, the
+-- same way Omarchy does it for Steam and Moonlight. Any fullscreen browser
+-- window counts, playing or not; a video in a normal window does not.
+-- Omarchy tags Chromium-family windows "chromium-based-browser"
+-- (default/hypr/apps/browser.lua), but its regex knows brave-browser, not
+-- brave-origin - so tag it here first, which also gives it Omarchy's stock
+-- browser treatment (tiled, 1.0/0.985 opacity). Upstream candidate.
+o.window("brave-origin", { tag = "+chromium-based-browser" })
+o.window({ tag = "chromium-based-browser" }, { idle_inhibit = "fullscreen" })
 
 -- Bibata-Modern-Ice at 14 instead of the stock Adwaita at 24. Installed by
 -- install.sh as a 1.7 MB XCursor theme under ~/.local/share/icons (the AUR

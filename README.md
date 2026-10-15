@@ -26,7 +26,8 @@ Everyday commands (updating the system and more) are in
    (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
    point into the repo.
 3. Do the manual steps it prints at the end: laptop scale for a different
-   panel, SSH key, `sudo tailscale up --accept-routes`, Firefox Sync, and
+   panel, SSH key, `sudo tailscale up --accept-routes`, uBlock Origin and
+   Bitwarden in Brave, and
    the untracked per-machine files (`~/.config/git/config.local`,
    `config/claude/rules/*.local.md`).
 
@@ -53,10 +54,12 @@ Omarchy's menus.
   to their terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
   after 7; a
-  fullscreen Firefox (a film) keeps the machine awake.
-- **Apps:** Firefox only, trimmed stock set (no LibreOffice, Obsidian, mpv,
-  Disks, CJK input); anything heavier runs in a container instead of being
-  installed. Only Claude Code as a coding agent.
+  fullscreen browser window (a film) keeps the machine awake.
+- **Apps:** Brave Origin as the only browser, with privacy defaults as
+  managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
+  stock set (no LibreOffice, Obsidian, mpv, Disks, CJK input); anything
+  heavier runs in a container instead of being installed. Only Claude Code
+  as a coding agent.
 
 ## Keybinds changed from Omarchy defaults
 
@@ -70,8 +73,8 @@ Omarchy's menus.
 | `CTRL+SHIFT+ESC` | Shutdown |
 | `SUPER+CTRL+SHIFT+R` | Reboot |
 
-Unbound because the app is not wanted (stock would offer to install it) or
-needs Chromium: webapp keys, Spotify, Signal, 1Password, Obsidian, cliamp,
+Unbound because the app is not wanted (stock would offer to install it):
+webapp keys, Spotify, Signal, 1Password, Obsidian, cliamp,
 Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`). Full list:
 `omarchy menu keybindings --print`.
 
@@ -83,8 +86,9 @@ config/
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
     plugins/           gradiscp.* - close dialog, workspaces, Claude status
-    extensions/        Menu overrides (hidden/redirected dead entries)
+    extensions/        Menu override (Share hidden, needs localsend)
     themes/            crimson-core, apple-coast (own themes, selectable)
+  brave/               Privacy policies, uBlock Origin backup
   claude/              Claude Code settings (hooks), global rules, own skills
   fontconfig/ herdr/ git/ mise/ mimeapps.list
 bin/                   claude-notify, window-close-guard, omarchy-drift-check,

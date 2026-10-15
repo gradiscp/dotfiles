@@ -43,6 +43,14 @@ if (( ${#AUR_PKGS[@]} > 0 )); then
   fi
 fi
 
+echo "== Browser (Brave Origin) =="
+# Omarchy's own installer: AUR package brave-origin-bin, Wayland flags, theme
+# policy. Privacy defaults go in as a second policy file next to Omarchy's
+# color.json (that is the only file Omarchy rewrites there). The default
+# browser itself comes from the linked mimeapps.list below.
+command -v brave-origin >/dev/null || omarchy install browser brave-origin || echo "WARN: 'omarchy install browser brave-origin' failed"
+sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json
+
 echo "== Tailscale =="
 # The service and the operator right only; `sudo tailscale up` (the login) is
 # interactive and stays a manual step. Omarchy's own installer also adds a
@@ -68,8 +76,7 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omar
 # stay selectable next to Tokyo Night, which install.sh sets below.
 link "$REPO_DIR/config/omarchy/themes/crimson-core" "$CONFIG_DIR/omarchy/themes/crimson-core"
 link "$REPO_DIR/config/omarchy/themes/apple-coast" "$CONFIG_DIR/omarchy/themes/apple-coast"
-# Menu overrides: hides the Share submenu (localsend is gone), Learn pages
-# open in the browser instead of the Chromium-only webapp launcher.
+# Menu override: hides the Share submenu (every entry needs localsend).
 link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
 
 echo "== Text size =="
@@ -118,9 +125,10 @@ if command -v mise >/dev/null; then
   done
   echo "mise tools now: $(mise ls 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ')"
 fi
-# Firefox as the default browser and URL handler. The claude-cli:// line in
-# there points at claude-code-url-handler.desktop, which Claude Code writes
-# itself on first run (with an absolute path, so it is not in the repo).
+# Brave Origin as the default browser and URL handler (xdg-settings writes
+# through this link, so a change via Omarchy's menu lands in the repo). The
+# claude-cli:// line points at claude-code-url-handler.desktop, which Claude
+# Code writes itself on first run (absolute path, so it is not in the repo).
 link "$REPO_DIR/config/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
 # The lazydocker launcher (SUPER+SHIFT+D's menu entry) stays the stock
 # Omarchy copy: Omarchy migrations `cp` over this path, so it must be a plain
@@ -199,7 +207,9 @@ Done. Manual steps still needed on this machine:
   3. Tailscale login: `sudo tailscale up --accept-routes`.
   4. Fingerprint: skipped on purpose. Check libfprint's supported-devices
      list for this laptop's sensor before bothering to set it up.
-  5. Firefox: sign in to Firefox Sync for add-ons (Bitwarden, uBlock).
+  5. Brave Origin: enable uBlock Origin under brave://settings/extensions/v2
+     and restore config/brave/ublock-origin-backup.txt in its dashboard;
+     install Bitwarden; set Shields to Aggressive (see CHEATSHEET).
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra
      git identities) and config/claude/rules/*.local.md (private rules).
 EOT

@@ -23,6 +23,19 @@ Omarchys getesteten Stand - etwas später als Arch selbst, aber vollständig.
 Kanal ansehen: `omarchy-channel-current` (`stable`; `rc`/`edge` wären neuer,
 aber ungetestet).
 
+### Brave Origin: was keine Policy setzt (einmal pro Laptop)
+
+`config/brave/privacy.json` setzt die meisten Datenschutz-Einstellungen als
+Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
+
+| Wo | Was |
+|---|---|
+| `brave://settings/shields` | Tracker & Werbung auf "Aggressiv"; "Store contact information for broken site reports" aus |
+| `brave://settings/extensions/v2` | uBlock Origin einschalten (Brave hostet die volle Manifest-V2-Version) |
+| uBlock-Dashboard, Reiter Settings | "Restore from file": `config/brave/ublock-origin-backup.txt` (Filterlisten-Auswahl) |
+| `brave://settings/extensions` | Bitwarden |
+| Omarchy-Netzwerk-Panel | DNS-Provider Cloudflare oder Quad9 (gilt systemweit, nicht nur im Browser) |
+
 ### Wenn nach einem Update etwas nicht stimmt
 
 | Problem | Befehl |
