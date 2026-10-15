@@ -58,7 +58,7 @@ Omarchy's menus.
   fullscreen browser window (a film) keeps the machine awake.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
-  stock set (no LibreOffice, Obsidian, mpv, Disks, CJK input); anything
+  stock set (no LibreOffice, Obsidian, mpv, Disks, CJK input, tmux); anything
   heavier runs in a container instead of being installed. Only Claude Code
   as a coding agent.
 
@@ -77,7 +77,8 @@ Omarchy's menus.
 Unbound because the app is not wanted (stock would offer to install it):
 webapp keys, Spotify, Signal, 1Password, Obsidian, cliamp,
 Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`), OCR
-(`SUPER+CTRL+PRINT`, needs tesseract). Full list:
+(`SUPER+CTRL+PRINT`, needs tesseract), tmux (`SUPER+ALT+RETURN`,
+`SUPER+ALT+K`; herdr instead). Full list:
 `omarchy menu keybindings --print`.
 
 ## Structure

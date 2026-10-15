@@ -37,8 +37,7 @@ hl.unbind("SUPER + SHIFT + ALT + X")    -- X post
 -- further down and reused for the screenshot bind.
 --
 -- Still bound and still working: Omawrite (SUPER+SHIFT+W), Herdr
--- (SUPER+CTRL+RETURN), Docker/lazydocker (SUPER+SHIFT+D), tmux
--- (SUPER+ALT+RETURN).
+-- (SUPER+CTRL+RETURN), Docker/lazydocker (SUPER+SHIFT+D).
 
 -- Persistent workspaces 6-8 so they always show in the bar's workspace
 -- indicator, not just once you've actually switched to them.
@@ -86,6 +85,9 @@ hl.unbind("SUPER + CTRL + S")
 hl.unbind("SUPER + CTRL + ALT + W")
 -- SUPER+CTRL+PRINT (extract text, OCR) needs tesseract, which is removed.
 hl.unbind("SUPER + CTRL + PRINT")
+-- tmux is removed (herdr does the job): its terminal launcher and help menu.
+hl.unbind("SUPER + ALT + RETURN")
+hl.unbind("SUPER + ALT + K")
 
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).

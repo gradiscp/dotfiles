@@ -92,10 +92,11 @@ straight into the repo, which the drift check cannot see:
   it fires on every Super press that ran no other bind. The menu is on
   `SUPER+SPACE` only. Don't re-add it without asking.
 - **Unbound stock keys** (webapps, Spotify, Signal, 1Password, Obsidian,
-  cliamp, Share, weather, OCR): stock's `{ omarchy = ... }` launchers offer
-  to *install* a missing app on keypress, which is not wanted; OCR needs the
-  removed tesseract. `omarchy_preinstalled_bindings = false` would also kill
-  the working Omawrite/herdr/lazydocker/tmux keys, hence the explicit list.
+  cliamp, Share, weather, OCR, tmux): stock's `{ omarchy = ... }` launchers
+  offer to *install* a missing app on keypress, which is not wanted; OCR
+  needs the removed tesseract, herdr replaces tmux.
+  `omarchy_preinstalled_bindings = false` would also kill the working
+  Omawrite/herdr/lazydocker keys, hence the explicit list.
 - A fullscreen browser holds idle off via `idle_inhibit = "fullscreen"` on
   Omarchy's `chromium-based-browser` tag; Omarchy's regex does not know the
   `brave-origin` class, so `looknfeel.lua` tags it first.

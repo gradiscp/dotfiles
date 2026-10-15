@@ -15,6 +15,8 @@ unwanted=(
   # Stock Omarchy apps not used here
   aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
   dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
+  # herdr replaces tmux (config/herdr mirrors the old tmux keys)
+  tmux
   # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere)
   noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
