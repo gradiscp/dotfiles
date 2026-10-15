@@ -51,9 +51,8 @@ Omarchy's menus.
   for a permission. No tray.
 - **Notifications:** stock. Claude permission requests pop up and jump back
   to their terminal on click.
-- **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
-  after 7; a fullscreen window with audio playing (a film) keeps the machine
-  awake - audio alone does not.
+- **Lock and idle:** stock. Screensaver after 5 min, lock after 7; a
+  fullscreen Firefox (a film) keeps the machine awake.
 - **Apps:** Firefox only, trimmed stock set (no LibreOffice, Obsidian, mpv,
   Disks, CJK input); anything heavier runs in a container instead of being
   installed. Only Claude Code as a coding agent.
@@ -62,8 +61,6 @@ Omarchy's menus.
 
 | Key | Action |
 |---|---|
-| `SUPER+L` | Lock (stock `SUPER+CTRL+L` still works) |
-| `SUPER+H` | Toggle workspace layout (was on `SUPER+L`) |
 | `SUPER+P` | Jump to the Claude session waiting for a permission |
 | `SUPER+W` | Close window - asks first if a terminal still runs something |
 | `SUPER+SHIFT+S` | Screenshot to clipboard (was `PRINT`) |
@@ -86,9 +83,8 @@ config/
     extensions/        Menu overrides (hidden/redirected dead entries)
     themes/            crimson-core, apple-coast (own themes, selectable)
   claude/              Claude Code settings (hooks), global rules, own skills
-  fontconfig/ herdr/ git/ mise/ systemd/ mimeapps.list
-bin/                   claude-notify, window-close-guard,
-                       omarchy-idle-audio-guard, omarchy-drift-check,
+  fontconfig/ herdr/ git/ mise/ mimeapps.list
+bin/                   claude-notify, window-close-guard, omarchy-drift-check,
                        git-all (status/fetch/pull/push over every repo below)
 install.sh             Fresh-machine setup
 remove-unwanted-apps.sh  Removes unwanted packages and stock themes (--check

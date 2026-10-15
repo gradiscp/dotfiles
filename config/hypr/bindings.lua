@@ -49,15 +49,6 @@ hl.workspace_rule({ workspace = "6", persistent = true })
 hl.workspace_rule({ workspace = "7", persistent = true })
 hl.workspace_rule({ workspace = "8", persistent = true })
 
--- SUPER+L: lock (the stock lock, also on stock's SUPER+CTRL+L).
--- Was: SUPER+L -> Toggle workspace layout.
-hl.unbind("SUPER + L")
-o.bind("SUPER + L", "Lock", "omarchy-system-lock")
-
--- The old SUPER+L action (toggle dwindle/master workspace layout) moved to
--- SUPER+H, which was unused.
-o.bind("SUPER + H", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")
-
 -- Screenshot on SUPER+SHIFT+S instead of the PRINT key.
 -- Was: PRINT -> Screenshot, SUPER+SHIFT+S -> Google Maps (that webapp
 -- shortcut was removed earlier anyway, so nothing lost there).

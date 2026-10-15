@@ -34,6 +34,11 @@ hl.config({
 -- default/hypr/apps/system.lua; square those too.
 o.window({ tag = "pop" }, { rounding = 0 })
 
+-- A fullscreen Firefox (a film) holds the idle screensaver and lock off, the
+-- same way Omarchy does it for Steam and Moonlight. Any fullscreen Firefox
+-- counts, playing or not; a video in a normal window does not.
+o.window({ tag = "firefox-based-browser" }, { idle_inhibit = "fullscreen" })
+
 -- Bibata-Modern-Ice at 14 instead of the stock Adwaita at 24. Installed by
 -- install.sh as a 1.7 MB XCursor theme under ~/.local/share/icons (the AUR
 -- package is 322 MB of every variant). No hyprcursor variant exists, so

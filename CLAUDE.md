@@ -65,7 +65,7 @@ live, and `hyprctl reload` still reports success.
   `scale =` values on purpose: the command rewrites the variable, and a
   shared variable dragged the laptop to the 4K monitor's 1.6 once.
 - **`~/.local/state/omarchy/workspace-layouts/` beats the global layout.**
-  `SUPER+H` (toggle layout) writes a per-workspace override there that
+  `SUPER+L` (toggle layout, stock) writes a per-workspace override there that
   silently beats `layout = "scrolling"` and survives reboots. When windows
   tile or resize wrongly on some workspaces only, `ls` that directory first;
   fix with `rm ~/.local/state/omarchy/workspace-layouts/*.lua && hyprctl reload`.
@@ -135,11 +135,11 @@ live, and `hyprctl reload` still reports success.
 - Known upstream crash: Hyprland can segfault on a lid/hotplug event while
   the panel is *blanked* under a lock. Accepted
   (`~/.cache/hyprland/hyprlandCrashReport*.txt`).
-- **"Never locks"**: check `ls ~/.local/state/omarchy/indicators/` and
-  `omarchy-shell idle status` before suspecting the plugins -
-  `omarchy-idle-audio-guard` holds `stay-awake` only for audio *and* a real
-  fullscreen window (`fullscreen == 2`). Do not set
-  `MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit` instead: it inhibits for any audio.
+- **"Never locks"**: check `omarchy-shell idle status` (stay-awake toggle,
+  stock `SUPER+CTRL+I`) and `hyprctl clients` for a fullscreen Firefox: the
+  `idle_inhibit = "fullscreen"` rule in `looknfeel.lua` is what keeps a film
+  from locking. Firefox sends no Wayland idle inhibitor itself, and
+  `MOZ_WAKE_LOCK_TYPE=WaylandIdleInhibit` would inhibit for any audio.
 - QML animations: never assign to a running animation's properties from
   inside it (restarts it, recursion, shell hang; `pkill -f quickshell`
   recovers). Keep `<`, `>`, `&` out of StyledText.

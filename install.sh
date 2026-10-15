@@ -133,7 +133,6 @@ fi
 
 echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
-link "$REPO_DIR/bin/omarchy-idle-audio-guard" "$HOME/.local/bin/omarchy-idle-audio-guard"
 link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
 link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
 # Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
@@ -162,14 +161,6 @@ link "$REPO_DIR/config/claude/skills/docu-guard" "$HOME/.claude/skills/docu-guar
 if command -v herdr >/dev/null; then
   herdr integration install claude || echo "WARN: 'herdr integration install claude' failed"
 fi
-
-echo "== Systemd user services =="
-# Keeps the screensaver/idle lock away only while a fullscreen window plays
-# audio (a film) - audio alone does not count. See the header of
-# bin/omarchy-idle-audio-guard for why Firefox cannot do this itself.
-link "$REPO_DIR/config/systemd/user/omarchy-idle-audio-guard.service" "$CONFIG_DIR/systemd/user/omarchy-idle-audio-guard.service"
-systemctl --user daemon-reload
-systemctl --user enable --now omarchy-idle-audio-guard.service
 
 echo "== GTK/GNOME settings =="
 # What Omarchy's own configs don't cover. gsettings set is idempotent.
