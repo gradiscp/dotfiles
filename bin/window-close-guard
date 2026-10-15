@@ -7,7 +7,7 @@
 #
 # "Something running" = the terminal's shell has a child process. An idle
 # prompt closes without a question, and so does a terminal started straight
-# into a TUI (`foot -e lazydocker`) - there is no shell in between to hold
+# into a TUI (`foot -e btop`) - there is no shell in between to hold
 # anything worth keeping.
 #
 # In the question, Tab / Shift+Tab / arrows switch buttons, Enter picks and
