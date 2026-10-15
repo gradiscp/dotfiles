@@ -55,7 +55,7 @@ check_link() {
     return
   fi
   if [[ ! -e $dst ]]; then
-    if ln -sfn "$src" "$dst" 2>/dev/null; then
+    if mkdir -p "$(dirname "$dst")" && ln -sfn "$src" "$dst" 2>/dev/null; then
       fixed "created missing link $dst"
     else
       problem "missing and could not link: $dst"
@@ -93,6 +93,10 @@ done
 while IFS= read -r line; do
   # shellcheck disable=SC2016  # literal: skip the loop line that uses "$f"
   [[ $line == *'"$f"'* ]] && continue
+  # The eval below expands this repo's own install.sh, run by this user anyway;
+  # still, an unattended hook must not run a command substitution from it.
+  # shellcheck disable=SC2016  # literal patterns
+  [[ $line == *'$('* || $line == *'`'* ]] && { problem "unsafe link line in install.sh: $line"; continue; }
   eval "set -- $line"
   check_link "$1" "$2"
 done < <(grep -E '^\s*link "' "$REPO_DIR/install.sh" | sed -E 's/^\s*link //')
@@ -119,7 +123,11 @@ extra_themes=$(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! 
 # or clicked in Omarchy's Install menu (LibreOffice, 2026-09-24, unnoticed
 # for three weeks - incidents repo).
 reinstalled=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>/dev/null | tr '\n' ' ')
-[[ -n $reinstalled ]] && problem "unwanted packages are installed again: ${reinstalled}- run remove-unwanted-apps.sh"
+[[ -n $reinstalled ]] && problem "unwanted packages or launchers are back: ${reinstalled}- run remove-unwanted-apps.sh"
+# The Brave policy is a root-owned copy, not a link; install.sh refreshes it.
+if ! cmp -s "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json; then
+  problem "/etc/brave/policies/managed/privacy.json differs from the repo - sudo install -Dm644 config/brave/privacy.json /etc/brave/policies/managed/privacy.json"
+fi
 
 # ---- report -----------------------------------------------------------------
 say "run finished: ${#repaired[@]} repaired, ${#problems[@]} problems"

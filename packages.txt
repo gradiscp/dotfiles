@@ -1,14 +1,17 @@
 # Packages beyond a stock Omarchy install. Read by install.sh: one package per
 # line, "#" comments and blank lines are ignored. AUR packages go in the
-# separate [aur] section and are installed with yay.
+# separate [aur] section and are installed with yay (Brave Origin comes via
+# `omarchy install browser`, not from here).
 
 # Official repos (pacman)
 tailscale
-# Lints the scripts in this repo: shellcheck install.sh remove-unwanted-apps.sh bin/*
 shellcheck
+code
+azure-cli
+keepassxc
+pnpm
+uv
+typst
 
 [aur]
-
-# NOTE: fingerprint (libfprint/fprintd) is not installed on purpose: check
-# libfprint's supported-devices list for the laptop's sensor first.
-# What is REMOVED from the stock Omarchy set lives in remove-unwanted-apps.sh.
+pandoc-bin

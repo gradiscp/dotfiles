@@ -1,22 +1,17 @@
 {
-  "_comment": "Brave Origin privacy defaults, installed by install.sh to /etc/brave/policies/managed/privacy.json (Omarchy only ever rewrites color.json in that dir). Managed policies are locked in the UI. Not policy-able, set by hand (CHEATSHEET): Shields level Aggressive, 'Store contact information for broken site reports' off, uBlock Origin lists.",
-
   "DefaultBraveAdblockSetting": 2,
   "DefaultBraveFingerprintingV2Setting": 3,
   "DefaultBraveHttpsUpgradeSetting": 2,
   "BlockThirdPartyCookies": true,
-
   "BraveP3AEnabled": false,
   "BraveStatsPingEnabled": false,
   "BraveWebDiscoveryEnabled": false,
   "MetricsReportingEnabled": false,
-
   "BraveDeAmpEnabled": true,
   "BraveDebouncingEnabled": true,
   "BraveTrackingQueryParametersFilteringEnabled": true,
   "BraveReduceLanguageEnabled": true,
   "BraveGlobalPrivacyControlEnabled": true,
-
   "BraveRewardsDisabled": true,
   "BraveWalletDisabled": true,
   "BraveVPNDisabled": true,
@@ -30,11 +25,9 @@
   "BraveWaybackMachineEnabled": false,
   "EmailAliasesEnabled": false,
   "IPFSEnabled": false,
-
   "PasswordManagerEnabled": false,
   "AutofillAddressEnabled": false,
   "AutofillCreditCardEnabled": false,
-
   "DefaultSearchProviderEnabled": true,
   "DefaultSearchProviderName": "Brave Search",
   "DefaultSearchProviderSearchURL": "https://search.brave.com/search?q={searchTerms}"

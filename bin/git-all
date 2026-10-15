@@ -20,6 +20,7 @@ case $action in status|fetch|pull|push) ;; *) echo "usage: git-all [status|fetch
 root="${2:-$PWD}"
 
 red=$'\e[31m' yellow=$'\e[33m' green=$'\e[32m' dim=$'\e[2m' reset=$'\e[0m'
+[[ -t 1 ]] || { red=''; yellow=''; green=''; dim=''; reset=''; }   # plain output when piped
 open=0 total=0
 
 if [[ $action != status && -z ${SSH_AUTH_SOCK:-} ]]; then

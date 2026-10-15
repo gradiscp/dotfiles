@@ -14,9 +14,22 @@
       "Read(~/.config/git/config.local)",
       "Edit(~/.config/git/config.local)",
       "Read(~/.config/git/config-arbeit)",
-      "Edit(~/.config/git/config-arbeit)"
-    ],
-    "defaultMode": "default"
+      "Edit(~/.config/git/config-arbeit)",
+      "Read(~/.azure/**)",
+      "Edit(~/.azure/**)",
+      "Read(~/.config/BraveSoftware/**)",
+      "Edit(~/.config/BraveSoftware/**)",
+      "Read(~/.docker/config.json)",
+      "Edit(~/.docker/config.json)",
+      "Read(~/.*_history)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.pfx)",
+      "Read(**/*.p12)",
+      "Read(**/*.kdbx)",
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ]
   },
   "model": "fable",
   "hooks": {

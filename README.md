@@ -25,11 +25,12 @@ Everyday commands (updating the system and more) are in
    installs via mise, removes the unwanted stock apps and themes
    (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
    point into the repo.
-3. Do the manual steps it prints at the end: laptop scale for a different
-   panel, SSH key, `sudo tailscale up --accept-routes`, uBlock Origin and
-   Bitwarden in Brave, and
-   the untracked per-machine files (`~/.config/git/config.local`,
-   `config/claude/rules/*.local.md`).
+3. Do the manual steps it prints at the end: log in again, laptop scale
+   for a different panel, SSH key and host alias, the Tailscale, GitHub and
+   Claude logins, the Brave hand-set items from the cheatsheet, and the
+   untracked per-machine files (`~/.config/git/config.local` with the
+   identity files it includes, `config/claude/rules/*.local.md`).
+   On an installation older than a few days, run `omarchy update` first.
 
 ## Keeping it in sync
 
@@ -42,10 +43,10 @@ Omarchy's menus.
 
 ## What's customized
 
-- **Look:** Tokyo Night (stock), square corners, no blur or transparency,
+- **Look:** Tokyo Night (stock), square corners, no blur, stock opacity,
   `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
-  everything (UI, terminal, and the generic sans/serif families), Bibata
-  cursor at 14 (one 1.7 MB variant, not the 322 MB package).
+  everything that names no font (UI, terminal, the generic sans/serif
+  families), Bibata cursor at 14 (one small download, not the 322 MB package).
   Two own themes, `crimson-core` and `apple-coast`, stay selectable.
 - **Bar:** the active workspace as a capsule in the theme's urgent colour; a
   terminal icon that lights up with a count while Claude Code sessions wait
@@ -75,7 +76,8 @@ Omarchy's menus.
 
 Unbound because the app is not wanted (stock would offer to install it):
 webapp keys, Spotify, Signal, 1Password, Obsidian, cliamp,
-Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`). Full list:
+Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`), OCR
+(`SUPER+CTRL+PRINT`, needs tesseract). Full list:
 `omarchy menu keybindings --print`.
 
 ## Structure
@@ -89,6 +91,7 @@ config/
     extensions/        Menu override (Share hidden, needs localsend)
     themes/            crimson-core, apple-coast (own themes, selectable)
   brave/               Privacy policies, launch flags, uBlock Origin backup
+  environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
   fontconfig/ herdr/ git/ mise/ mimeapps.list
 bin/                   claude-notify, window-close-guard, omarchy-drift-check,
@@ -98,3 +101,9 @@ remove-unwanted-apps.sh  Removes unwanted packages and stock themes (--check
                        only reports); NoExtract keeps updates from restoring them
 packages.txt           Packages added on top of Omarchy
 ```
+
+## Third-party content
+
+The wallpapers under `config/omarchy/themes/*/backgrounds/` are not covered
+by this repo's MIT licence: they belong to their respective owners and are
+kept here only as the images these themes were built around.

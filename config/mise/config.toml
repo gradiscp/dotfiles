@@ -1,3 +1,8 @@
 [tools]
 claude = "latest"
 gh = "latest"
+
+[settings]
+# Omarchy's own setting: `mise up` must not prune the version a running
+# session started from.
+upgrade.auto_prune = false
