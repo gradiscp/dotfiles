@@ -15,8 +15,9 @@ unwanted=(
   # Stock Omarchy apps not used here
   aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
   dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
-  # herdr replaces tmux (config/herdr mirrors the old tmux keys)
-  tmux
+  # herdr replaces tmux (config/herdr mirrors the old tmux keys); the docker
+  # and git terminal UIs and the screen recorder are not used
+  tmux lazydocker lazygit gpu-screen-recorder
   # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere)
   noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
@@ -32,9 +33,9 @@ command -v brave-origin >/dev/null && unwanted+=(chromium chromium-widevine)
 
 # Stock webapp launchers for services not used here (their keybinds are
 # unbound in config/hypr/bindings.lua). Omarchy's omarchy-refresh-applications
-# can put them back. Docker.desktop stays: it launches lazydocker in a terminal.
+# and migrations can put them back; Docker.desktop is the lazydocker launcher.
 launchers=(Basecamp HEY Zoom "Google Contacts" "Google Maps" "Google Messages" "Google Photos"
-  X Discord WhatsApp YouTube "Disk Usage" mpv)
+  X Discord WhatsApp YouTube "Disk Usage" mpv Docker)
 APPS="$HOME/.local/share/applications"
 
 mapfile -t installed < <(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)

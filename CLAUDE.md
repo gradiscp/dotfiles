@@ -25,10 +25,10 @@ and plugins themselves. Budget: 12 KiB.
 - **A repo edit is a live edit** - most of `~/.config` links here. After a
   Hyprland edit, `hyprctl configerrors` must be empty.
 - **Files identical to Omarchy's stock copy are not kept in the repo.**
-  `hypr/hyprland.lua`, `hypr/autostart.lua`, `hypr/input.lua`, `foot.ini`,
-  `.bashrc` and `Docker.desktop` are stock plain files live. `Docker.desktop`
-  must stay a plain file: Omarchy migrations `cp` onto that path, and through
-  a link they wrote into this repo.
+  `hypr/hyprland.lua`, `hypr/autostart.lua`, `hypr/input.lua`, `foot.ini`
+  and `.bashrc` are stock plain files live. Launchers under
+  `~/.local/share/applications` are never linked: Omarchy migrations `cp`
+  onto those paths (through a link they once wrote into this repo).
 - **`git add <paths>`, not `git add -A`**, and `git diff` first: tools write
   through the links (below), and a sweep commits whatever they wrote.
 
@@ -92,11 +92,11 @@ straight into the repo, which the drift check cannot see:
   it fires on every Super press that ran no other bind. The menu is on
   `SUPER+SPACE` only. Don't re-add it without asking.
 - **Unbound stock keys** (webapps, Spotify, Signal, 1Password, Obsidian,
-  cliamp, Share, weather, OCR, tmux): stock's `{ omarchy = ... }` launchers
-  offer to *install* a missing app on keypress, which is not wanted; OCR
-  needs the removed tesseract, herdr replaces tmux.
+  cliamp, Share, weather, OCR, tmux, Docker TUI, screen recording): stock's
+  `{ omarchy = ... }` launchers offer to *install* a missing app on
+  keypress, which is not wanted; the rest point at removed packages.
   `omarchy_preinstalled_bindings = false` would also kill the working
-  Omawrite/herdr/lazydocker keys, hence the explicit list.
+  Omawrite/herdr keys, hence the explicit list.
 - A fullscreen browser holds idle off via `idle_inhibit = "fullscreen"` on
   Omarchy's `chromium-based-browser` tag; Omarchy's regex does not know the
   `brave-origin` class, so `looknfeel.lua` tags it first.
