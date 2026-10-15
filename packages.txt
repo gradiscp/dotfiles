@@ -5,14 +5,9 @@
 # Official repos (pacman)
 firefox
 tailscale
-# Proxmox automation (2026-09-13); installed by hand, listed so a fresh
-# install has them too.
-ansible
-python-proxmoxer
 
 [aur]
-bibata-cursor-theme-bin
 
-# NOTE: fingerprint (libfprint/fprintd/usbutils) was tried and reverted -
-# this laptop's EgisTec EH57E sensor has no Linux driver, not worth installing.
+# NOTE: fingerprint (libfprint/fprintd) is not installed on purpose: check
+# libfprint's supported-devices list for the laptop's sensor first.
 # What is REMOVED from the stock Omarchy set lives in remove-unwanted-apps.sh.

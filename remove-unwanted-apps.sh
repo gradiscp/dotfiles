@@ -1,11 +1,21 @@
 #!/bin/bash
-# Strip apps from the stock Omarchy set that aren't wanted here.
+# Strip packages from the stock Omarchy set that aren't wanted here, and keep
+# the stock themes down to Tokyo Night. Re-runnable; `omarchy update` can
+# reinstall base packages (LibreOffice came back on 2026-09-24), which
+# omarchy-drift-check reports via `--check`.
+#
+# Usage: remove-unwanted-apps.sh          remove what is installed
+#        remove-unwanted-apps.sh --check  only list unwanted packages that are
+#                                         installed; exit 1 if any
 set -euo pipefail
 
-# Anything that is really needed runs in a container instead (see CLAUDE.md).
+# Anything that is really needed runs in a container instead.
 unwanted=(
   # Stock Omarchy apps not used here
   aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
+  dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
+  # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere)
+  noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
   # Firefox is the browser; chromium-widevine only installs into /usr/lib/chromium
   chromium chromium-widevine
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
@@ -15,12 +25,32 @@ unwanted=(
   qemu-user-static qemu-user-static-binfmt
   cups cups-filters cups-pk-helper system-config-printer
 )
-# omarchy-pkg-drop filters the list down to what is actually installed, then
-# `sudo pacman -Rns --noconfirm` (dependencies nothing else needs go too).
-# The filter matters: pacman aborts the whole transaction if one name is
-# missing, which is why an earlier fixed list removed nothing on re-runs.
-omarchy-pkg-drop "${unwanted[@]}"
 
+mapfile -t installed < <(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)
+if [[ ${1:-} == --check ]]; then
+  if (( ${#installed[@]} > 0 )); then
+    printf '%s\n' "${installed[@]}"
+    exit 1
+  fi
+  exit 0
+fi
+
+if (( ${#installed[@]} > 0 )); then
+  echo "Removing: ${installed[*]}"
+  # omarchy-pkg-drop filters the list down to what is actually installed, then
+  # `sudo pacman -Rns --noconfirm` (dependencies nothing else needs go too).
+  # A refused transaction (a new dependency on one of these) must not abort
+  # install.sh, so it is only reported.
+  omarchy-pkg-drop "${installed[@]}" \
+    || echo "WARN: package removal failed - check 'pacman -Rns --print ${installed[*]}' by hand"
+fi
+# fcitx5 is gone, so its user service must not fail at every login.
+systemctl --user disable --now omarchy-fcitx5.service 2>/dev/null || true
+
+# Webapp launchers: Chromium is uninstalled here (see CLAUDE.md) and
+# omarchy-launch-webapp hardcodes a Chromium-family browser for every one of
+# them, so they would just error out. Docker.desktop stays: it launches
+# lazydocker in a terminal and never needed Chromium.
 rm -f ~/.local/share/applications/Basecamp.desktop \
       ~/.local/share/applications/HEY.desktop \
       ~/.local/share/applications/Zoom.desktop \
@@ -31,38 +61,30 @@ rm -f ~/.local/share/applications/Basecamp.desktop \
       ~/.local/share/applications/X.desktop \
       ~/.local/share/applications/Discord.desktop \
       ~/.local/share/applications/WhatsApp.desktop \
-      ~/.local/share/applications/YouTube.desktop
-
-# NOT Docker.desktop - that one launches lazydocker in a terminal, doesn't
-# go through omarchy-launch-webapp, so it never needed Chromium at all.
-# The webapp shortcuts above are removed because Chromium is uninstalled here
-# (see CLAUDE.md) and omarchy-launch-webapp hardcodes a Chromium-family
-# browser for every one of them - they'd just error out otherwise.
-
+      ~/.local/share/applications/YouTube.desktop \
+      ~/.local/share/applications/"Disk Usage.desktop" \
+      ~/.local/share/applications/mpv.desktop
 update-desktop-database ~/.local/share/applications 2>/dev/null || true
 
-# Stock themes: only crimson-core is used here, so the 22 shipped ones (~119MB)
-# go too. There is no supported way to *hide* a theme - omarchy-theme-list globs
-# $OMARCHY_PATH/themes unconditionally - so they have to be deleted, and pacman's
-# NoExtract is what keeps `omarchy update` from putting them back. Undo both by
-# deleting the NoExtract line and running `sudo pacman -S omarchy`.
-if ! grep -qF 'usr/share/omarchy/themes/*' /etc/pacman.conf; then
+# Stock themes: only Tokyo Night is used (plus the two themes in this repo),
+# so the other 21 shipped ones (~115MB) go. There is no supported way to
+# *hide* a theme - omarchy-theme-list globs $OMARCHY_PATH/themes
+# unconditionally - so they are deleted, and pacman's NoExtract (with a `!`
+# exception for tokyo-night) keeps `omarchy update` from putting them back.
+# Undo both by deleting the NoExtract line and running `sudo pacman -S omarchy`.
+# Never put NoExtract on the Plymouth/SDDM theme dirs: pacman still removes
+# the old files on upgrade, which left a bare-text LUKS prompt (2026-09-16).
+noextract='NoExtract   = usr/share/omarchy/themes/* !usr/share/omarchy/themes/tokyo-night/*'
+if ! grep -qxF "$noextract" /etc/pacman.conf; then
   sudo cp -a /etc/pacman.conf "/etc/pacman.conf.bak.$(date +%s)"
-  sudo sed -i '/^\[options\]/a\\n# Stock Omarchy themes are deleted here; keep updates from restoring them.\nNoExtract   = usr/share/omarchy/themes/*' /etc/pacman.conf
+  # Replace an older form of the rule, or add it under [options].
+  if grep -q '^NoExtract *= *usr/share/omarchy/themes' /etc/pacman.conf; then
+    sudo sed -i "s|^NoExtract *= *usr/share/omarchy/themes.*|$noextract|" /etc/pacman.conf
+  else
+    sudo sed -i "/^\[options\]/a # Stock Omarchy themes except Tokyo Night are deleted here; keep updates from restoring them.\n$noextract" /etc/pacman.conf
+  fi
 fi
-sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + 2>/dev/null || true
-
-# Boot/login screen: NOT protected with NoExtract. That was tried on
-# 2026-09-13 and emptied both theme directories on the next omarchy-settings
-# upgrade (4.0.4, 2026-09-16): pacman skips extracting NoExtract'd files, but
-# still removes the old package's copies, so the LUKS prompt fell back to
-# text mode and SDDM showed a black screen after logout. The boot screen is
-# stock Omarchy now (the crimson-core restyle was dropped 2026-09-21); this
-# block only removes the old rule if it is still present.
-if grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf; then
-  sudo cp -a /etc/pacman.conf "/etc/pacman.conf.bak.$(date +%s)"
-  sudo sed -i '/keep updates from resetting it/d; /^NoExtract *= *usr\/share\/plymouth\/themes\/omarchy/d' /etc/pacman.conf
-  echo "Removed the Plymouth/SDDM NoExtract rule - run 'sudo pacman -S omarchy-settings' to restore the boot screen."
-fi
+sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night -exec rm -rf {} + \
+  || echo "WARN: could not delete the stock themes"
 
 echo "Done. Run 'pacman -Qtdq' afterwards to check for newly-orphaned deps."

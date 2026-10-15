@@ -1,32 +1,5 @@
--- Keep only your personal keybinding overrides here. Add new bindings or
--- unbind defaults before replacing them.
-
--- See current bindings and descriptions:
---   omarchy menu keybindings --print
-
--- To disable every Omarchy default binding, set this in
--- ~/.config/hypr/hyprland.lua before require("default.hypr.omarchy"), then add
--- only the bindings you want below:
---   omarchy_default_bindings = false
-
--- To disable all preinstalled app/webapp bindings, set:
---   omarchy_preinstalled_bindings = false
-
--- Add a new binding.
--- o.bind("SUPER + SHIFT + R", "SSH", "alacritty -e ssh your-server")
-
--- Change an existing binding by unbinding it first, then binding the key again.
--- This example changes SUPER+SPACE from the launcher to the Omarchy root menu.
--- hl.unbind("SUPER + SPACE")
--- o.bind("SUPER + SPACE", "Omarchy menu", "omarchy-menu toggle root")
-
--- Disable a default binding without replacing it.
--- hl.unbind("SUPER + SHIFT + B")
-
--- Logitech MX Keys examples:
--- o.bind("SUPER + SHIFT + S", nil, "omarchy-capture-screenshot")
--- o.bind("SUPER + H", nil, "voxtype record toggle")
--- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
+-- Personal keybinding overrides on top of Omarchy's defaults.
+-- See current bindings and descriptions: omarchy menu keybindings --print
 
 -- The Omarchy menu is on the stock SUPER+SPACE only (see
 -- default/hypr/bindings/utilities.lua - not overridden here).
@@ -37,17 +10,14 @@
 -- when you press Super, change your mind, and let go. Don't re-add it
 -- without asking.
 
--- Dead default bindings, unbound because the thing behind them isn't here.
--- Checked 2026-08-28 with `command -v`; re-check before re-adding any.
---
--- Apps that were never installed / were removed (see
--- remove-unwanted-apps.sh). The bind existing without the app means the key does
--- nothing at all - no error, no window - which is worse than the key being
--- free for something else.
+-- Stock keys for apps that are not wanted here (see remove-unwanted-apps.sh).
+-- Stock's `{ omarchy = "..." }` launchers offer to INSTALL the app when it is
+-- missing, which is exactly what is not wanted, so the keys are unbound.
 hl.unbind("SUPER + SHIFT + M")          -- Spotify
 hl.unbind("SUPER + SHIFT + ALT + M")    -- cliamp (music TUI)
 hl.unbind("SUPER + SHIFT + G")          -- Signal
 hl.unbind("SUPER + SHIFT + SLASH")      -- 1Password
+hl.unbind("SUPER + SHIFT + O")          -- Obsidian (removed 2026-10-15)
 
 -- Every webapp bind. These all route through omarchy-launch-webapp, which
 -- only recognizes Chromium-family browsers and otherwise falls back to
@@ -69,9 +39,9 @@ hl.unbind("SUPER + SHIFT + ALT + X")    -- X post
 -- SUPER + SHIFT + S (Google Maps) is not listed here: it is already unbound
 -- further down and reused for the screenshot bind.
 --
--- Still bound and still working: Obsidian (SUPER+SHIFT+O), Omawrite
--- (SUPER+SHIFT+W), Herdr (SUPER+CTRL+RETURN), Docker/lazydocker
--- (SUPER+SHIFT+D), tmux (SUPER+ALT+RETURN).
+-- Still bound and still working: Omawrite (SUPER+SHIFT+W), Herdr
+-- (SUPER+CTRL+RETURN), Docker/lazydocker (SUPER+SHIFT+D), tmux
+-- (SUPER+ALT+RETURN).
 
 -- Persistent workspaces 6-8 so they always show in the bar's workspace
 -- indicator, not just once you've actually switched to them.
