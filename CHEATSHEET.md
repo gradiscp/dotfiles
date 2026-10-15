@@ -42,3 +42,4 @@ diff -q $P/gradiscp.notifications/NotificationLogic.js $S/notifications/Notifica
 | Hyprland-Fehler | `hyprctl configerrors` |
 | Update kaputt, zurück | Beim Booten im Limine-Menü unter „Snapshots“ den Stand vor dem Update wählen (jedes `omarchy update` legt einen an), dort `omarchy snapshot restore` - macht ihn dauerhaft |
 | Log des letzten Updates | `less /tmp/omarchy-update.log` |
+| Skript im dotfiles-Repo geändert | `shellcheck install.sh remove-unwanted-apps.sh bin/*` und `bash -n` darauf |

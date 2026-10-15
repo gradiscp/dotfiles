@@ -55,7 +55,11 @@ check_link() {
     return
   fi
   if [[ ! -e $dst ]]; then
-    ln -sfn "$src" "$dst" 2>/dev/null && fixed "created missing link $dst" || problem "missing and could not link: $dst"
+    if ln -sfn "$src" "$dst" 2>/dev/null; then
+      fixed "created missing link $dst"
+    else
+      problem "missing and could not link: $dst"
+    fi
     return
   fi
   # A plain file or directory in the way: safe to replace only if identical.
@@ -66,9 +70,11 @@ check_link() {
     if [[ -d $dst && ! -L $dst ]]; then
       # rename(2) cannot put a symlink over a real directory; the content was
       # verified identical, so dropping the copy first loses nothing.
-      rm -rf "$dst" && ln -sfn "$src" "$dst" \
-        && fixed "re-linked $dst (content was identical)" \
-        || problem "could not re-link $dst"
+      if rm -rf "$dst" && ln -sfn "$src" "$dst"; then
+        fixed "re-linked $dst (content was identical)"
+      else
+        problem "could not re-link $dst"
+      fi
     elif ln -sfn "$src" "$dst.link.$STAMP" && mv -T "$dst.link.$STAMP" "$dst"; then
       fixed "re-linked $dst (content was identical)"
     else
@@ -85,6 +91,7 @@ for f in "$REPO_DIR"/config/hypr/*.lua; do
   check_link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
 done
 while IFS= read -r line; do
+  # shellcheck disable=SC2016  # literal: skip the loop line that uses "$f"
   [[ $line == *'"$f"'* ]] && continue
   eval "set -- $line"
   check_link "$1" "$2"

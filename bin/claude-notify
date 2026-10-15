@@ -246,7 +246,7 @@ printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
     if herdr agent wait "$pane" --until blocked --timeout "$TOAST_MS"; then
       left=$((deadline - $(now_ms)))
       ((left > 0)) && herdr agent wait "$pane" \
-        --until idle --until working --until done --until unknown --timeout "$left"
+        --until idle --until working --until "done" --until unknown --timeout "$left"
     fi
   else
     # No agent state outside herdr; going to the window is the best signal.
