@@ -170,10 +170,12 @@ live, and `hyprctl reload` still reports success.
   nothing else (`grep -r`, scripts): a guard rail, not a boundary.
 - `claude-notify` logs every decision to `$XDG_RUNTIME_DIR/claude-notify/log`;
   read it before debugging a missing toast.
-- **Only Claude Code via mise.** Omarchy's installer also puts codex, crush,
-  gemini, copilot, opencode, playwright and pi in via mise; `install.sh`
-  uninstalls them again (check `mise ls` on a new machine). node is not in
-  mise: the system `nodejs` (a pnpm dependency) is enough.
+- **Only Claude Code via mise.** Omarchy's installer and migrations drop
+  lazy `~/.local/bin` wrappers for other agents (codex, copilot, crush,
+  cursor-agent, gemini, grok, hermes, muse, omp, opencode, pi) that install
+  on first run; `install.sh` removes them (check `ls ~/.local/bin` and
+  `mise ls` after an update). node is not in mise: the system `nodejs` (a
+  pnpm dependency) is enough.
 
 ## Packages and boot
 

@@ -89,16 +89,17 @@ link "$REPO_DIR/config/herdr/config.toml" "$CONFIG_DIR/herdr/config.toml"
 link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"
 link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
 # Tool versions for claude and gh; `mise install` fetches them. Omarchy's own
-# installer (install/user/mise.sh) also puts other coding agents in via mise;
-# only Claude Code is wanted here, so those go again, wrapper scripts included.
+# installer and migrations (omarchy-mise-install) also drop lazy wrappers for
+# other coding agents into ~/.local/bin that install the agent on first run;
+# only Claude Code is wanted here, so those go again, installed or not.
 link "$REPO_DIR/config/mise/config.toml" "$CONFIG_DIR/mise/config.toml"
 if command -v mise >/dev/null; then
   mise install || echo "WARN: mise install failed - run 'mise install' by hand"
-  for tool in codex crush gemini copilot opencode playwright pi; do
-    mise uninstall "$tool" >/dev/null 2>&1 || true
+  for tool in codex copilot crush cursor-agent gemini grok hermes muse omp opencode pi; do
+    mise uninstall --all "$tool" >/dev/null 2>&1 || true
     rm -f "$HOME/.local/bin/$tool"
   done
-  echo "mise tools now: $(mise ls --installed 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ')"
+  echo "mise tools now: $(mise ls 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ')"
 fi
 # Firefox as the default browser and URL handler. The claude-cli:// line in
 # there points at claude-code-url-handler.desktop, which Claude Code writes
