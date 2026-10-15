@@ -50,6 +50,10 @@ echo "== Browser (Brave Origin) =="
 # browser itself comes from the linked mimeapps.list below.
 command -v brave-origin >/dev/null || omarchy install browser brave-origin || echo "WARN: 'omarchy install browser brave-origin' failed"
 sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json
+# Omarchy's launch flags (Wayland, libsecret) minus its --load-extension line:
+# the Copy-URL, yt-dlp and WhatsApp-slim extensions are not wanted. Linked
+# after the installer, which would otherwise cp its stock copy over it.
+link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-flags.conf"
 
 echo "== Tailscale =="
 # The service and the operator right only; `sudo tailscale up` (the login) is

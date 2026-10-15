@@ -88,7 +88,7 @@ config/
     plugins/           gradiscp.* - close dialog, workspaces, Claude status
     extensions/        Menu override (Share hidden, needs localsend)
     themes/            crimson-core, apple-coast (own themes, selectable)
-  brave/               Privacy policies, uBlock Origin backup
+  brave/               Privacy policies, launch flags, uBlock Origin backup
   claude/              Claude Code settings (hooks), global rules, own skills
   fontconfig/ herdr/ git/ mise/ mimeapps.list
 bin/                   claude-notify, window-close-guard, omarchy-drift-check,
