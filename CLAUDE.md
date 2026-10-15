@@ -117,9 +117,8 @@ live, and `hyprctl reload` still reports success.
 - **A menu override replaces the stock entry completely** (missing fields
   become defaults), so `omarchy-menu.jsonc` entries carry every stock field.
 - **Webapps need Chromium.** `omarchy-launch-webapp` falls back to
-  `chromium.desktop` for any non-Chromium default browser, and Chromium is
-  uninstalled - so webapp `.desktop` files and binds are removed. Use a
-  Firefox tab, or reinstall Chromium as a runtime, if one is ever wanted.
+  `chromium.desktop`, and Chromium is uninstalled - so webapp `.desktop`
+  files and binds are removed. Use a Firefox tab instead.
 - **Themes:** Tokyo Night (the one stock theme kept on disk) is the default;
   `crimson-core` and `apple-coast` in `config/omarchy/themes/` stay
   selectable. Their `colors.toml`/wallpaper edits are only seen after
@@ -138,8 +137,8 @@ live, and `hyprctl reload` still reports success.
   by request. Ask before swapping it. The light-lock flag is
   `$XDG_RUNTIME_DIR/omarchy-lock-no-blank` (tmpfs, cannot survive a crash).
 - Known upstream crash: Hyprland can segfault on a lid/hotplug event while
-  the panel is *blanked* under a lock. Accepted; `SUPER+L` never blanks.
-  Evidence is in `~/.cache/hyprland/hyprlandCrashReport*.txt`.
+  the panel is *blanked* under a lock. Accepted; `SUPER+L` never blanks
+  (`~/.cache/hyprland/hyprlandCrashReport*.txt`).
 - **"Never locks"**: check `ls ~/.local/state/omarchy/indicators/` and
   `omarchy-shell idle status` before suspecting the plugins -
   `omarchy-idle-audio-guard` holds `stay-awake` only for audio *and* a real
@@ -174,8 +173,11 @@ live, and `hyprctl reload` still reports success.
   lazy `~/.local/bin` wrappers for other agents (codex, copilot, crush,
   cursor-agent, gemini, grok, hermes, muse, omp, opencode, pi) that install
   on first run; `install.sh` removes them (check `ls ~/.local/bin` and
-  `mise ls` after an update). node is not in mise: the system `nodejs` (a
-  pnpm dependency) is enough.
+  `mise ls` after an update). The `omarchy.agents` bar widget runs `codex`
+  for its usage meter, which through that wrapper wrote codex back into
+  `mise/config.toml` once: its codex/fireworks providers stay disabled in
+  `shell.json`. node is not in mise: the system `nodejs` (a pnpm dependency)
+  is enough.
 
 ## Packages and boot
 
@@ -198,7 +200,6 @@ live, and `hyprctl reload` still reports success.
 - Firefox follows the system scale; a `layout.css.devPixelsPerPx` in a
   `user.js` (profile under `~/.config/mozilla/`) would override `prefs.js` on
   every start. There is none - keep it that way.
-- JetBrains Mono serves the generic `sans-serif`/`serif` families too
-  (`config/fontconfig/conf.d/51-jetbrains.conf` hooks in after Omarchy's
-  `50-omarchy.conf`, which assigns them to Liberation first). Delete the two
-  `match` blocks there to get normal web fonts back.
+- JetBrains Mono serves `sans-serif`/`serif` too: `51-jetbrains.conf` hooks
+  in after Omarchy's `50-omarchy.conf` (which assigns Liberation first).
+  Delete its two `match` blocks to get normal web fonts back.
