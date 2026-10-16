@@ -10,6 +10,32 @@ The invariants and the traps that cost real debugging time live in
 Everyday commands (updating the system and more) are in
 [CHEATSHEET.md](CHEATSHEET.md). This file is the overview.
 
+## Principles
+
+Every change to this repo, and every suggestion for one, is measured against
+these, in this order:
+
+1. **Stock first.** Omarchy's defaults are the baseline. A customisation
+   earns its place only if it does something stock cannot and I actually use
+   it; styling alone does not qualify. Prefer a setting over a file, a file
+   over a script, a script over a plugin, and a one-line override over a
+   copy of stock code (copies never receive upstream fixes).
+2. **Lightweight.** Nothing installed "just in case". Packages, launchers and
+   keybinds for things I do not use go, and `remove-unwanted-apps.sh` keeps
+   them gone. Tools that are not desktop config live in containers or in
+   `mise`, not as system packages.
+3. **Secure and private.** The repo is public: no identities, hosts, tokens
+   or project names, ever (per-machine files are untracked). Scripts
+   validate what they pass to the shell, downloads are pinned and checked,
+   Claude Code is denied the credential stores, the browser runs with
+   privacy policies.
+4. **Simple to reason about.** One list of links (`install.sh`), one check
+   that they hold (`omarchy-drift-check`), docs that describe the present
+   and leave history to `git log`. If a mechanism needs a paragraph to
+   justify itself, it is probably too much.
+5. **Reproducible.** A fresh Omarchy plus `./install.sh` must yield this
+   machine; anything that is set by hand is listed in the cheatsheet.
+
 ## New laptop
 
 1. Install Omarchy with its own installer.

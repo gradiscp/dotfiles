@@ -5,7 +5,9 @@ file holds only what is true now and must not be broken: the invariants and
 the traps. History lives in commit messages and in the incidents repo
 (`~/Projects/paulgradischnig/incidents`); the overview and the keybind table
 live in `README.md`; component details live in the headers of the scripts
-and plugins themselves. Budget: 12 KiB.
+and plugins themselves. Budget: 12 KiB. The principles that decide what
+belongs here at all (stock first, lightweight, private, simple,
+reproducible) are in `README.md`; apply them to every suggestion.
 
 ## Repo rules
 
@@ -107,9 +109,7 @@ straight into the repo, which the drift check cannot see:
   `gradiscp.closeconfirm`, run `omarchy restart shell`; otherwise the old
   code keeps running without an error. Bar widgets and `shell.json` do
   hot-reload.
-- **Cloning a `kind: bar` plugin is broken** in this Omarchy version: a
-  byte-identical clone makes the whole bar disappear. Widget and service
-  clones work.
+- **Cloning a `kind: bar` plugin is broken** here: the whole bar disappears.
 - **Plugin clones drift silently** (a clone never follows stock updates;
   partial clones are not possible). The only clone left is
   `gradiscp.workspaces`, which keeps `moduleName: "omarchy.workspaces"` on
@@ -156,8 +156,7 @@ straight into the repo, which the drift check cannot see:
   [herdr#3329](https://github.com/herdrdev/herdr/issues/3329) is open: herdr
   corrupts alternate-screen panes on resize, and Ctrl+L does not repair it
   (`/exit` + `claude --resume` does). Change renderer settings between
-  sessions, not under running ones. Postmortem:
-  `~/Projects/paulgradischnig/incidents/2026-09-12-herdr-claude-fullscreen-garbled.md`.
+  sessions, not under running ones (incidents repo, 2026-09-12).
 - Running sessions keep the hook command they loaded. After changing a hook
   path in `settings.json`, restart the sessions or leave something at the
   old path.
