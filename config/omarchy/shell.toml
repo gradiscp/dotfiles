@@ -1,0 +1,10 @@
+[font]
+base-size = 12
+
+[bar]
+# Smaller than stock (26 / 27 / 16 / 13): a thinner bar, everything else
+# unchanged. User keys here win over the theme's shell.toml.
+size-horizontal = 22
+icon-slot       = 23
+icon-canvas     = 14
+icon-font       = 12

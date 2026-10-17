@@ -75,7 +75,8 @@ Omarchy's menus.
   families), Bibata cursor at 14 (one small download, not the 322 MB package).
   Stock themes kept besides it: Ethereal, Kanagawa (with an own Big Sur
   coast background) and Vantablack; the other stock themes are removed.
-- **Bar:** the active workspace as a capsule in the theme's urgent colour; a
+- **Bar:** thinner than stock (22 px); the active workspace as a capsule in
+  the theme's urgent colour; a
   terminal icon that lights up with a count while Claude Code sessions wait
   for a permission; media controls while something plays, microphone mute
   and Tailscale. No tray, weather, indicators, display or menu button.
@@ -116,6 +117,7 @@ config/
   hypr/                Hyprland overrides (bindings, looknfeel, monitors)
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
+    shell.toml         Shell values over every theme: font size, thinner bar
     plugins/           gradiscp.* - close dialog, workspaces, Claude status
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
