@@ -37,6 +37,9 @@
           }
         },
         {
+          "id": "omarchy.tailscale"
+        },
+        {
           "id": "omarchy.bluetooth"
         },
         {
