@@ -37,8 +37,8 @@ reproducible) are in `README.md`; apply them to every suggestion.
 ## Symlink drift
 
 Omarchy's tools sometimes replace a link with a plain file when they write
-(`omarchy-shell-config` `mv`s over `shell.json`,
-`omarchy-hyprland-monitor-scaling` runs `sed -i` without
+(`omarchy-shell-config` `mv`s over `shell.json`, `omarchy display text
+size` over `shell.toml`, `omarchy-hyprland-monitor-scaling` runs `sed -i` without
 `--follow-symlinks`). Then the repo file changes nothing live, and
 `hyprctl reload` still reports success. Others write *through* the link,
 straight into the repo, which the drift check cannot see:

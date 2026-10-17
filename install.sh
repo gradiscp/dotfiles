@@ -74,6 +74,9 @@ done
 
 echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
+# Machine-level shell values that win over every theme: font base-size 12
+# (Omarchy's stock size) and a thinner bar.
+link "$REPO_DIR/config/omarchy/shell.toml" "$CONFIG_DIR/omarchy/shell.toml"
 # SUPER+W's "close anyway?" dialog, summoned by bin/window-close-guard.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarchy/plugins/gradiscp.closeconfirm"
 # Clone of omarchy.workspaces (dot workspaces) and the Claude waiting-count
@@ -90,12 +93,6 @@ link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarc
 # directly: `omarchy default agent` would run `mise use -g` through the linked
 # mise config and launch the agent.
 mkdir -p "$CONFIG_DIR/omarchy/defaults" && printf 'claude\n' >"$CONFIG_DIR/omarchy/defaults/agent"
-
-echo "== Text size =="
-# One knob for shell font base-size, GTK text-scaling-factor and the terminal
-# font (see omarchy-display-text-size). 12 is Omarchy's stock size; this only
-# resets a machine that was set to something else.
-omarchy display text size 12 || echo "WARN: 'omarchy display text size 12' failed - run it by hand"
 
 echo "== Cursor (Bibata-Modern-Ice, single variant) =="
 # 1.7 MB download (27 MB unpacked) from the upstream release instead of the
