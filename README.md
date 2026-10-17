@@ -73,7 +73,8 @@ Omarchy's menus.
   `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
   everything that names no font (UI, terminal, the generic sans/serif
   families), Bibata cursor at 14 (one small download, not the 322 MB package).
-  Two own themes, `crimson-core` and `apple-coast`, stay selectable.
+  Stock themes kept besides it: Ethereal, Kanagawa (with an own Big Sur
+  coast background) and Vantablack; the other stock themes are removed.
 - **Bar:** the active workspace as a capsule in the theme's urgent colour; a
   terminal icon that lights up with a count while Claude Code sessions wait
   for a permission; media controls while something plays, microphone mute
@@ -117,7 +118,7 @@ config/
     shell.json         Bar layout, idle timing, plugin list
     plugins/           gradiscp.* - close dialog, workspaces, Claude status
     extensions/        Menu override (Share hidden, needs localsend)
-    themes/            crimson-core, apple-coast (own themes, selectable)
+    backgrounds/       Own background for the stock Kanagawa theme
   brave/               Privacy policies, launch flags, uBlock Origin backup
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
@@ -133,6 +134,6 @@ packages.txt           Packages added on top of Omarchy
 
 ## Third-party content
 
-The wallpapers under `config/omarchy/themes/*/backgrounds/` are not covered
-by this repo's MIT licence: they belong to their respective owners and are
-kept here only as the images these themes were built around.
+The wallpaper under `config/omarchy/backgrounds/` is not covered by this
+repo's MIT licence: it belongs to its owner and is kept here only as a
+personal desktop background.

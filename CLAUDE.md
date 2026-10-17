@@ -115,13 +115,12 @@ straight into the repo, which the drift check cannot see:
   `gradiscp.workspaces`, which keeps `moduleName: "omarchy.workspaces"` on
   purpose (IPC routing via `clonedFrom`). Idle, lock and notifications are
   stock since 2026-10-15.
-- **Theme files:** a theme's `shell.toml` *replaces* the generated file and a
-  `shell.<section>.toml` replaces that whole section (every key must be
-  repeated). The two own themes ship neither: `colors.toml`, `icons.theme`,
-  backgrounds, crimson-core's `neovim.lua`. Their edits are only seen after
-  `omarchy theme set <name>` (`current/theme/` is a copy). Wallpapers are
-  **added as downloaded - do not re-encode them** (the compositor downscales
-  a 4K file better than any re-compression).
+- **Themes are stock only** (the kept list is in `remove-unwanted-apps.sh`).
+  Own backgrounds for a stock theme go in
+  `config/omarchy/backgrounds/<theme>/` (linked; sorted before the theme's
+  own, seen after `omarchy theme set <name>`). Wallpapers are **added as
+  downloaded - do not re-encode them** (the compositor downscales a 4K file
+  better than any re-compression).
 - **`bar.transparent` is toggled by double-clicking the bar's centre** - a
   stock gesture, not drift.
 - **There is no `omarchy bar remove`**; delete the entry from `bar.layout`.
@@ -182,10 +181,11 @@ straight into the repo, which the drift check cannot see:
   files, so an `omarchy-settings` upgrade left a bare-text LUKS prompt and a
   black greeter. Recovery: drop the rule, `sudo pacman -S omarchy-settings`.
   The boot and login screens are stock Omarchy.
-- The stock-theme `NoExtract` (`usr/share/omarchy/themes/*` with a `!`
-  exception for `tokyo-night`) is intended; `remove-unwanted-apps.sh` writes
-  it and the drift check verifies it. `omarchy channel set` rewrites
-  `pacman.conf` and brings the themes back until the next run of the script.
+- The stock-theme `NoExtract` (`usr/share/omarchy/themes/*` with one `!`
+  exception per kept theme) is intended; `remove-unwanted-apps.sh` writes it
+  from its `keep_themes` list and the drift check verifies it. `omarchy
+  channel set` rewrites `pacman.conf` and brings the themes back until the
+  next run of the script.
 - Any `pacman -S` (typed, or Omarchy's Install menu) can bring a removed
   package back; `remove-unwanted-apps.sh` is re-runnable and the drift check
   reports what came back.

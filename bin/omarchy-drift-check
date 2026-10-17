@@ -15,10 +15,9 @@
 #             whose content equals the repo copy is re-linked (nothing lost);
 #             one that differs is only reported, with which side is newer.
 #   plugins   every plugin id in shell.json exists under ~/.config/omarchy/plugins
-#   pacman    the stock-theme NoExtract (Tokyo Night excepted) is still in
-#             /etc/pacman.conf, only tokyo-night is left under
-#             /usr/share/omarchy/themes, and no package from the removal
-#             list is installed again (remove-unwanted-apps.sh --check)
+#   pacman    no harmful Plymouth NoExtract, and remove-unwanted-apps.sh
+#             --check is clean: packages, launchers, kept stock themes and
+#             their NoExtract rule
 #
 # Usage: omarchy-drift-check [--quiet]   (--quiet: no notification when clean)
 
@@ -110,20 +109,15 @@ if [[ -f $CONFIG_DIR/omarchy/shell.json ]]; then
 fi
 
 # ---- pacman NoExtract, stock themes, reinstalled packages ------------------
-grep -qxF 'NoExtract   = usr/share/omarchy/themes/* !usr/share/omarchy/themes/tokyo-night/*' /etc/pacman.conf \
-  || problem "NoExtract for stock themes (with the tokyo-night exception) is not in /etc/pacman.conf - re-run remove-unwanted-apps.sh"
 # The reverse of the stock-theme rule: a NoExtract on the Plymouth/SDDM theme
 # makes the next omarchy-settings upgrade DELETE the boot screen, leaving a
 # bare-text LUKS prompt and a greeter-less logout (2026-09-16).
 grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf && problem "harmful NoExtract for the Plymouth/SDDM theme is in /etc/pacman.conf - delete that line, then: sudo pacman -S omarchy-settings"
-extra_themes=$(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night -printf '%f ' 2>/dev/null)
-[[ -n $extra_themes ]] && problem "stock Omarchy themes are back in /usr/share/omarchy/themes ($extra_themes) - re-run remove-unwanted-apps.sh"
-[[ -d /usr/share/omarchy/themes/tokyo-night ]] || problem "tokyo-night is missing from /usr/share/omarchy/themes - sudo pacman -S omarchy"
-# A package removed on purpose can come back through any `pacman -S`, typed
-# or clicked in Omarchy's Install menu (LibreOffice, 2026-09-24, unnoticed
-# for three weeks - incidents repo).
-reinstalled=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>/dev/null | tr '\n' ' ')
-[[ -n $reinstalled ]] && problem "unwanted packages or launchers are back: ${reinstalled}- run remove-unwanted-apps.sh"
+# Packages, launchers and stock themes from remove-unwanted-apps.sh's lists
+# (one place). A package can come back through any `pacman -S`, typed or
+# clicked in Omarchy's Install menu (LibreOffice, 2026-09-24, incidents repo).
+drift=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>/dev/null | tr '\n' ' ')
+[[ -n $drift ]] && problem "removal list not in effect: ${drift}- run remove-unwanted-apps.sh (missing-theme: sudo pacman -S omarchy)"
 # The Brave policy is a root-owned copy, not a link; install.sh refreshes it.
 if ! cmp -s "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json; then
   problem "/etc/brave/policies/managed/privacy.json differs from the repo - sudo install -Dm644 config/brave/privacy.json /etc/brave/policies/managed/privacy.json"
