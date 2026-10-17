@@ -126,6 +126,11 @@ echo "== Fontconfig (JetBrains Mono everywhere) =="
 link "$REPO_DIR/config/fontconfig/conf.d/51-jetbrains.conf" "$CONFIG_DIR/fontconfig/conf.d/51-jetbrains.conf"
 fc-cache -f >/dev/null 2>&1 || echo "WARN: fc-cache failed"
 
+echo "== Neovim =="
+# One plugin on top of Omarchy's LazyVim: Markdown rendered in the buffer.
+# lazy.nvim fetches it on the first start.
+link "$REPO_DIR/config/nvim/lua/plugins/markdown.lua" "$CONFIG_DIR/nvim/lua/plugins/markdown.lua"
+
 echo "== Environment =="
 # Omarchy's /usr/lib/environment.d/10-omarchy-fcitx.conf points Qt, SDL and
 # XWayland at the fcitx5 input method, which remove-unwanted-apps.sh removes.

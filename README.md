@@ -121,6 +121,7 @@ config/
   brave/               Privacy policies, launch flags, uBlock Origin backup
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
+  nvim/                One plugin on top of Omarchy's LazyVim: Markdown rendering
   fontconfig/ herdr/ git/ mise/ mimeapps.list
 bin/                   claude-notify, window-close-guard, omarchy-drift-check,
                        git-all (status/fetch/pull/push over every repo below)
