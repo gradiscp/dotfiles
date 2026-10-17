@@ -4,10 +4,16 @@
     "layout": {
       "center": [
         {
+          "id": "omarchy.indicators"
+        },
+        {
           "id": "omarchy.clock",
           "format": "yyyy-MM-dd HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
           "verticalFormat": "HH\n—\nmm"
+        },
+        {
+          "id": "omarchy.media"
         },
         {
           "id": "omarchy.system-update"
@@ -44,6 +50,9 @@
         },
         {
           "id": "omarchy.audio"
+        },
+        {
+          "id": "omarchy.microphone"
         },
         {
           "id": "omarchy.network"
