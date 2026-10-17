@@ -1,4 +1,7 @@
 {
+  "env": {
+    "DISABLE_AUTOUPDATER": "1"
+  },
   "permissions": {
     "deny": [
       "Read(~/.ssh/**)",
@@ -31,7 +34,7 @@
       "Read(**/.env.*)"
     ]
   },
-  "model": "fable",
+  "model": "opus",
   "hooks": {
     "PermissionRequest": [
       {
@@ -67,5 +70,10 @@
       }
     ]
   },
-  "theme": "dark-daltonized"
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "theme": "custom:omarchy"
 }
