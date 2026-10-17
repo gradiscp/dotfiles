@@ -1,6 +1,6 @@
 #!/bin/bash
 # Strip packages from the stock Omarchy set that aren't wanted here, and keep
-# the stock themes down to Tokyo Night. Re-runnable: a listed package can
+# the stock themes down to the kept ones. Re-runnable: a listed package can
 # come back through any `pacman -S` or Omarchy's Install menu (LibreOffice,
 # 2026-09-24, unnoticed for three weeks), which omarchy-drift-check reports
 # via `--check`.
@@ -38,12 +38,32 @@ launchers=(Basecamp HEY Zoom "Google Contacts" "Google Maps" "Google Messages" "
   X Discord WhatsApp YouTube "Disk Usage" mpv Docker)
 APPS="$HOME/.local/share/applications"
 
+# Stock themes kept on disk; every other shipped theme is deleted and kept
+# away by pacman's NoExtract (one `!` exception per kept theme). install.sh
+# sets tokyo-night as the default.
+keep_themes=(tokyo-night ethereal kanagawa vantablack)
+THEMES=/usr/share/omarchy/themes
+noextract="NoExtract   = usr/share/omarchy/themes/*$(printf ' !usr/share/omarchy/themes/%s/*' "${keep_themes[@]}")"
+
 mapfile -t installed < <(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)
 present=()
 for l in "${launchers[@]}"; do [[ -e $APPS/$l.desktop ]] && present+=("$l.desktop"); done
+extra_themes=() missing_themes=()
+for d in "$THEMES"/*/; do
+  [[ -d $d ]] || continue
+  name=$(basename "$d")
+  [[ " ${keep_themes[*]} " == *" $name "* ]] || extra_themes+=("$name")
+done
+for t in "${keep_themes[@]}"; do [[ -d $THEMES/$t ]] || missing_themes+=("$t"); done
+grep -qxF "$noextract" /etc/pacman.conf && rule_ok=1 || rule_ok=0
+
 if [[ ${1:-} == --check ]]; then
-  (( ${#installed[@]} + ${#present[@]} == 0 )) && exit 0
-  printf '%s\n' "${installed[@]}" "${present[@]}"
+  problems=("${installed[@]}" "${present[@]}")
+  for t in "${extra_themes[@]}"; do problems+=("theme:$t"); done
+  for t in "${missing_themes[@]}"; do problems+=("missing-theme:$t"); done
+  (( rule_ok )) || problems+=("pacman-NoExtract-rule")
+  (( ${#problems[@]} == 0 )) && exit 0
+  printf '%s\n' "${problems[@]}"
   exit 1
 fi
 
@@ -62,28 +82,27 @@ systemctl --user disable --now omarchy-fcitx5.service 2>/dev/null || true
 for l in "${launchers[@]}"; do rm -f "$APPS/$l.desktop"; done
 update-desktop-database "$APPS" 2>/dev/null || true
 
-# Stock themes: only Tokyo Night is used (plus the two themes in this repo),
-# so the other 21 shipped ones (~115MB) go. There is no supported way to
-# *hide* a theme - omarchy-theme-list globs $OMARCHY_PATH/themes
-# unconditionally - so they are deleted, and pacman's NoExtract (with a `!`
-# exception for tokyo-night) keeps `omarchy update` from putting them back.
-# Undo both by deleting the NoExtract line and running `sudo pacman -S omarchy`.
+# Stock themes: there is no supported way to *hide* one - omarchy-theme-list
+# globs $THEMES unconditionally - so the unwanted ones are deleted, and
+# pacman's NoExtract keeps `omarchy update` from putting them back. Undo by
+# deleting the NoExtract line and running `sudo pacman -S omarchy`.
 # Never put NoExtract on the Plymouth/SDDM theme dirs: pacman still removes
 # the old files on upgrade, which left a bare-text LUKS prompt (2026-09-16).
-noextract='NoExtract   = usr/share/omarchy/themes/* !usr/share/omarchy/themes/tokyo-night/*'
-if ! grep -qxF "$noextract" /etc/pacman.conf; then
+if (( ! rule_ok )); then
   sudo cp -a /etc/pacman.conf "/etc/pacman.conf.bak.$(date +%s)"
   # Replace an older form of the rule, or add it under [options].
   if grep -q '^NoExtract *= *usr/share/omarchy/themes' /etc/pacman.conf; then
     sudo sed -i "s|^NoExtract *= *usr/share/omarchy/themes.*|$noextract|" /etc/pacman.conf
   else
-    sudo sed -i "/^\[options\]/a # Stock Omarchy themes except Tokyo Night are deleted here; keep updates from restoring them.\n$noextract" /etc/pacman.conf
+    sudo sed -i "/^\[options\]/a # Stock Omarchy themes not kept here are deleted; keep updates from restoring them.\n$noextract" /etc/pacman.conf
   fi
 fi
 # Only ask for sudo when there is something to delete.
-if [[ -n $(find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night 2>/dev/null | head -1) ]]; then
-  sudo find /usr/share/omarchy/themes -mindepth 1 -maxdepth 1 -type d ! -name tokyo-night -exec rm -rf {} + \
-    || echo "WARN: could not delete the stock themes"
+if (( ${#extra_themes[@]} > 0 )); then
+  sudo rm -rf -- "${extra_themes[@]/#/$THEMES/}" || echo "WARN: could not delete the stock themes"
+fi
+if (( ${#missing_themes[@]} > 0 )); then
+  echo "WARN: kept themes missing (${missing_themes[*]}) - run: sudo pacman -S omarchy"
 fi
 
 echo "Done. Run 'pacman -Qtdq' afterwards to check for newly-orphaned deps."

@@ -80,11 +80,10 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarc
 # widget. shell.json above already points the bar at these ids.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.workspaces" "$CONFIG_DIR/omarchy/plugins/gradiscp.workspaces"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.claude-status"
-# Own themes (whole directories: each is its own theme, not an overlay).
-# omarchy-theme-list globs both dirs and symlinks, so linking is enough. They
-# stay selectable next to Tokyo Night, which install.sh sets below.
-link "$REPO_DIR/config/omarchy/themes/crimson-core" "$CONFIG_DIR/omarchy/themes/crimson-core"
-link "$REPO_DIR/config/omarchy/themes/apple-coast" "$CONFIG_DIR/omarchy/themes/apple-coast"
+# An own background for the stock Kanagawa theme. User backgrounds sort before
+# the theme's own, so it is the first one when Kanagawa is set. Directory
+# link: `omarchy theme bg install` adds files here, i.e. into the repo.
+link "$REPO_DIR/config/omarchy/backgrounds/kanagawa" "$CONFIG_DIR/omarchy/backgrounds/kanagawa"
 # Menu override: hides the Share submenu (every entry needs localsend).
 link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
 # Default coding agent for Omarchy's menu and SUPER+CTRL+SHIFT+A. Written
@@ -220,8 +219,8 @@ echo "== App cleanup =="
 bash "$REPO_DIR/remove-unwanted-apps.sh" || echo "WARN: app cleanup reported a problem (see above)"
 
 echo "== Theme and reload =="
-# Tokyo Night is the stock theme kept on disk (remove-unwanted-apps.sh deletes
-# the other stock ones); it generates the shell/foot/hyprland colour files
+# Tokyo Night is the default of the stock themes kept on disk (the list is in
+# remove-unwanted-apps.sh); it generates the shell/foot/hyprland colour files
 # that everything else reads, so a failure here must not be hidden.
 omarchy theme set tokyo-night || echo "WARN: 'omarchy theme set tokyo-night' failed - run 'omarchy theme list' and set it by hand"
 omarchy restart shell || echo "WARN: 'omarchy restart shell' failed"
