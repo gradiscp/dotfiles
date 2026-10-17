@@ -76,7 +76,8 @@ Omarchy's menus.
   Two own themes, `crimson-core` and `apple-coast`, stay selectable.
 - **Bar:** the active workspace as a capsule in the theme's urgent colour; a
   terminal icon that lights up with a count while Claude Code sessions wait
-  for a permission. No tray.
+  for a permission; Omarchy's Tailscale widget (connect, exit node,
+  machines). No tray.
 - **Notifications:** stock. Claude permission requests pop up and jump back
   to their terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock

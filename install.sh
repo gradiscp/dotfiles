@@ -61,9 +61,9 @@ sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/ma
 link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-flags.conf"
 
 echo "== Tailscale =="
-# The service and the operator right only; `sudo tailscale up` (the login) is
-# interactive and stays a manual step. Omarchy's own installer also adds a
-# Chromium webapp and a bar widget, neither wanted here.
+# The service and the operator right only (the operator lets the bar widget
+# in shell.json connect and switch without sudo); `sudo tailscale up` (the
+# login) is interactive and stays a manual step.
 sudo systemctl enable --now tailscaled.service
 sudo tailscale set --operator="$USER" || echo "WARN: tailscale operator not set - run: sudo tailscale set --operator=$USER"
 
