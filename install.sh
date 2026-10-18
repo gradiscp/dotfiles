@@ -140,22 +140,14 @@ link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"
 link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
 # Tool versions for claude and gh (plus upgrade.auto_prune = false, which
 # Omarchy sets for a reason: `mise up` must not prune the Claude binary that
-# running sessions started from). Omarchy's installer and migrations also
-# drop lazy wrappers for other coding agents into ~/.local/bin that run
-# `mise use -g <tool>` on first call - through the link that would write the
-# tool into this repo. Only Claude Code is wanted, so those go, installed or
-# not; only files carrying Omarchy's wrapper marker are deleted. node is not
-# needed either (claude is a native binary; pnpm brings system nodejs).
+# running sessions started from). The other coding agents Omarchy drops in as
+# lazy wrappers are removed by remove-unwanted-apps.sh (App cleanup below).
+# node is not installed at all (claude is a native binary, pnpm 12 is
+# standalone).
 link "$REPO_DIR/config/mise/config.toml" "$CONFIG_DIR/mise/config.toml"
 if command -v mise >/dev/null; then
   mise install || echo "WARN: mise install failed - run 'mise install' by hand"
-  for tool in codex copilot crush cursor-agent gemini grok hermes muse omp opencode pi node playwright ghui; do
-    mise uninstall --all "$tool" >/dev/null 2>&1 || true
-    if [[ -f $HOME/.local/bin/$tool ]] && grep -q 'mise use -g' "$HOME/.local/bin/$tool"; then
-      rm -f "$HOME/.local/bin/$tool"
-    fi
-  done
-  echo "mise tools now: $(mise ls 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ')"
+  mise uninstall --all node >/dev/null 2>&1 || true
 fi
 # Brave Origin as the default browser and URL handler. Omarchy's "default
 # browser" menu writes this file (through the link on 2026-10-15, so the
@@ -175,6 +167,9 @@ link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
 # time into the post-update hook dir, so it runs after every `omarchy update`.
 link "$REPO_DIR/bin/omarchy-drift-check" "$HOME/.local/bin/omarchy-drift-check"
 link "$REPO_DIR/bin/omarchy-drift-check" "$CONFIG_DIR/omarchy/hooks/post-update.d/50-dotfiles-drift-check"
+# Runs before the drift check (hooks run in name order): takes out whatever an
+# update or a migration brought back, so the check after it sees the result.
+link "$REPO_DIR/remove-unwanted-apps.sh" "$CONFIG_DIR/omarchy/hooks/post-update.d/40-dotfiles-remove-unwanted"
 
 echo "== Claude Code =="
 # herdr's Claude hook: reports each session's id so herdr can `claude --resume`

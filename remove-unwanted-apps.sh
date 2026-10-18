@@ -1,13 +1,13 @@
 #!/bin/bash
-# Strip packages from the stock Omarchy set that aren't wanted here, and keep
-# the stock themes down to the kept ones. Re-runnable: a listed package can
-# come back through any `pacman -S` or Omarchy's Install menu (LibreOffice,
-# 2026-09-24, unnoticed for three weeks), which omarchy-drift-check reports
-# via `--check`.
+# Keep the machine down to what is wanted: removes unwanted stock packages,
+# webapp launchers, lazy coding-agent wrappers and stock themes. Re-runnable;
+# runs after every `omarchy update` as the post-update hook
+# 40-dotfiles-remove-unwanted (linked by install.sh), right before the drift
+# check (50-), because updates, migrations and the Install menu can bring
+# things back (LibreOffice, 2026-09-24, unnoticed for three weeks).
 #
-# Usage: remove-unwanted-apps.sh          remove what is installed
-#        remove-unwanted-apps.sh --check  list unwanted packages and launchers
-#                                         that are present; exit 1 if any
+# Usage: remove-unwanted-apps.sh          remove what is present
+#        remove-unwanted-apps.sh --check  list what is present; exit 1 if any
 set -euo pipefail
 
 # Anything that is really needed runs in a container instead.
@@ -15,6 +15,9 @@ unwanted=(
   # Stock Omarchy apps not used here
   aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
   dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
+  # PDF viewer: Papers (GNOME's successor, a dependency of Nautilus' sushi
+  # preview since Omarchy 4.0.5) does the job; mimeapps.list points PDFs at it
+  evince
   # herdr replaces tmux (config/herdr mirrors the old tmux keys); the docker
   # and git terminal UIs and the screen recorder are not used
   tmux lazydocker lazygit gpu-screen-recorder
@@ -38,6 +41,13 @@ launchers=(Basecamp HEY Zoom "Google Contacts" "Google Maps" "Google Messages" "
   X Discord WhatsApp YouTube "Disk Usage" mpv Docker)
 APPS="$HOME/.local/share/applications"
 
+# Lazy wrappers Omarchy's installer and migrations drop into ~/.local/bin:
+# they run `mise use -g <tool>` on first call, which installs the tool AND
+# writes it into the linked mise config, i.e. this repo. Only Claude Code is
+# wanted. Only files carrying the wrapper's marker are touched.
+wrappers=(codex copilot crush cursor-agent gemini grok hermes muse omp opencode pi playwright ghui)
+BIN="$HOME/.local/bin"
+
 # Stock themes kept on disk; every other shipped theme is deleted and kept
 # away by pacman's NoExtract (one `!` exception per kept theme). install.sh
 # sets tokyo-night as the default.
@@ -48,6 +58,10 @@ noextract="NoExtract   = usr/share/omarchy/themes/*$(printf ' !usr/share/omarchy
 mapfile -t installed < <(pacman -Qq "${unwanted[@]}" 2>/dev/null || true)
 present=()
 for l in "${launchers[@]}"; do [[ -e $APPS/$l.desktop ]] && present+=("$l.desktop"); done
+present_wrappers=()
+for w in "${wrappers[@]}"; do
+  [[ -f $BIN/$w ]] && grep -q 'mise use -g' "$BIN/$w" && present_wrappers+=("$w")
+done
 extra_themes=() missing_themes=()
 for d in "$THEMES"/*/; do
   [[ -d $d ]] || continue
@@ -59,6 +73,7 @@ grep -qxF "$noextract" /etc/pacman.conf && rule_ok=1 || rule_ok=0
 
 if [[ ${1:-} == --check ]]; then
   problems=("${installed[@]}" "${present[@]}")
+  for w in "${present_wrappers[@]}"; do problems+=("wrapper:$w"); done
   for t in "${extra_themes[@]}"; do problems+=("theme:$t"); done
   for t in "${missing_themes[@]}"; do problems+=("missing-theme:$t"); done
   (( rule_ok )) || problems+=("pacman-NoExtract-rule")
@@ -81,6 +96,11 @@ systemctl --user disable --now omarchy-fcitx5.service 2>/dev/null || true
 
 for l in "${launchers[@]}"; do rm -f "$APPS/$l.desktop"; done
 update-desktop-database "$APPS" 2>/dev/null || true
+
+for w in "${present_wrappers[@]}"; do
+  rm -f "$BIN/$w"
+  command -v mise >/dev/null && mise uninstall --all "$w" >/dev/null 2>&1
+done
 
 # Stock themes: there is no supported way to *hide* one - omarchy-theme-list
 # globs $THEMES unconditionally - so the unwanted ones are deleted, and

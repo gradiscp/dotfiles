@@ -170,9 +170,9 @@ straight into the repo, which the drift check cannot see:
 - **Only Claude Code via mise.** Omarchy's installer and migrations drop lazy
   `~/.local/bin` wrappers for other agents and tools that install on first
   run; `install.sh` removes them (check `ls ~/.local/bin` and `mise ls`
-  after an update). The `omarchy.agents` widget polls only Claude: its
-  codex poll once re-added codex through such a wrapper. node is not in
-  mise: claude is a native binary, pnpm brings the system `nodejs`.
+  after an update; the removal script handles them). The `omarchy.agents`
+  widget polls only Claude: its codex poll once re-added codex through such
+  a wrapper. No node: claude is a native binary, pnpm 12 is standalone.
 
 ## Packages and boot
 
@@ -186,9 +186,10 @@ straight into the repo, which the drift check cannot see:
   from its `keep_themes` list and the drift check verifies it. `omarchy
   channel set` rewrites `pacman.conf` and brings the themes back until the
   next run of the script.
-- Any `pacman -S` (typed, or Omarchy's Install menu) can bring a removed
-  package back; `remove-unwanted-apps.sh` is re-runnable and the drift check
-  reports what came back.
+- Any `pacman -S`, update or migration can bring a removed package,
+  launcher, agent wrapper or theme back: `remove-unwanted-apps.sh` (the one
+  list of all of them) runs as post-update hook 40, before the drift check
+  (50), and by hand any time.
 - `packages.txt` installs with `-S --needed`, never `-Sy` (partial upgrade).
 - No fingerprint (the old laptop's EgisTec EH57E has no libfprint driver);
   check libfprint's device list before setting one up on another machine.
