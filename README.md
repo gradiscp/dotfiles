@@ -60,12 +60,12 @@ these, in this order:
 
 ## Keeping it in sync
 
-Omarchy's own tools sometimes replace a linked config with a plain file, and
-a removed package can come back through any install command or menu.
-`omarchy-drift-check` re-links the copies (when nothing was changed) and
-reports real differences and returned packages as a notification. It runs
-after every `omarchy update`; run it by hand after changing settings through
-Omarchy's menus.
+After every `omarchy update` two hooks run. `remove-unwanted-apps.sh` takes
+out whatever the update brought back (packages, launchers, coding-agent
+wrappers, stock themes). Then `omarchy-drift-check` re-links configs that
+Omarchy's tools turned into plain copies and reports anything still off as a
+notification. Both can be run by hand any time, e.g. after changing settings
+through Omarchy's menus.
 
 ## What's customized
 
@@ -87,7 +87,8 @@ Omarchy's menus.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
   stock set (no LibreOffice, Obsidian, mpv, Disks, CJK input, tmux,
-  lazydocker, lazygit, screen recorder); anything heavier runs in a
+  lazydocker, lazygit, screen recorder, Evince: PDFs open in Papers);
+  anything heavier runs in a
   container instead of being installed. Only Claude Code as a coding agent.
 
 ## Keybinds changed from Omarchy defaults
