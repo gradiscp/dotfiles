@@ -55,3 +55,10 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 | Skript geändert | `shellcheck install.sh remove-unwanted-apps.sh bin/*` und `bash -n` darauf |
 | vor jedem Commit | `git diff` lesen: Tools schreiben durch die Links ins Repo (CLAUDE.md, "Write-through writers"); `git add <Pfade>`, nicht `-A` |
 | vor jedem Push | `git grep -niE 'svag\|fortnitepro\|privat\|/home/' HEAD` muss leer sein |
+
+### Github gh 
+
+| Wann | Befehl |
+| -------------- | --------------- |
+| Account switchen von gh | gh auth switch --user gradiscpsvag |
+
