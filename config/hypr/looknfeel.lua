@@ -44,6 +44,19 @@ o.window({ tag = "pop" }, { rounding = 0 })
 o.window("brave-origin", { tag = "+chromium-based-browser" })
 o.window({ tag = "chromium-based-browser" }, { idle_inhibit = "fullscreen" })
 
+-- Same gap for the Bitwarden extension's popup window (passkey prompt,
+-- pop-out): Omarchy floats it only under Chromium's class
+-- (default/hypr/apps/bitwarden.lua); Brave names it brave-<id>-Default.
+-- Untagged, the scrolling layout made it a column of its own and scrolled
+-- the browser off screen. Floated at its own size, not stock's 875x600:
+-- Brave keeps drawing the popup at the width it opened with until the
+-- pointer moves over it.
+o.window("brave-nngceckbapebfimnlniiiahkandclblb-Default", {
+  no_screen_share = true,
+  float = true,
+  center = true,
+})
+
 -- Bibata-Modern-Ice at 14 instead of the stock Adwaita at 24. Installed by
 -- install.sh as a 1.7 MB XCursor theme under ~/.local/share/icons (the AUR
 -- package is 322 MB of every variant). No hyprcursor variant exists, so
