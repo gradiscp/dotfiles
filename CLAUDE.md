@@ -170,9 +170,10 @@ straight into the repo, which the drift check cannot see:
 - **Only Claude Code via mise.** Omarchy's installer and migrations drop lazy
   `~/.local/bin` wrappers for other agents and tools that install on first
   run; `install.sh` removes them (check `ls ~/.local/bin` and `mise ls`
-  after an update; the removal script handles them). The `omarchy.agents`
-  widget polls only Claude: its codex poll once re-added codex through such
-  a wrapper. No node: claude is a native binary, pnpm 12 is standalone.
+  after an update). The `omarchy.agents` widget polls only Claude: its codex
+  poll once re-added codex via such a wrapper. Node only via `mise exec
+  node@24 -- ...` (installs on demand, `install.sh` removes it), never in
+  mise's config.
 
 ## Packages and boot
 
