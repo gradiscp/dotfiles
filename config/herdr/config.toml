@@ -107,3 +107,9 @@ agent_panel_sort = "spaces"
 # is still blocked then), so over the AirPods it came ~1.5s after Claude asked.
 # Measured 2026-10-21: hook -> herdr blocked ~0.2s, blocked -> player ~1.0s.
 delay_seconds = 0
+
+[ui.sound.agents]
+# claude-notify plays herdr's two sounds for Claude itself, so the panel of
+# the gradiscp.claude-status bar widget can switch them off at runtime
+# without editing this linked file. herdr would play them a second time.
+claude = "off"
