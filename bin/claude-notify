@@ -7,7 +7,8 @@
 # (fires as the dialog opens, so the toast is immediate) and Notification with
 # matcher "permission_prompt" (the original; arrives later, so it is only a
 # fallback - skipped when a PermissionRequest toast for the same terminal went
-# up in the last 20s). Two kinds of terminal:
+# up in the last 20s). A third hook, Stop, only plays the done sound (below).
+# Two kinds of terminal:
 #
 # - Inside herdr: the hook inherits HERDR_PANE_ID from the pane Claude runs
 #   in, so a click focuses herdr's window *and* that pane - no guessing which
@@ -28,14 +29,21 @@
 # most recently blocked herdr agent, else the last plain terminal that asked
 # and has not been visited since.
 #
+# Sounds: herdr's own two (request, done), played here instead of by herdr
+# (config/herdr/config.toml silences herdr for Claude) so that they can be
+# switched off at runtime without editing that linked repo file. The request
+# sound goes with the prompt (also while toasts are muted), the done sound
+# with Claude's Stop hook; neither when you are looking at that terminal,
+# like herdr. install.sh fetches the files.
+#
 # `quiet` mutes the toasts (right-click on the gradiscp.claude-status bar
-# widget, or the switch in its panel): the bar glyph still lights up and
-# herdr still plays its own sound. The flag lives on tmpfs, so a reboot turns
-# toasts back on.
+# widget, or the switch in its panel): the bar glyph still lights up and the
+# sound still plays. `sound off` mutes the sounds. Both flags live on tmpfs,
+# so a reboot turns everything back on.
 #
 # `status` feeds that widget's panel: one JSON document with every herdr
 # agent (waiting ones first, with what they ask for), the plain terminal that
-# asked, the last toasts from the log, and the quiet flag. What a session asks
+# asked, and the quiet flag. What a session asks
 # for ("Braucht eine Genehmigung: Bash") is kept in <key>.ask next to the
 # toast state and dropped by `count` once herdr no longer reports the pane
 # blocked, so a prompt that arrived without a hook never shows a stale ask.
@@ -48,6 +56,7 @@
 #   claude-notify count                   bar widget poll
 #   claude-notify status                  bar widget panel, JSON
 #   claude-notify quiet [on|off|toggle]   mute toasts; prints on/off
+#   claude-notify sound [on|off|toggle]   sounds on/off; prints on/off
 
 set -uo pipefail
 
@@ -61,6 +70,8 @@ SELF="$(realpath -s "$0")"
 RUN_DIR="$XDG_RUNTIME_DIR/claude-notify"
 LAST_WINDOW="$RUN_DIR/last-window"
 QUIET="$RUN_DIR/quiet"
+SOUND_OFF="$RUN_DIR/sound-off"
+SOUND_DIR="$HOME/.local/share/claude-notify/sounds"
 mkdir -p "$RUN_DIR"
 # Only these shapes ever reach a hyprctl dispatch or become a file name:
 # a Hyprland window address, and a herdr pane id (w<N>:p<N> as observed in
@@ -78,6 +89,12 @@ log() {
 }
 
 active_window() { hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'; }
+
+# Play <name>.mp3 (request or done) detached, so the hook returns at once.
+play_sound() {
+  [[ -e $SOUND_OFF || ! -f $SOUND_DIR/$1.mp3 ]] && return 0
+  setsid -f paplay "$SOUND_DIR/$1.mp3" </dev/null >/dev/null 2>&1
+}
 
 # Address of the Hyprland window owned by <pid> or its nearest ancestor that
 # owns one. Fails if the chain reaches init without finding a window.
@@ -175,8 +192,8 @@ focus-window)
 count)
   # For the gradiscp.claude-status bar widget: herdr agents in "blocked", plus
   # the plain terminal that asked and has not been visited since. Only the
-  # last plain terminal is remembered, so that side adds at most 1. A second
-  # line "quiet" while toasts are muted.
+  # last plain terminal is remembered, so that side adds at most 1. Then a
+  # line "quiet" while toasts are muted, and "silent" while sounds are off.
   blocked=$(herdr agent list 2>/dev/null |
     jq -r '.result.agents[]? | select(.agent_status == "blocked") | .pane_id' 2>/dev/null)
   n=0
@@ -202,12 +219,13 @@ count)
   fi
   echo "$n"
   [[ -e $QUIET ]] && echo quiet
+  [[ -e $SOUND_OFF ]] && echo silent
   exit 0
   ;;
 status)
   # For the panel of the gradiscp.claude-status bar widget, polled only while
-  # it is open: one jq pass over `herdr agent list`, the ask files, the log
-  # and the plain terminal, so a refresh is one fork of each tool. Session
+  # it is open: one jq pass over `herdr agent list`, the ask files and the
+  # plain terminal, so a refresh is one fork of each tool. Session
   # titles come from Claude's terminal title and are untrusted text; the
   # panel renders them as plain text.
   agents=$(herdr agent list 2>/dev/null | jq -c '.result.agents // []' 2>/dev/null)
@@ -222,15 +240,16 @@ status)
     window=$(cat "$LAST_WINDOW")
   fi
   quiet=0; [[ -e $QUIET ]] && quiet=1
+  sound=1; [[ -e $SOUND_OFF ]] && sound=0
   jq -n --argjson agents "${agents:-[]}" --arg asks "$asks" --argjson quiet "$quiet" \
-    --arg window "$window" --arg wtitle "${wtitle:-Terminal}" \
-    --arg log "$(grep -E '^[0-9:]{8} (toast|quiet) \(' "$RUN_DIR/log" 2>/dev/null | tail -n 6 | tac)" '
+    --argjson sound "$sound" --arg window "$window" --arg wtitle "${wtitle:-Terminal}" '
     def rank: {blocked: 0, working: 1, idle: 2, unknown: 3, done: 4}[.] // 5;
     ($asks | split("\n") | map(select(length > 0) | split("\t")
       | {key: .[0], asked_ms: ((.[1] // "0") | tonumber? // 0), ask: (.[2] // "")})
       | map({(.key): .}) | add // {}) as $ask
     | {
       quiet: ($quiet == 1),
+      sound: ($sound == 1),
       sessions: ([
           $agents[] | select(.pane_id != null) | {
             kind: "pane", id: .pane_id, status: (.agent_status // "unknown"),
@@ -242,9 +261,7 @@ status)
             kind: "window", id: $window, status: "blocked", title: $wtitle,
             project: "", focused: false, seq: 0
           } + ($ask["window-" + $window] // {} | del(.key))] end)
-        | sort_by([(.status | rank), -.seq])),
-      log: ($log | split("\n") | map(select(length > 0)
-        | capture("^(?<time>[0-9:]+) (?<kind>toast|quiet) \\((?<key>[^,)]*)[^)]*\\): (?<text>.*)$")))
+        | sort_by([(.status | rank), -.seq]))
     }'
   exit 0
   ;;
@@ -255,6 +272,15 @@ quiet)
   toggle) if [[ -e $QUIET ]]; then rm -f "$QUIET"; else : >"$QUIET"; fi ;;
   esac
   [[ -e $QUIET ]] && echo on || echo off
+  exit 0
+  ;;
+sound)
+  case ${2:-} in
+  on) rm -f "$SOUND_OFF" ;;
+  off) : >"$SOUND_OFF" ;;
+  toggle) if [[ -e $SOUND_OFF ]]; then rm -f "$SOUND_OFF"; else : >"$SOUND_OFF"; fi ;;
+  esac
+  [[ -e $SOUND_OFF ]] && echo off || echo on
   exit 0
   ;;
 jump)
@@ -297,13 +323,29 @@ else
 fi
 [[ -n $title ]] || title=$(basename "$(jq -r '.cwd // empty' <<<"$input")")
 
+looking_at_it() { ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; }
+
+# Claude finished its turn: only the done sound.
+if [[ $event == Stop ]]; then
+  if looking_at_it; then
+    log "skip ($key, Stop): already looking at it"
+  else
+    log "done ($key): sound"
+    play_sound "done"
+  fi
+  exit 0
+fi
+
 # The late Notification hook for a prompt PermissionRequest already announced.
+# The marker is set before any exit below, so muted toasts do not let the
+# fallback play the sound a second time.
 marker="$RUN_DIR/$key.request"
 stamp=$(cat "$marker" 2>/dev/null); [[ $stamp =~ ^[0-9]+$ ]] || stamp=0
 if [[ $event == Notification && -f $marker ]] && (( $(now_ms) - stamp < 20000 )); then
   log "skip ($key): Notification after PermissionRequest"
   exit 0
 fi
+[[ $event == PermissionRequest ]] && now_ms >"$marker"
 
 # What it asks for, shown in the widget's panel even when no toast goes up.
 # A pane's file lives until `count` sees the pane unblocked, a plain
@@ -311,11 +353,13 @@ fi
 ask="$(now_ms)	${message//[$'\t\n']/ }"
 [[ -n $pane ]] && echo "$ask" >"$RUN_DIR/$key.ask"
 
-# Already looking at that very terminal: a toast would only be noise.
-if ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; then
+# Already looking at that very terminal: a toast or sound would only be noise.
+if looking_at_it; then
   log "skip ($key): already looking at it"
   exit 0
 fi
+
+play_sound request
 
 # The plain terminal that asked, for the bar glyph, the panel and `jump`.
 if [[ -z $pane ]]; then
@@ -334,7 +378,6 @@ if [[ -e $QUIET ]]; then
 fi
 
 log "toast ($key, ${event:-?}): $headline"
-[[ $event == PermissionRequest ]] && now_ms >"$marker"
 
 # One state file per terminal: a token, so a watcher left over from an earlier
 # prompt in the same place cannot take down this newer toast, and the headline

@@ -11,13 +11,16 @@ import qs.Ui
 // 2026-10-21, the number is in the tooltip). The count comes from
 // `claude-notify count`: herdr agents in "blocked", plus the last plain
 // terminal that asked and was not visited since. A right-click mutes the
-// toasts or turns them back on (`claude-notify quiet on|off`); herdr's sound
+// toasts or turns them back on (`claude-notify quiet on|off`); the sound
 // stays. SUPER+P (`claude-notify jump`) goes straight to the latest waiter.
+//
+// A badge in the glyph's corner (bar and panel) shows what is off: a
+// crossed-out bell for muted toasts, else a muted speaker for sounds off.
 //
 // A click opens the panel (since 2026-10-21): every Claude session herdr
 // knows, waiting ones first with what they ask for, a click on a row goes
-// there; the last toasts from claude-notify's log; and the toast switch,
-// the same flag as the right-click. The panel polls `claude-notify status`
+// there; the toast switch (the same flag as the right-click) and the sound
+// switch (`claude-notify sound on|off`). The panel polls `claude-notify status`
 // once a second only while it is open - the glyph's `count` poll runs
 // regardless. Same bones as the stock agents/tailscale panels: Panel root,
 // BarIconButton, KeyboardPanel with j/k, Enter, Esc.
@@ -29,8 +32,8 @@ Panel {
 
   property int waiting: 0
   property bool quiet: false
+  property bool silent: false
   property var sessions: []
-  property var toasts: []
   // "seit 2 min" reads this instead of Date.now(), refreshed with each poll.
   property double nowMs: Date.now()
   // Keyboard cursor: a session row, or the toast switch at sessions.length.
@@ -58,6 +61,11 @@ Panel {
     Quickshell.execDetached([root.notify, "quiet", on ? "on" : "off"])
   }
 
+  function setSilent(on) {
+    root.silent = on
+    Quickshell.execDetached([root.notify, "sound", on ? "off" : "on"])
+  }
+
   function goTo(session) {
     if (!session) return
     Quickshell.execDetached([root.notify, session.kind === "window" ? "focus-window" : "focus", String(session.id)])
@@ -66,13 +74,14 @@ Panel {
 
   function moveCursor(dy) {
     root.cursorActive = true
-    root.cursor = Math.max(0, Math.min(root.sessions.length, root.cursor + dy))
+    root.cursor = Math.max(0, Math.min(root.sessions.length + 1, root.cursor + dy))
   }
 
   function activateCursor() {
     if (!root.cursorActive) return
     if (root.cursor < root.sessions.length) root.goTo(root.sessions[root.cursor])
-    else root.setQuiet(!root.quiet)
+    else if (root.cursor === root.sessions.length) root.setQuiet(!root.quiet)
+    else root.setSilent(!root.silent)
   }
 
   function statusWord(status) {
@@ -102,9 +111,9 @@ Panel {
     if (!data || !(data.sessions instanceof Array)) return
     root.nowMs = Date.now()
     root.sessions = data.sessions
-    root.toasts = data.log instanceof Array ? data.log : []
     root.quiet = data.quiet === true
-    if (root.cursor > root.sessions.length) root.cursor = root.sessions.length
+    root.silent = data.sound === false
+    if (root.cursor > root.sessions.length + 1) root.cursor = root.sessions.length + 1
   }
 
   onOpenedChanged: if (opened) {
@@ -122,7 +131,8 @@ Panel {
         var lines = String(text).trim().split("\n")
         var n = parseInt(lines[0], 10)
         root.waiting = isFinite(n) && n > 0 ? n : 0
-        root.quiet = lines[1] === "quiet"
+        root.quiet = lines.indexOf("quiet") > 0
+        root.silent = lines.indexOf("silent") > 0
       }
     }
   }
@@ -168,11 +178,17 @@ Panel {
     foreground: root.waiting > 0 ? root.alertColor : root.idleColor
     tooltipText: (root.waiting === 0 ? "Keine Claude-Session wartet"
       : (root.waiting === 1 ? "1 Claude-Session wartet" : root.waiting + " Claude-Sessions warten"))
-      + (root.quiet ? " · Benachrichtigungen aus, nur Ton (Rechtsklick: an)"
-                    : " · Rechtsklick: Benachrichtigungen aus, nur Ton")
+      + (root.quiet ? " · Benachrichtigungen aus (Rechtsklick: an)"
+                    : " · Rechtsklick: Benachrichtigungen aus")
+      + (root.silent ? " · Ton aus" : "")
     onPressed: function(button) {
       if (button === Qt.RightButton) root.setQuiet(!root.quiet)
       else root.toggle()
+    }
+
+    QuietBadge {
+      anchors { right: parent.right; bottom: parent.bottom; rightMargin: Style.space(1); bottomMargin: Style.space(2) }
+      size: Math.round(Style.bar.iconFont * 0.6)
     }
   }
 
@@ -194,7 +210,10 @@ Panel {
       onActivateRequested: root.activateCursor()
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
-      onTextKey: function(t) { if (t === "m" || t === "M") root.setQuiet(!root.quiet) }
+      onTextKey: function(t) {
+        if (t === "m" || t === "M") root.setQuiet(!root.quiet)
+        else if (t === "t" || t === "T") root.setSilent(!root.silent)
+      }
 
       Flickable {
         id: panelFlick
@@ -232,6 +251,12 @@ Panel {
                 font.pixelSize: Style.font.display
 
                 Behavior on color { ColorAnimation { duration: 160 } }
+
+                QuietBadge {
+                  anchors { right: parent.right; bottom: parent.bottom; rightMargin: -Style.space(8); bottomMargin: -Style.space(4) }
+                  size: Math.round(Style.font.display * 0.45)
+                  color: "transparent"
+                }
               }
             }
           }
@@ -276,51 +301,13 @@ Panel {
             }
           }
 
-          // ---------- Recent toasts ----------
-          PanelSeparator { foreground: root.foreground }
-
-          Column {
-            id: toastSection
-            width: parent.width
-            spacing: Style.spacing.xs
-
-            PanelSectionHeader {
-              width: parent.width
-              text: "ZULETZT"
-              foreground: root.foreground
-              fontFamily: root.fontFamily
-            }
-
-            Text {
-              visible: root.toasts.length === 0
-              width: parent.width
-              topPadding: Style.spacing.md
-              bottomPadding: Style.spacing.md
-              text: "Noch keine Benachrichtigung seit dem Start."
-              color: root.dim
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.body
-              wrapMode: Text.WordWrap
-            }
-
-            Repeater {
-              model: root.toasts
-
-              ToastRow {
-                required property var modelData
-                width: toastSection.width
-                entry: modelData
-              }
-            }
-          }
-
           // ---------- Toasts on/off ----------
           PanelSeparator { foreground: root.foreground }
 
           Toggle {
             width: parent.width
             label: "Benachrichtigungen"
-            description: root.quiet ? "Aus: nur herdrs Ton, der Glyph leuchtet weiter"
+            description: root.quiet ? "Aus: kein Toast, das Symbol leuchtet weiter"
                                     : "Toast, wenn Claude eine Genehmigung braucht"
             checked: !root.quiet
             hasCursor: root.cursorActive && root.cursor === root.sessions.length
@@ -331,6 +318,23 @@ Panel {
               if (!isHovered) return
               root.cursorActive = true
               root.cursor = root.sessions.length
+            }
+          }
+
+          Toggle {
+            width: parent.width
+            label: "Ton"
+            description: root.silent ? "Aus: kein Ton bei Genehmigung und wenn Claude fertig ist"
+                                     : "Bei Genehmigung und wenn Claude fertig ist"
+            checked: !root.silent
+            hasCursor: root.cursorActive && root.cursor === root.sessions.length + 1
+            foreground: root.foreground
+            fontFamily: root.fontFamily
+            onClicked: root.setSilent(!root.silent)
+            onHovered: function(isHovered) {
+              if (!isHovered) return
+              root.cursorActive = true
+              root.cursor = root.sessions.length + 1
             }
           }
         }
@@ -433,52 +437,25 @@ Panel {
     }
   }
 
-  // One line of claude-notify's log: time, headline, and "stumm" for a
-  // prompt that came while toasts were muted. Display only.
-  component ToastRow: Item {
-    id: toastRow
-    property var entry: null
-
-    implicitHeight: toastText.implicitHeight + Style.spacing.sm
-
-    Text {
-      id: toastTime
-      textFormat: Text.PlainText
-      anchors.left: parent.left
-      anchors.leftMargin: Style.spacing.rowPaddingX
-      anchors.verticalCenter: parent.verticalCenter
-      text: toastRow.entry ? String(toastRow.entry.time || "").slice(0, 5) : ""
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
-    }
+  // Toasts muted: a crossed-out bell (nf-fa-bell_slash, U+F1F6); else sounds
+  // off: a muted speaker (nf-oct-mute, U+F466). On a disc of the bar's
+  // background, so it reads as a badge on top of the glyph.
+  component QuietBadge: Rectangle {
+    property real size: Style.space(10)
+    visible: root.quiet || root.silent
+    z: 10
+    width: size + Style.space(4)
+    height: width
+    radius: width / 2
+    color: root.bar ? root.bar.background : Commons.Color.background
 
     Text {
-      id: toastText
+      anchors.centerIn: parent
       textFormat: Text.PlainText
-      anchors.left: toastTime.right
-      anchors.leftMargin: Style.spacing.xl
-      anchors.right: mutedText.visible ? mutedText.left : parent.right
-      anchors.rightMargin: Style.spacing.rowPaddingX
-      anchors.verticalCenter: parent.verticalCenter
-      text: toastRow.entry ? String(toastRow.entry.text || "") : ""
-      color: root.dim
+      text: root.quiet ? "\uf1f6" : "\uf466"
+      color: root.bar ? root.bar.barForeground : Commons.Color.foreground
       font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
-      elide: Text.ElideRight
-    }
-
-    Text {
-      id: mutedText
-      textFormat: Text.PlainText
-      visible: toastRow.entry && toastRow.entry.kind === "quiet"
-      anchors.right: parent.right
-      anchors.rightMargin: Style.spacing.rowPaddingX
-      anchors.verticalCenter: parent.verticalCenter
-      text: "stumm"
-      color: Qt.darker(root.foreground, 2.0)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
+      font.pixelSize: parent.size
     }
   }
 }

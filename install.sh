@@ -118,6 +118,30 @@ if [[ ! -d $CURSOR_DIR/cursors || ! -f $CURSOR_DIR/index.theme ]]; then
   rm -rf "$tmp"; trap - EXIT
 fi
 
+echo "== Claude sounds (herdr's request/done, played by claude-notify) =="
+# herdr's own two sounds (Apache-2.0), pinned to the v0.9.1 tag - the files
+# are byte-identical to the ones built into that herdr. herdr is silenced for
+# Claude in config/herdr/config.toml; claude-notify plays these instead, so
+# the bar panel can switch them off without touching that linked file.
+SOUND_DIR="$HOME/.local/share/claude-notify/sounds"
+SOUND_URL="https://raw.githubusercontent.com/herdrdev/herdr/v0.9.1/assets/sounds"
+declare -A SOUND_SHA256=(
+  [request]="44c077ce28a0a48cec29da204beb627fd17140e5bde1f92dbaecf3d478bdda6f"
+  [done]="cb9c93492c808e33946edac2ab5915758267e65914bc4b794a5ca6dc6e655741"
+)
+mkdir -p "$SOUND_DIR"
+for sound in request done; do
+  [[ -f $SOUND_DIR/$sound.mp3 ]] && continue
+  tmp="$(mktemp)"
+  if curl -fsSL -o "$tmp" "$SOUND_URL/$sound.mp3" \
+    && echo "${SOUND_SHA256[$sound]}  $tmp" | sha256sum -c --quiet; then
+    mv "$tmp" "$SOUND_DIR/$sound.mp3" && echo "Installed $SOUND_DIR/$sound.mp3"
+  else
+    rm -f "$tmp"
+    echo "WARN: $sound sound download or checksum failed - no Claude $sound sound"
+  fi
+done
+
 echo "== Fontconfig (JetBrains Mono everywhere) =="
 link "$REPO_DIR/config/fontconfig/conf.d/51-jetbrains.conf" "$CONFIG_DIR/fontconfig/conf.d/51-jetbrains.conf"
 fc-cache -f >/dev/null 2>&1 || echo "WARN: fc-cache failed"
