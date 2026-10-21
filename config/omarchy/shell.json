@@ -5,7 +5,7 @@
       "center": [
         {
           "id": "omarchy.clock",
-          "format": "yyyy-MM-dd HH:mm",
+          "format": "ddd d MMM HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
           "verticalFormat": "HH\n—\nmm"
         },
