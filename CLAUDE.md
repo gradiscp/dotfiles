@@ -105,10 +105,9 @@ straight into the repo, which the drift check cannot see:
 
 ## Omarchy shell and plugins
 
-- **`service`/`panel`/overlay plugins do not hot-reload.** After editing
-  `gradiscp.closeconfirm`, run `omarchy restart shell`; otherwise the old
-  code keeps running without an error. Bar widgets and `shell.json` do
-  hot-reload.
+- **Own plugins do not hot-reload**, bar widgets too (2026-10-21; nor does
+  `rescanPlugins`). After editing a `gradiscp.*` plugin run `omarchy restart
+  shell`, or the old code runs on silently. `shell.json` hot-reloads.
 - **Cloning a `kind: bar` plugin is broken** here: the whole bar disappears.
 - **Plugin clones drift silently** (a clone never follows stock updates;
   partial clones are not possible). The only clone left is

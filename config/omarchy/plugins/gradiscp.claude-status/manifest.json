@@ -4,7 +4,7 @@
   "name": "Claude status",
   "version": "1.0.0",
   "author": "gradiscp",
-  "description": "How many Claude Code sessions are waiting for a permission; a click jumps to the latest.",
+  "description": "Whether Claude Code sessions are waiting for a permission; a click opens a panel with every session, what the waiting ones ask for, the last toasts and the toast switch; a right-click mutes the toasts.",
   "kinds": [
     "bar-widget"
   ],
@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "Claude status",
-    "description": "Terminal glyph that lights up in the bar's urgent colour with a count while Claude Code sessions wait for a permission.",
+    "description": "Terminal glyph that lights up in the bar's urgent colour while Claude Code sessions wait for a permission; a click opens the session panel.",
     "category": "AI",
     "allowMultiple": false
   }
