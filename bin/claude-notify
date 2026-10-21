@@ -28,11 +28,26 @@
 # most recently blocked herdr agent, else the last plain terminal that asked
 # and has not been visited since.
 #
+# `quiet` mutes the toasts (right-click on the gradiscp.claude-status bar
+# widget, or the switch in its panel): the bar glyph still lights up and
+# herdr still plays its own sound. The flag lives on tmpfs, so a reboot turns
+# toasts back on.
+#
+# `status` feeds that widget's panel: one JSON document with every herdr
+# agent (waiting ones first, with what they ask for), the plain terminal that
+# asked, the last toasts from the log, and the quiet flag. What a session asks
+# for ("Braucht eine Genehmigung: Bash") is kept in <key>.ask next to the
+# toast state and dropped by `count` once herdr no longer reports the pane
+# blocked, so a prompt that arrived without a hook never shows a stale ask.
+#
 # Usage:
 #   claude-notify                         reads Claude's hook JSON on stdin
 #   claude-notify focus <pane>            click action, herdr pane
 #   claude-notify focus-window <address>  click action, plain terminal
 #   claude-notify jump                    keybind
+#   claude-notify count                   bar widget poll
+#   claude-notify status                  bar widget panel, JSON
+#   claude-notify quiet [on|off|toggle]   mute toasts; prints on/off
 
 set -uo pipefail
 
@@ -45,6 +60,7 @@ SELF="$(realpath -s "$0")"
 [[ -n ${XDG_RUNTIME_DIR:-} ]] || { echo "claude-notify: XDG_RUNTIME_DIR unset" >&2; exit 0; }
 RUN_DIR="$XDG_RUNTIME_DIR/claude-notify"
 LAST_WINDOW="$RUN_DIR/last-window"
+QUIET="$RUN_DIR/quiet"
 mkdir -p "$RUN_DIR"
 # Only these shapes ever reach a hyprctl dispatch or become a file name:
 # a Hyprland window address, and a herdr pane id (w<N>:p<N> as observed in
@@ -110,9 +126,18 @@ dismiss() {
   [[ -n $headline ]] && "$OMARCHY_BIN/omarchy-shell" notifications dismiss "$headline" >/dev/null 2>&1
 }
 
+# Title of the Hyprland window <address>, without the spinner glyph Claude
+# puts in front ("<glyph> <task>"). Fails when the window is gone.
+window_title() {
+  hyprctl clients -j 2>/dev/null |
+    jq -er --arg a "$1" 'first(.[] | select(.address == $a)) | .title // ""' |
+    sed 's/^[^[:alnum:]]* //'
+}
+
 # The plain terminal counts as visited: `jump` should not lead back to it.
 forget_window() {
   [[ $(cat "$LAST_WINDOW" 2>/dev/null) == "$1" ]] && rm -f "$LAST_WINDOW"
+  rm -f "$RUN_DIR/window-$1.ask"
 }
 
 focus_pane() {
@@ -150,15 +175,86 @@ focus-window)
 count)
   # For the gradiscp.claude-status bar widget: herdr agents in "blocked", plus
   # the plain terminal that asked and has not been visited since. Only the
-  # last plain terminal is remembered, so that side adds at most 1.
-  n=$(herdr agent list 2>/dev/null |
-    jq '[.result.agents[]? | select(.agent_status == "blocked")] | length' 2>/dev/null)
-  n=${n:-0}
-  if [[ -s $LAST_WINDOW ]] && hyprctl clients -j 2>/dev/null |
-    jq -e --arg a "$(cat "$LAST_WINDOW")" 'any(.[]; .address == $a)' >/dev/null; then
-    n=$((n + 1))
+  # last plain terminal is remembered, so that side adds at most 1. A second
+  # line "quiet" while toasts are muted.
+  blocked=$(herdr agent list 2>/dev/null |
+    jq -r '.result.agents[]? | select(.agent_status == "blocked") | .pane_id' 2>/dev/null)
+  n=0
+  [[ -n $blocked ]] && n=$(wc -l <<<"$blocked")
+  # A pane that is no longer blocked has had its question answered; its
+  # recorded ask would otherwise resurface on the next prompt that comes
+  # without a hook (a plan approval, a question from the agent).
+  for ask in "$RUN_DIR"/w*:p*.ask; do
+    [[ -f $ask ]] || continue
+    key=${ask##*/}
+    [[ $'\n'$blocked$'\n' == *$'\n'${key%.ask}$'\n'* ]] || rm -f "$ask"
+  done
+  if [[ -s $LAST_WINDOW ]]; then
+    last=$(cat "$LAST_WINDOW")
+    # Being in that window counts as a visit. The toast's watcher only looks
+    # for 10s, so without this a prompt answered later kept the glyph lit.
+    if [[ $(active_window) == "$last" ]]; then
+      forget_window "$last"
+    elif hyprctl clients -j 2>/dev/null |
+      jq -e --arg a "$last" 'any(.[]; .address == $a)' >/dev/null; then
+      n=$((n + 1))
+    fi
   fi
   echo "$n"
+  [[ -e $QUIET ]] && echo quiet
+  exit 0
+  ;;
+status)
+  # For the panel of the gradiscp.claude-status bar widget, polled only while
+  # it is open: one jq pass over `herdr agent list`, the ask files, the log
+  # and the plain terminal, so a refresh is one fork of each tool. Session
+  # titles come from Claude's terminal title and are untrusted text; the
+  # panel renders them as plain text.
+  agents=$(herdr agent list 2>/dev/null | jq -c '.result.agents // []' 2>/dev/null)
+  asks=
+  for ask in "$RUN_DIR"/*.ask; do
+    [[ -f $ask ]] || continue
+    key=${ask##*/}
+    asks+="${key%.ask}	$(head -n 1 "$ask")"$'\n'
+  done
+  window=; wtitle=
+  if [[ -s $LAST_WINDOW ]] && wtitle=$(window_title "$(cat "$LAST_WINDOW")"); then
+    window=$(cat "$LAST_WINDOW")
+  fi
+  quiet=0; [[ -e $QUIET ]] && quiet=1
+  jq -n --argjson agents "${agents:-[]}" --arg asks "$asks" --argjson quiet "$quiet" \
+    --arg window "$window" --arg wtitle "${wtitle:-Terminal}" \
+    --arg log "$(grep -E '^[0-9:]{8} (toast|quiet) \(' "$RUN_DIR/log" 2>/dev/null | tail -n 6 | tac)" '
+    def rank: {blocked: 0, working: 1, idle: 2, unknown: 3, done: 4}[.] // 5;
+    ($asks | split("\n") | map(select(length > 0) | split("\t")
+      | {key: .[0], asked_ms: ((.[1] // "0") | tonumber? // 0), ask: (.[2] // "")})
+      | map({(.key): .}) | add // {}) as $ask
+    | {
+      quiet: ($quiet == 1),
+      sessions: ([
+          $agents[] | select(.pane_id != null) | {
+            kind: "pane", id: .pane_id, status: (.agent_status // "unknown"),
+            title: (.terminal_title_stripped // .terminal_title // ""),
+            project: ((.cwd // "") | split("/") | last // ""),
+            focused: (.focused == true), seq: (.state_change_seq // 0)
+          } + (if .agent_status == "blocked" then ($ask[.pane_id] // {}) | del(.key) else {} end)
+        ] + (if $window == "" then [] else [{
+            kind: "window", id: $window, status: "blocked", title: $wtitle,
+            project: "", focused: false, seq: 0
+          } + ($ask["window-" + $window] // {} | del(.key))] end)
+        | sort_by([(.status | rank), -.seq])),
+      log: ($log | split("\n") | map(select(length > 0)
+        | capture("^(?<time>[0-9:]+) (?<kind>toast|quiet) \\((?<key>[^,)]*)[^)]*\\): (?<text>.*)$")))
+    }'
+  exit 0
+  ;;
+quiet)
+  case ${2:-} in
+  on) : >"$QUIET" ;;
+  off) rm -f "$QUIET" ;;
+  toggle) if [[ -e $QUIET ]]; then rm -f "$QUIET"; else : >"$QUIET"; fi ;;
+  esac
+  [[ -e $QUIET ]] && echo on || echo off
   exit 0
   ;;
 jump)
@@ -195,10 +291,7 @@ if [[ -n $pane ]]; then
 else
   window=$(window_of "$$") || { log "skip: no local terminal window (SSH, tmux?)"; exit 0; }
   key="window-$window"
-  # Claude titles its terminal "<spinner glyph> <task>"; drop the glyph.
-  title=$(hyprctl clients -j 2>/dev/null |
-    jq -r --arg a "$window" 'first(.[] | select(.address == $a)).title // empty' |
-    sed 's/^[^[:alnum:]]* //')
+  title=$(window_title "$window")
   looking=1
   click=(focus-window "$window")
 fi
@@ -212,15 +305,34 @@ if [[ $event == Notification && -f $marker ]] && (( $(now_ms) - stamp < 20000 ))
   exit 0
 fi
 
+# What it asks for, shown in the widget's panel even when no toast goes up.
+# A pane's file lives until `count` sees the pane unblocked, a plain
+# terminal's until that window is visited (forget_window).
+ask="$(now_ms)	${message//[$'\t\n']/ }"
+[[ -n $pane ]] && echo "$ask" >"$RUN_DIR/$key.ask"
+
 # Already looking at that very terminal: a toast would only be noise.
 if ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; then
   log "skip ($key): already looking at it"
   exit 0
 fi
 
+# The plain terminal that asked, for the bar glyph, the panel and `jump`.
+if [[ -z $pane ]]; then
+  rm -f "$RUN_DIR"/window-*.ask
+  echo "$window" >"$LAST_WINDOW"
+  echo "$ask" >"$RUN_DIR/$key.ask"
+fi
+
 # The headline doubles as the handle for dismissing the toast later, so it
 # carries the terminal's title to tell two waiting sessions apart.
 headline="Claude wartet${title:+: $title}"
+
+if [[ -e $QUIET ]]; then
+  log "quiet ($key, ${event:-?}): $headline"
+  exit 0
+fi
+
 log "toast ($key, ${event:-?}): $headline"
 [[ $event == PermissionRequest ]] && now_ms >"$marker"
 
@@ -231,7 +343,6 @@ log "toast ($key, ${event:-?}): $headline"
 # find this headline, not the previous prompt's.
 token="$$.$(now_ms)"
 printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
-[[ -z $pane ]] && echo "$window" >"$LAST_WINDOW"
 
 "$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" \
   -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
