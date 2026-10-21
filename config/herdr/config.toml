@@ -101,3 +101,9 @@ tab_bar_right = [{ type = "zoom" }, { type = "hostname" }]
 # and it resolves on the server so remote sessions name the remote host.
 window_title = "{hostname}: {workspace}"
 agent_panel_sort = "spaces"
+
+[ui.toast]
+# The "needs input" sound waited herdr's default 1s (it only fires if the pane
+# is still blocked then), so over the AirPods it came ~1.5s after Claude asked.
+# Measured 2026-10-21: hook -> herdr blocked ~0.2s, blocked -> player ~1.0s.
+delay_seconds = 0
