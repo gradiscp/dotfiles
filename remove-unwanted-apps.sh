@@ -51,7 +51,7 @@ BIN="$HOME/.local/bin"
 # Stock themes kept on disk; every other shipped theme is deleted and kept
 # away by pacman's NoExtract (one `!` exception per kept theme). install.sh
 # sets tokyo-night as the default.
-keep_themes=(tokyo-night ethereal kanagawa vantablack)
+keep_themes=(tokyo-night last-horizon kanagawa vantablack solitude)
 THEMES=/usr/share/omarchy/themes
 noextract="NoExtract   = usr/share/omarchy/themes/*$(printf ' !usr/share/omarchy/themes/%s/*' "${keep_themes[@]}")"
 
