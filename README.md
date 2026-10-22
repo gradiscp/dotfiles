@@ -73,12 +73,13 @@ through Omarchy's menus.
   `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
   everything that names no font (UI, terminal, the generic sans/serif
   families), Bibata cursor at 14 (one small download, not the 322 MB package).
-  Stock themes kept besides it: Ethereal, Kanagawa (with an own Big Sur
-  coast background) and Vantablack; the other stock themes are removed.
+  Stock themes kept besides it: Last Horizon, Kanagawa (with an own Big Sur
+  coast background), Vantablack and Solitude; the other stock themes are
+  removed.
 - **Bar:** thinner than stock (22 px); the active workspace as a capsule in
   the theme's urgent colour; a
-  terminal icon that lights up with a count while Claude Code sessions wait
-  for a permission; media controls while something plays, microphone mute
+  terminal icon that lights up while Claude Code sessions wait for a
+  permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute
   and Tailscale. No tray, weather, indicators, display or menu button.
 - **Notifications:** stock. Claude permission requests pop up and jump back
   to their terminal on click.
