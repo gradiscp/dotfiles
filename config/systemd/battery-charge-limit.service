@@ -1,0 +1,18 @@
+# Stop charging the battery at 80% - the laptop is plugged in most of the day,
+# and sitting at 100% wears the cells. The samsung_galaxybook driver exposes
+# the threshold on BAT1 (kernel docs: 1-100, 100 = off; 50/60/70/80/90 are the
+# values Samsung's "Battery Saver" in Windows uses, below 30 some models turn
+# it off). There is no start threshold: it charges again below 80%.
+# Set at every boot because it is not documented whether the firmware keeps it.
+# Installed to /etc/systemd/system by install.sh.
+[Unit]
+Description=Stop charging the battery at 80%
+ConditionPathExists=/sys/class/power_supply/BAT1/charge_control_end_threshold
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sh -c 'echo 80 > /sys/class/power_supply/BAT1/charge_control_end_threshold'
+
+[Install]
+WantedBy=multi-user.target
