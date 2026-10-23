@@ -16,7 +16,12 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy
 -- capacity and gave sparkles and short blackouts (incidents repo,
 -- 2026-10-02). Mounted in portrait: transform 1 = rotated 90 degrees, 3 = the
 -- other way round (use 3 if the picture is upside down).
-hl.monitor({ output = "desc:Samsung Electric Company LS24AG30x", mode = "1920x1080@60", position = "auto", scale = 1.25, transform = 1 })
+hl.monitor({ output = "desc:Samsung Electric Company LS24AG30x", mode = "1920x1080@60", position = "auto", scale = 1, transform = 1 })
 
--- Samsung 32" 4K stands left of the laptop, with its own scale of 1.6.
-hl.monitor({ output = "desc:Samsung Electric Company LF32TU87", mode = "preferred", position = "auto-left", scale = 1.6 })
+-- Dell Alienware 25" next to it, pinned to 1 like the Samsung (it used to
+-- follow the laptop's omarchy_monitor_scale through the catch-all rule).
+hl.monitor({ output = "desc:Dell Inc. AW2521HFA", mode = "preferred", position = "auto", scale = 1 })
+
+-- Samsung 32" 4K stands left of the laptop, with its own scale of 1.5
+-- (2560x1440 logical; was 1.6).
+hl.monitor({ output = "desc:Samsung Electric Company LF32TU87", mode = "preferred", position = "auto-left", scale = 1.5 })
