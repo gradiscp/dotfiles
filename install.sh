@@ -56,6 +56,10 @@ if ! command -v brave-origin >/dev/null; then
   omarchy install browser brave-origin || echo "WARN: 'omarchy install browser brave-origin' failed - no browser until it is installed"
 fi
 sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json
+# Battery stops charging at 80% (see the unit's header); only where the
+# samsung_galaxybook driver offers the threshold, the unit skips itself elsewhere.
+sudo install -Dm644 "$REPO_DIR/config/systemd/battery-charge-limit.service" /etc/systemd/system/battery-charge-limit.service
+sudo systemctl daemon-reload && sudo systemctl enable --now battery-charge-limit.service
 # Omarchy's launch flags (Wayland, libsecret) minus its --load-extension line:
 # the Copy-URL, yt-dlp and WhatsApp-slim extensions are not wanted.
 link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-flags.conf"
