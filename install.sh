@@ -60,6 +60,10 @@ sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/ma
 # samsung_galaxybook driver offers the threshold, the unit skips itself elsewhere.
 sudo install -Dm644 "$REPO_DIR/config/systemd/battery-charge-limit.service" /etc/systemd/system/battery-charge-limit.service
 sudo systemctl daemon-reload && sudo systemctl enable --now battery-charge-limit.service
+# ClamAV signatures once a day (and right now). No clamd daemon: scans run on
+# demand only (CHEATSHEET, "Sicherheit"); a resident clamd holds 1.6 GB+ RAM.
+sudo systemctl enable --now clamav-freshclam-once.timer
+sudo systemctl start clamav-freshclam-once.service || echo "WARN: ClamAV signatures not downloaded - run: sudo freshclam"
 # Omarchy's launch flags (Wayland, libsecret) minus its --load-extension line:
 # the Copy-URL, yt-dlp and WhatsApp-slim extensions are not wanted.
 link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-flags.conf"

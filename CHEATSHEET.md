@@ -56,6 +56,19 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 | vor jedem Commit | `git diff` lesen: Tools schreiben durch die Links ins Repo (CLAUDE.md, "Write-through writers"); `git add <Pfade>`, nicht `-A` |
 | vor jedem Push | `git grep -niE 'svag\|fortnitepro\|privat\|/home/' HEAD` muss leer sein |
 
+### Sicherheit (Viren, bekannte Lücken)
+
+| Wann | Befehl | Was es tut |
+|---|---|---|
+| USB-Stick von fremdem / Windows-Rechner | `clamscan -r -i /run/media/$USER/<Stick>` | Virenscan, meldet nur. Mit `--move=$HOME/quarantine` werden Funde dorthin verschoben. Nie `--remove` (Fehlalarme). ~1 GB RAM, nie mehrere gleichzeitig. |
+| Downloads, ab und zu | `clamscan -r -i ~/Downloads` | wie oben |
+| einzelne verdächtige Datei | virustotal.com | ~70 Scanner auf einmal; nichts Vertrauliches hochladen |
+| nach `omarchy update`, ab und zu | `arch-audit -u` | Installierte Pakete mit bekannter Lücke, für die es schon ein Update gibt; leer = nichts zu tun. Ohne `-u` auch die ohne Fix. |
+| im Projektordner (wie Dependabot) | `osv-scanner scan source -r .` | Prüft die Lockfiles (npm, uv/pip, ...) gegen osv.dev. Schickt Paketnamen und Versionen dorthin, keinen Code. |
+
+Die ClamAV-Signaturen aktualisiert `clamav-freshclam-once.timer` täglich;
+Stand: `clamscan --version`. Kein `clamd`-Daemon (dauerhaft 1,6 GB+ RAM).
+
 ### Github gh 
 
 | Wann | Befehl |
