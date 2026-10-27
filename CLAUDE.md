@@ -138,9 +138,9 @@ straight into the repo, which the drift check cannot see:
   security decision, not styling.
 - Lock is stock `omarchy-system-lock` everywhere (SUPER+L, idle); ask
   before adding a lock variant again.
-- Known upstream crash: Hyprland can segfault on a lid/hotplug event while
-  the panel is *blanked* under a lock. Accepted
-  (`~/.cache/hyprland/hyprlandCrashReport*.txt`).
+- Known upstream crash: Hyprland can segfault on a lid/hotplug/touch
+  event while the panel is *blanked* under a lock. Touch is off
+  (`install.sh`). Reports: `~/.cache/hyprland`.
 - **"Never locks"**: check `omarchy-shell idle status` (stay-awake toggle,
   stock `SUPER+CTRL+I`) and `hyprctl clients` for a fullscreen browser
   window.

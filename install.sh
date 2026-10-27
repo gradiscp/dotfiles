@@ -79,6 +79,15 @@ echo "== Hyprland config =="
 for f in "$REPO_DIR"/config/hypr/*.lua; do
   link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
 done
+# Touchscreen off: a touch event while the locked panel was waking up crashed
+# Hyprland 0.56.2 (incidents repo, 2026-10-27). Omarchy's own toggle keeps the
+# device name in ~/.local/state and re-applies it on every reload; it needs a
+# running Hyprland to find the device. Back on: omarchy toggle touchscreen on
+if ! hyprctl -j devices >/dev/null 2>&1; then
+  echo "WARN: Hyprland not running - touchscreen not checked; run: omarchy toggle touchscreen off"
+elif [[ -n $(omarchy-hw-touchscreen) ]]; then
+  omarchy toggle touchscreen off
+fi
 
 echo "== Omarchy shell =="
 link "$REPO_DIR/config/omarchy/shell.json" "$CONFIG_DIR/omarchy/shell.json"
