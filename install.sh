@@ -168,6 +168,18 @@ echo "== Neovim =="
 # lazy.nvim fetches it on the first start.
 link "$REPO_DIR/config/nvim/lua/plugins/markdown.lua" "$CONFIG_DIR/nvim/lua/plugins/markdown.lua"
 
+echo "== Code - OSS =="
+# Settings linked: theme Matte Black with Material icons, a quiet UI, no window
+# buttons (window.controlsStyle, needs a full restart). Theme extensions come
+# from Open VSX, Code - OSS's gallery. Omarchy's theme sync is off for `code`:
+# it writes Microsoft VS Code's ~/.config/Code (never read by Code - OSS) but
+# installs each Omarchy theme's extension into Code - OSS.
+link "$REPO_DIR/config/code-oss/settings.json" "$CONFIG_DIR/Code - OSS/User/settings.json"
+for ext in tahayvr.matteblack pkief.material-icon-theme pkief.material-product-icons; do
+  code --install-extension "$ext" >/dev/null || echo "WARN: Code extension $ext not installed - run: code --install-extension $ext"
+done
+omarchy toggle skip-vscode-theme-changes on
+
 echo "== Environment =="
 # Omarchy's /usr/lib/environment.d/10-omarchy-fcitx.conf points Qt, SDL and
 # XWayland at the fcitx5 input method, which remove-unwanted-apps.sh removes.

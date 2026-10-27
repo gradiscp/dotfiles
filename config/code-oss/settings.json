@@ -1,0 +1,23 @@
+{
+    "workbench.startupEditor": "none",
+    "explorer.confirmDelete": false,
+    "explorer.excludeGitIgnore": true,
+
+    "files.exclude": {
+    "**/__init__.py": true
+},
+"editor.minimap.enabled": false,
+"workbench.statusBar.visible": false,
+"chat.titleBar.openInAgentsWindow.enabled": false,
+"chat.titleBar.signIn.enabled": false,
+"window.commandCenter": false,
+"workbench.browser.showInTitleBar": false,
+"window.menuBarVisibility": "compact",
+"window.controlsStyle": "hidden",
+"workbench.layoutControl.type": "menu",
+"workbench.layoutControl.enabled": false,
+"workbench.colorTheme": "Matte Black",
+"workbench.iconTheme": "material-icon-theme",
+"workbench.productIconTheme": "material-product-icons",
+"window.zoomLevel": -1
+}
