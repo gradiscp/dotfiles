@@ -191,16 +191,13 @@ echo "== herdr, git, mise, default apps =="
 link "$REPO_DIR/config/herdr/config.toml" "$CONFIG_DIR/herdr/config.toml"
 link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"
 link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
-# Tool versions for claude and gh (plus upgrade.auto_prune = false, which
+# Tool versions for claude, gh and node (plus upgrade.auto_prune = false, which
 # Omarchy sets for a reason: `mise up` must not prune the Claude binary that
 # running sessions started from). The other coding agents Omarchy drops in as
 # lazy wrappers are removed by remove-unwanted-apps.sh (App cleanup below).
-# node is not installed at all (claude is a native binary, pnpm 12 is
-# standalone).
 link "$REPO_DIR/config/mise/config.toml" "$CONFIG_DIR/mise/config.toml"
 if command -v mise >/dev/null; then
   mise install || echo "WARN: mise install failed - run 'mise install' by hand"
-  mise uninstall --all node >/dev/null 2>&1 || true
 fi
 # Brave Origin as the default browser and URL handler. Omarchy's "default
 # browser" menu writes this file (through the link on 2026-10-15, so the
