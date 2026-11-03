@@ -170,9 +170,8 @@ straight into the repo, which the drift check cannot see:
   `~/.local/bin` wrappers for other agents and tools that install on first
   run; `install.sh` removes them (check `ls ~/.local/bin` and `mise ls`
   after an update). The `omarchy.agents` widget polls only Claude: its codex
-  poll once re-added codex via such a wrapper. Node only via `mise exec
-  node@24 -- ...` (installs on demand, `install.sh` removes it), never in
-  mise's config.
+  poll once re-added codex via such a wrapper. Node is pinned in mise's
+  config: a `mise use -g node@...` diff there is meant to be committed.
 
 ## Packages and boot
 

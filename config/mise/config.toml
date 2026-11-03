@@ -1,6 +1,7 @@
 [tools]
 claude = "latest"
 gh = "latest"
+node = "26.13.0"
 
 [settings]
 # Omarchy's own setting: `mise up` must not prune the version a running
