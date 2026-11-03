@@ -1,0 +1,46 @@
+#!/bin/bash
+# Tidy the local branches of the repo you are in: fetch with --prune, then
+# delete every local branch that is merged into the remote default branch or
+# whose remote branch is gone. Lists them and asks first. Never touches the
+# default branch or the one checked out; a gone branch that is not merged is
+# kept (git branch -d refuses it), so unmerged work is never lost.
+#
+#   git-tidy        (or: git tidy)  list, ask, delete
+#   git-tidy -y     delete without asking
+#
+# The fetch talks to the network and asks for the SSH key passphrase unless an
+# ssh-agent holds it (eval "$(ssh-agent)" && ssh-add).
+
+set -uo pipefail
+yes=false
+case ${1:-} in -y) yes=true ;; "") ;; *) echo "usage: git-tidy [-y]" >&2; exit 2 ;; esac
+
+git rev-parse --git-dir >/dev/null 2>&1 || { echo "git-tidy: not a git repository" >&2; exit 1; }
+git fetch --prune || exit 1
+
+default=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
+default=${default#origin/}
+default=${default:-main}
+current=$(git branch --show-current)
+
+merged=$(git branch --format='%(refname:short)' --merged "origin/$default" |
+  grep -vxF -e "$default" -e "$current")
+gone=$(git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads |
+  awk '$2 == "[gone]" {print $1}' | grep -vxF -e "$default" -e "$current" |
+  grep -vxF -f <(printf '%s\n' "$merged"))
+
+if [[ -z $merged && -z $gone ]]; then
+  echo "git-tidy: nothing to delete"
+  exit 0
+fi
+[[ -n $merged ]] && { echo "Merged into origin/$default:"; printf '  %s\n' $merged; }
+[[ -n $gone ]] && { echo "Gone on the remote (deleted only if merged):"; printf '  %s\n' $gone; }
+
+if ! $yes; then
+  read -r -p "Delete them? [y/N] " answer
+  [[ $answer == [yY] ]] || { echo "git-tidy: nothing deleted"; exit 0; }
+fi
+for branch in $merged; do git branch -D "$branch"; done
+for branch in $gone; do
+  git branch -d "$branch" 2>/dev/null || echo "  kept $branch: not merged (git branch -D $branch to drop it)"
+done

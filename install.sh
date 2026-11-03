@@ -215,6 +215,8 @@ link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
 link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
 # Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
 link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
+# In one repo: git tidy deletes the local branches that are merged or gone on origin.
+link "$REPO_DIR/bin/git-tidy" "$HOME/.local/bin/git-tidy"
 # Repairs links Omarchy's tools turned into plain files, and reports the rest
 # (returned packages and launchers, the Brave policy copy). Linked a second
 # time into the post-update hook dir, so it runs after every `omarchy update`.
