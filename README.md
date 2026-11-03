@@ -130,7 +130,8 @@ config/
   code-oss/            Code - OSS settings: Matte Black, Material icons, no window buttons
   fontconfig/ herdr/ git/ mise/ mimeapps.list
 bin/                   claude-notify, window-close-guard, omarchy-drift-check,
-                       git-all (status/fetch/pull/push over every repo below)
+                       git-all (status/fetch/pull/push over every repo below),
+                       git-tidy (deletes a repo's merged or gone local branches)
 install.sh             Fresh-machine setup
 remove-unwanted-apps.sh  Removes unwanted packages and stock themes (--check
                        only reports); NoExtract keeps updates from restoring them
