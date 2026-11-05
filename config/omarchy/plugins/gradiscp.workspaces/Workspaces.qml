@@ -81,12 +81,15 @@ BarWidget {
     return null
   }
 
-  // The first five of the monitor's own, and any of the rest that exist. After
-  // them come workspaces that are only visiting: those of a monitor that is
-  // unplugged, which had no room to join this one's.
+  // The first eight of the monitor's own (stock: five), and any of the rest
+  // that exist. After them come workspaces that are only visiting: those of a
+  // monitor that is unplugged, which had no room to join this one's.
+  readonly property int alwaysShown: 8
+
   function workspaceIds() {
     var base = root.block * root.slots
-    var ids = [base + 1, base + 2, base + 3, base + 4, base + 5]
+    var ids = []
+    for (var n = 1; n <= root.alwaysShown; n++) ids.push(base + n)
     var guests = []
     var values = Hyprland.workspaces.values
 
