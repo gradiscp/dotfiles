@@ -170,7 +170,7 @@ straight into the repo, which the drift check cannot see:
   opts out of Omarchy's lazy agent list (`omarchy-mise-default-tools
   disable`, a line in `miserc.toml`): `mise ls --current` shows only our
   config. Old `~/.local/bin` wrappers go via `remove-unwanted-apps.sh`.
-  The `omarchy.agents` widget polls only Claude. Node is pinned in mise's
+  The `omarchy.agents` widget polls Claude and Codex. Node is pinned in mise's
   config: a `mise use -g node@...` diff there is meant to be committed.
 
 ## Packages and boot

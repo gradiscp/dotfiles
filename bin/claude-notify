@@ -7,7 +7,8 @@
 # (fires as the dialog opens, so the toast is immediate) and Notification with
 # matcher "permission_prompt" (the original; arrives later, so it is only a
 # fallback - skipped when a PermissionRequest toast for the same terminal went
-# up in the last 20s). A third hook, Stop, only plays the done sound (below).
+# up in the last 20s). A third hook, Stop, plays the done sound and puts up a
+# "Claude ist fertig" toast with the first line of the answer (below).
 # Two kinds of terminal:
 #
 # - Inside herdr: the hook inherits HERDR_PANE_ID from the pane Claude runs
@@ -89,6 +90,23 @@ log() {
 }
 
 active_window() { hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'; }
+
+# Claude's logo from Omarchy's agents panel for the toasts, as --image: the
+# shell draws no app icon (-i) given as a path. The glyph each toast also
+# sends stands in when an update moves the file.
+CLAUDE_ICON="${OMARCHY_PATH:-/usr/share/omarchy}/shell/plugins/agents/assets/claude.svg"
+icon=()
+[[ -f $CLAUDE_ICON ]] && icon=(--image "$CLAUDE_ICON")
+
+# First line of Claude's last text answer in <transcript> (JSONL, newest
+# last), without Markdown marks and cut to fit a toast. Empty when unreadable.
+last_answer() {
+  [[ -f $1 ]] || return 0
+  tac "$1" 2>/dev/null |
+    jq -R -r 'fromjson? | select(.type == "assistant") | .message.content[]?
+      | select(.type == "text") | .text | split("\n") | map(select(test("\\S"))) | first // empty' 2>/dev/null |
+    head -n 1 | tr -d '`*#' | sed 's/^[[:space:]>-]*//' | cut -c1-140
+}
 
 # Play <name>.mp3 (request or done) detached, so the hook returns at once.
 play_sound() {
@@ -325,14 +343,24 @@ fi
 
 looking_at_it() { ((looking)) && [[ -n $window && $(active_window) == "$window" ]]; }
 
-# Claude finished its turn: only the done sound.
+# Claude finished its turn: the done sound and a toast that says so, with the
+# first line of Claude's last answer; a click jumps there like the prompt's.
+# It is a normal toast that expires on its own, so no watcher is needed.
 if [[ $event == Stop ]]; then
   if looking_at_it; then
     log "skip ($key, Stop): already looking at it"
-  else
-    log "done ($key): sound"
-    play_sound "done"
+    exit 0
   fi
+  play_sound "done"
+  if [[ -e $QUIET ]]; then
+    log "done ($key): sound, toast muted"
+    exit 0
+  fi
+  log "done ($key): sound and toast"
+  answer=$(last_answer "$(jq -r '.transcript_path // empty' <<<"$input")")
+  "$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" "${icon[@]}" \
+    -g $'\U000F012C' -u normal -t "$TOAST_MS" "Claude ist fertig${title:+: $title}" \
+    "${answer:-Die Antwort ist da}" --exec "$SELF" "${click[@]}" >/dev/null 2>&1
   exit 0
 fi
 
@@ -387,7 +415,7 @@ log "toast ($key, ${event:-?}): $headline"
 token="$$.$(now_ms)"
 printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
 
-"$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" \
+"$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" "${icon[@]}" \
   -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
   --exec "$SELF" "${click[@]}" >/dev/null 2>&1
 

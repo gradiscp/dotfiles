@@ -308,7 +308,7 @@ Panel {
             width: parent.width
             label: "Benachrichtigungen"
             description: root.quiet ? "Aus: kein Toast, das Symbol leuchtet weiter"
-                                    : "Toast, wenn Claude eine Genehmigung braucht"
+                                    : "Toast, wenn Claude wartet oder fertig ist"
             checked: !root.quiet
             hasCursor: root.cursorActive && root.cursor === root.sessions.length
             foreground: root.foreground
