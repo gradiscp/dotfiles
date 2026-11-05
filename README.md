@@ -79,10 +79,12 @@ through Omarchy's menus.
 - **Bar:** thinner than stock (22 px); the active workspace as a capsule in
   the theme's urgent colour; a
   terminal icon that lights up while Claude Code sessions wait for a
-  permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute
-  and Tailscale. No tray, weather, indicators, display or menu button.
-- **Notifications:** stock. Claude permission requests and finished answers
-  pop up with Claude's logo and jump back to their terminal on click.
+  permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute,
+  Tailscale, the display widget and the do-not-disturb bell next to the
+  clock. No tray, weather or menu button.
+- **Notifications:** stock. Claude Code and Codex permission requests and
+  finished answers pop up with the agent's logo and jump back to their
+  terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
   after 7; a fullscreen browser window (a film) keeps the machine awake.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
@@ -128,6 +130,7 @@ config/
   brave/               Privacy policies, launch flags, uBlock Origin backup
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
+  codex/               Codex hooks: the same toasts through claude-notify
   nvim/                One plugin on top of Omarchy's LazyVim: Markdown rendering
   code-oss/            Code - OSS settings: Matte Black, Material icons, no window buttons
   fontconfig/ herdr/ git/ mise/ mimeapps.list

@@ -244,6 +244,9 @@ fi
 # bin/claude-notify. Claude Code rewrites this file through the link
 # (/model, /config, "always allow"): diff it before committing.
 link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
+# Codex runs claude-notify on the same two events (PermissionRequest, Stop).
+# Codex only runs a new or changed hook once it is trusted: /hooks in Codex.
+link "$REPO_DIR/config/codex/hooks.json" "$HOME/.codex/hooks.json"
 # Global instructions for every project (e.g. ask instead of guessing).
 # Whole directory, so a new rule file in the repo is live without relinking;
 # machine-specific rules go in *.local.md there (gitignored, still loaded).
