@@ -76,6 +76,8 @@ o.bind("SUPER + P", "Jump to waiting Claude", "claude-notify jump")
 -- closes at once, as stock.
 hl.unbind("SUPER + W")
 o.bind("SUPER + W", "Close window", "window-close-guard")
+-- Stock (since 4.5) also closes on SUPER+Q, which would skip the guard.
+hl.unbind("SUPER + Q")
 
 -- Dead stock keys found in the 2026-09-13 audit:
 -- SUPER+CTRL+S opens the Share menu, and every Share entry ends in localsend,
