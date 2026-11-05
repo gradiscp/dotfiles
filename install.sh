@@ -191,12 +191,17 @@ echo "== herdr, git, mise, default apps =="
 link "$REPO_DIR/config/herdr/config.toml" "$CONFIG_DIR/herdr/config.toml"
 link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"
 link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
-# Tool versions for claude, gh and node (plus upgrade.auto_prune = false, which
-# Omarchy sets for a reason: `mise up` must not prune the Claude binary that
-# running sessions started from). The other coding agents Omarchy drops in as
-# lazy wrappers are removed by remove-unwanted-apps.sh (App cleanup below).
+# Tool versions for claude, codex, gh and node (plus upgrade.auto_prune = false,
+# which Omarchy sets for a reason: `mise up` must not prune the Claude binary
+# that running sessions started from). Omarchy also declares ~35 coding agents
+# as lazy tools in /etc/mise/conf.d/omarchy-tools.toml; the opt-out (a line in
+# ~/.config/mise/miserc.toml) leaves only this file. Older lazy wrappers in
+# ~/.local/bin are removed by remove-unwanted-apps.sh (App cleanup below).
 link "$REPO_DIR/config/mise/config.toml" "$CONFIG_DIR/mise/config.toml"
 if command -v mise >/dev/null; then
+  if command -v omarchy-mise-default-tools >/dev/null; then
+    omarchy-mise-default-tools disable || echo "WARN: run 'omarchy-mise-default-tools disable' by hand"
+  fi
   mise install || echo "WARN: mise install failed - run 'mise install' by hand"
 fi
 # Brave Origin as the default browser and URL handler. Omarchy's "default

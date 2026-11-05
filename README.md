@@ -47,8 +47,8 @@ these, in this order:
    ```
    It asks for the sudo password a few times and refuses to run as root.
    It installs `packages.txt`, links every config into place, sets the text
-   size, GTK font and cursor, keeps only Claude Code of the coding agents Omarchy
-   installs via mise, removes the unwanted stock apps and themes
+   size, GTK font and cursor, keeps only Claude Code and Codex of the coding
+   agents Omarchy offers via mise, removes the unwanted stock apps and themes
    (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
    point into the repo.
 3. Do the manual steps it prints at the end: log in again, laptop scale
@@ -87,10 +87,11 @@ through Omarchy's menus.
   after 7; a fullscreen browser window (a film) keeps the machine awake.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
-  stock set (no LibreOffice, Obsidian, mpv, Disks, CJK input, tmux,
+  stock set (no LibreOffice, Obsidian, Disks, CJK input, tmux,
   lazydocker, lazygit, screen recorder, Evince: PDFs open in Papers);
   anything heavier runs in a
-  container instead of being installed. Only Claude Code as a coding agent.
+  container instead of being installed. Only Claude Code and Codex as coding
+  agents.
 
 ## Keybinds changed from Omarchy defaults
 
