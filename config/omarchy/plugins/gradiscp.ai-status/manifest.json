@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.ai-status",
+  "name": "KI-Status",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "Whether Claude Code or Codex sessions are waiting for a permission; a click opens a panel with every session, what the waiting ones ask for, the last toasts and the toast switch; a right-click mutes the toasts.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "KI-Status",
+    "description": "Terminal glyph that lights up in the bar's urgent colour while Claude Code or Codex sessions wait for a permission; a click opens the session panel.",
+    "category": "AI",
+    "allowMultiple": false
+  }
+}

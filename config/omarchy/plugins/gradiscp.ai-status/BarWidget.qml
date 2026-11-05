@@ -9,10 +9,10 @@ import qs.Ui
 // A terminal glyph that lights up (bar.urgent) while Claude Code sessions wait
 // for a permission ("A" of the 2026-09-13 bar mockups; no count badge since
 // 2026-10-21, the number is in the tooltip). The count comes from
-// `claude-notify count`: herdr agents in "blocked", plus the last plain
+// `ai-notify count`: herdr agents in "blocked", plus the last plain
 // terminal that asked and was not visited since. A right-click mutes the
-// toasts or turns them back on (`claude-notify quiet on|off`); the sound
-// stays. SUPER+P (`claude-notify jump`) goes straight to the latest waiter.
+// toasts or turns them back on (`ai-notify quiet on|off`); the sound
+// stays. SUPER+P (`ai-notify jump`) goes straight to the latest waiter.
 //
 // A badge in the glyph's corner (bar and panel) shows what is off: a
 // crossed-out bell for muted toasts, else a muted speaker for sounds off.
@@ -20,15 +20,15 @@ import qs.Ui
 // A click opens the panel (since 2026-10-21): every Claude session herdr
 // knows, waiting ones first with what they ask for, a click on a row goes
 // there; the toast switch (the same flag as the right-click) and the sound
-// switch (`claude-notify sound on|off`). The panel polls `claude-notify status`
+// switch (`ai-notify sound on|off`). The panel polls `ai-notify status`
 // once a second only while it is open - the glyph's `count` poll runs
 // regardless. Same bones as the stock agents/tailscale panels: Panel root,
 // BarIconButton, KeyboardPanel with j/k, Enter, Esc.
 Panel {
   id: root
-  moduleName: "gradiscp.claude-status"
-  // Panel's own IpcHandler: `omarchy-shell gradiscp.claude-status toggle`.
-  ipcTarget: "gradiscp.claude-status"
+  moduleName: "gradiscp.ai-status"
+  // Panel's own IpcHandler: `omarchy-shell gradiscp.ai-status toggle`.
+  ipcTarget: "gradiscp.ai-status"
 
   property int waiting: 0
   property bool quiet: false
@@ -40,7 +40,7 @@ Panel {
   property int cursor: 0
   property bool cursorActive: false
 
-  readonly property string notify: Quickshell.env("HOME") + "/.local/bin/claude-notify"
+  readonly property string notify: Quickshell.env("HOME") + "/.local/bin/ai-notify"
   readonly property color alertColor: root.bar ? root.bar.urgent : Commons.Color.urgent
   readonly property color idleColor: Util.alpha(root.bar ? root.bar.barForeground : Commons.Color.foreground, 0.45)
   readonly property color foreground: bar ? bar.foreground : Commons.Color.foreground
@@ -176,8 +176,8 @@ Panel {
     // icon gone) - after an edit, check that the `text:` line still has it.
     text: "\uf489"
     foreground: root.waiting > 0 ? root.alertColor : root.idleColor
-    tooltipText: (root.waiting === 0 ? "Keine Claude-Session wartet"
-      : (root.waiting === 1 ? "1 Claude-Session wartet" : root.waiting + " Claude-Sessions warten"))
+    tooltipText: (root.waiting === 0 ? "Keine KI-Session wartet"
+      : (root.waiting === 1 ? "1 KI-Session wartet" : root.waiting + " KI-Sessions warten"))
       + (root.quiet ? " · Benachrichtigungen aus (Rechtsklick: an)"
                     : " · Rechtsklick: Benachrichtigungen aus")
       + (root.silent ? " · Ton aus" : "")
@@ -234,7 +234,7 @@ Panel {
           // ---------- Hero: glyph · Claude Code · how many wait ----------
           PanelHero {
             width: parent.width
-            title: "Claude Code"
+            title: "KI-Agenten"
             meta: root.waitingSessions === 0 ? "Keine Session wartet"
               : (root.waitingSessions === 1 ? "1 Session wartet" : root.waitingSessions + " Sessions warten")
             detail: root.sessions.length === 0 ? ""
@@ -281,7 +281,7 @@ Panel {
               width: parent.width
               topPadding: Style.spacing.md
               bottomPadding: Style.spacing.md
-              text: "Keine Claude-Session in herdr."
+              text: "Keine KI-Session in herdr."
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
@@ -308,7 +308,7 @@ Panel {
             width: parent.width
             label: "Benachrichtigungen"
             description: root.quiet ? "Aus: kein Toast, das Symbol leuchtet weiter"
-                                    : "Toast, wenn Claude wartet oder fertig ist"
+                                    : "Toast, wenn eine KI wartet oder fertig ist"
             checked: !root.quiet
             hasCursor: root.cursorActive && root.cursor === root.sessions.length
             foreground: root.foreground
@@ -324,8 +324,8 @@ Panel {
           Toggle {
             width: parent.width
             label: "Ton"
-            description: root.silent ? "Aus: kein Ton bei Genehmigung und wenn Claude fertig ist"
-                                     : "Bei Genehmigung und wenn Claude fertig ist"
+            description: root.silent ? "Aus: kein Ton bei Genehmigung und wenn eine KI fertig ist"
+                                     : "Bei Genehmigung und wenn eine KI fertig ist"
             checked: !root.silent
             hasCursor: root.cursorActive && root.cursor === root.sessions.length + 1
             foreground: root.foreground

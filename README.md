@@ -124,17 +124,17 @@ config/
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
     shell.toml         Shell values over every theme: font size, thinner bar
-    plugins/           gradiscp.* - close dialog, workspaces, Claude status
+    plugins/           gradiscp.* - close dialog, workspaces, AI status (Claude, Codex)
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
   brave/               Privacy policies, launch flags, uBlock Origin backup
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
-  codex/               Codex hooks: the same toasts through claude-notify
+  codex/               Codex hooks: the same toasts through ai-notify
   nvim/                One plugin on top of Omarchy's LazyVim: Markdown rendering
   code-oss/            Code - OSS settings: Matte Black, Material icons, no window buttons
   fontconfig/ herdr/ git/ mise/ mimeapps.list
-bin/                   claude-notify, window-close-guard, omarchy-drift-check,
+bin/                   ai-notify, window-close-guard, omarchy-drift-check,
                        git-all (status/fetch/pull/push over every repo below),
                        git-tidy (deletes a repo's merged or gone local branches)
 install.sh             Fresh-machine setup

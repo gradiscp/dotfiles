@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pop an Omarchy toast (top right, same popup as the low-battery warning)
-# whenever Claude Code stops to ask for permission, and jump straight back to
-# that exact terminal when it is clicked.
+# whenever Claude Code or Codex stops to ask for permission or finishes, and
+# jump straight back to that exact terminal when it is clicked.
 #
 # Wired up in config/claude/settings.json as two hooks: PermissionRequest
 # (fires as the dialog opens, so the toast is immediate) and Notification with
@@ -37,7 +37,7 @@
 # with Claude's Stop hook; neither when you are looking at that terminal,
 # like herdr. install.sh fetches the files.
 #
-# `quiet` mutes the toasts (right-click on the gradiscp.claude-status bar
+# `quiet` mutes the toasts (right-click on the gradiscp.ai-status bar
 # widget, or the switch in its panel): the bar glyph still lights up and the
 # sound still plays. `sound off` mutes the sounds. Both flags live on tmpfs,
 # so a reboot turns everything back on.
@@ -50,15 +50,15 @@
 # blocked, so a prompt that arrived without a hook never shows a stale ask.
 #
 # Usage:
-#   claude-notify                         reads Claude's hook JSON on stdin
-#   claude-notify codex                   the same for Codex's hooks
-#   claude-notify focus <pane>            click action, herdr pane
-#   claude-notify focus-window <address>  click action, plain terminal
-#   claude-notify jump                    keybind
-#   claude-notify count                   bar widget poll
-#   claude-notify status                  bar widget panel, JSON
-#   claude-notify quiet [on|off|toggle]   mute toasts; prints on/off
-#   claude-notify sound [on|off|toggle]   sounds on/off; prints on/off
+#   ai-notify                         reads Claude's hook JSON on stdin
+#   ai-notify codex                   the same for Codex's hooks
+#   ai-notify focus <pane>            click action, herdr pane
+#   ai-notify focus-window <address>  click action, plain terminal
+#   ai-notify jump                    keybind
+#   ai-notify count                   bar widget poll
+#   ai-notify status                  bar widget panel, JSON
+#   ai-notify quiet [on|off|toggle]   mute toasts; prints on/off
+#   ai-notify sound [on|off|toggle]   sounds on/off; prints on/off
 
 set -uo pipefail
 
@@ -73,15 +73,15 @@ name=Claude app="Claude Code"
 [[ ${1:-} == codex ]] && { name=Codex app=Codex; shift; }
 # Needs XDG_RUNTIME_DIR (always set under uwsm); no /tmp fallback. Exit 0 so
 # a hook never blocks Claude.
-[[ -n ${XDG_RUNTIME_DIR:-} ]] || { echo "claude-notify: XDG_RUNTIME_DIR unset" >&2; exit 0; }
-RUN_DIR="$XDG_RUNTIME_DIR/claude-notify"
+[[ -n ${XDG_RUNTIME_DIR:-} ]] || { echo "ai-notify: XDG_RUNTIME_DIR unset" >&2; exit 0; }
+RUN_DIR="$XDG_RUNTIME_DIR/ai-notify"
 LAST_WINDOW="$RUN_DIR/last-window"
 # The session that finished last while you looked elsewhere: "focus <pane>"
 # or "focus-window <address>", the same words its toast click runs.
 LAST_DONE="$RUN_DIR/last-done"
 QUIET="$RUN_DIR/quiet"
 SOUND_OFF="$RUN_DIR/sound-off"
-SOUND_DIR="$HOME/.local/share/claude-notify/sounds"
+SOUND_DIR="$HOME/.local/share/ai-notify/sounds"
 mkdir -p "$RUN_DIR"
 # Only these shapes ever reach a hyprctl dispatch or become a file name:
 # a Hyprland window address, and a herdr pane id (w<N>:p<N> as observed in
@@ -214,17 +214,17 @@ focus_plain() {
 
 case ${1:-} in
 focus)
-  valid_pane "${2:?usage: claude-notify focus <pane>}" || exit 0
+  valid_pane "${2:?usage: ai-notify focus <pane>}" || exit 0
   focus_pane "$2"
   exit 0
   ;;
 focus-window)
-  valid_address "${2:?usage: claude-notify focus-window <address>}" || exit 0
+  valid_address "${2:?usage: ai-notify focus-window <address>}" || exit 0
   focus_plain "$2"
   exit 0
   ;;
 count)
-  # For the gradiscp.claude-status bar widget: herdr agents in "blocked", plus
+  # For the gradiscp.ai-status bar widget: herdr agents in "blocked", plus
   # the plain terminal that asked and has not been visited since. Only the
   # last plain terminal is remembered, so that side adds at most 1. Then a
   # line "quiet" while toasts are muted, and "silent" while sounds are off.
@@ -257,7 +257,7 @@ count)
   exit 0
   ;;
 status)
-  # For the panel of the gradiscp.claude-status bar widget, polled only while
+  # For the panel of the gradiscp.ai-status bar widget, polled only while
   # it is open: one jq pass over `herdr agent list`, the ask files and the
   # plain terminal, so a refresh is one fork of each tool. Session
   # titles come from Claude's terminal title and are untrusted text; the
