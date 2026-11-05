@@ -60,6 +60,7 @@ Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
 
 | Wann | Befehl | Was es tut |
 |---|---|---|
+| alles auf einmal, oder einzeln | Schild im Tray, oder `security-audit all\|packages\|projects\|viruses` | Die drei Prüfungen unten (Pakete, Projekte unter `~/Projects`, Viren in Downloads und eingesteckten USB-Sticks) nacheinander, mit Ergebnis pro Prüfung und Toast. Immer nur ein Lauf gleichzeitig. |
 | USB-Stick von fremdem / Windows-Rechner | `clamscan -r -i /run/media/$USER/<Stick>` | Virenscan, meldet nur. Mit `--move=$HOME/quarantine` werden Funde dorthin verschoben. Nie `--remove` (Fehlalarme). ~1 GB RAM, nie mehrere gleichzeitig. |
 | Downloads, ab und zu | `clamscan -r -i ~/Downloads` | wie oben |
 | einzelne verdächtige Datei | virustotal.com | ~70 Scanner auf einmal; nichts Vertrauliches hochladen |

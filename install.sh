@@ -100,6 +100,8 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarc
 # widget. shell.json above already points the bar at these ids.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.workspaces" "$CONFIG_DIR/omarchy/plugins/gradiscp.workspaces"
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.ai-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.ai-status"
+# Shield in the tray drawer that starts bin/security-audit.
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.security" "$CONFIG_DIR/omarchy/plugins/gradiscp.security"
 # An own background for the stock Kanagawa theme. User backgrounds sort before
 # the theme's own, so it is the first one when Kanagawa is set. Directory
 # link: `omarchy theme bg install` adds files here, i.e. into the repo.
@@ -215,6 +217,8 @@ echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
 link "$REPO_DIR/bin/ai-notify" "$HOME/.local/bin/ai-notify"
 link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
+# The security checks from the cheatsheet, one or all (tray shield or by hand).
+link "$REPO_DIR/bin/security-audit" "$HOME/.local/bin/security-audit"
 # Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
 link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
 # In one repo: git tidy deletes the local branches that are merged or gone on origin.

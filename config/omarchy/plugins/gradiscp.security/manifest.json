@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.security",
+  "name": "Sicherheit",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "Starts the security checks of security-audit (installed packages, project dependencies, virus scan), all in a row or one at a time, and shows the last result of each.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Sicherheit",
+    "description": "Shield that lights up in the bar's urgent colour while the last checks found something; a click opens the panel to start them.",
+    "category": "System",
+    "allowMultiple": false
+  }
+}
