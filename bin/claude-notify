@@ -51,6 +51,7 @@
 #
 # Usage:
 #   claude-notify                         reads Claude's hook JSON on stdin
+#   claude-notify codex                   the same for Codex's hooks
 #   claude-notify focus <pane>            click action, herdr pane
 #   claude-notify focus-window <address>  click action, plain terminal
 #   claude-notify jump                    keybind
@@ -65,6 +66,11 @@ OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
 # The click action runs from the shell's environment, whose PATH need not
 # include ~/.local/bin - so hand it an absolute path to this script.
 SELF="$(realpath -s "$0")"
+# Codex runs the same two hooks (config/codex/hooks.json, linked to
+# ~/.codex/hooks.json) with "codex" as the first word; that only changes the
+# name and the logo on the toasts.
+agent=Claude app="Claude Code"
+[[ ${1:-} == codex ]] && { agent=Codex app=Codex; shift; }
 # Needs XDG_RUNTIME_DIR (always set under uwsm); no /tmp fallback. Exit 0 so
 # a hook never blocks Claude.
 [[ -n ${XDG_RUNTIME_DIR:-} ]] || { echo "claude-notify: XDG_RUNTIME_DIR unset" >&2; exit 0; }
@@ -91,21 +97,28 @@ log() {
 
 active_window() { hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'; }
 
-# Claude's logo from Omarchy's agents panel for the toasts, as --image: the
-# shell draws no app icon (-i) given as a path. The glyph each toast also
-# sends stands in when an update moves the file.
-CLAUDE_ICON="${OMARCHY_PATH:-/usr/share/omarchy}/shell/plugins/agents/assets/claude.svg"
+# The agent's logo from Omarchy's agents panel (claude.svg, codex.svg) for the
+# toasts, as --image: the shell draws no app icon (-i) given as a path. The
+# glyph each toast also sends stands in when an update moves the file.
+AGENT_ICON="${OMARCHY_PATH:-/usr/share/omarchy}/shell/plugins/agents/assets/${agent,,}.svg"
 icon=()
-[[ -f $CLAUDE_ICON ]] && icon=(--image "$CLAUDE_ICON")
+[[ -f $AGENT_ICON ]] && icon=(--image "$AGENT_ICON")
 
-# First line of Claude's last text answer in <transcript> (JSONL, newest
-# last), without Markdown marks and cut to fit a toast. Empty when unreadable.
+# First non-empty line of the text on stdin, without Markdown marks and cut to
+# fit a toast.
+first_line() {
+  grep -m 1 '[^[:space:]]' | tr -d '`*#' | sed 's/^[[:space:]>-]*//' | cut -c1-140
+}
+
+# Claude's last text answer in <transcript> (JSONL, newest last). Codex hands
+# its answer to the Stop hook directly (last_assistant_message); Claude's is
+# read from the transcript. Empty when unreadable.
 last_answer() {
   [[ -f $1 ]] || return 0
   tac "$1" 2>/dev/null |
     jq -R -r 'fromjson? | select(.type == "assistant") | .message.content[]?
-      | select(.type == "text") | .text | split("\n") | map(select(test("\\S"))) | first // empty' 2>/dev/null |
-    head -n 1 | tr -d '`*#' | sed 's/^[[:space:]>-]*//' | cut -c1-140
+      | select(.type == "text") | .text' 2>/dev/null |
+    first_line
 }
 
 # Play <name>.mp3 (request or done) detached, so the hook returns at once.
@@ -357,9 +370,10 @@ if [[ $event == Stop ]]; then
     exit 0
   fi
   log "done ($key): sound and toast"
-  answer=$(last_answer "$(jq -r '.transcript_path // empty' <<<"$input")")
-  "$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" "${icon[@]}" \
-    -g $'\U000F012C' -u normal -t "$TOAST_MS" "Claude ist fertig${title:+: $title}" \
+  answer=$(jq -r '.last_assistant_message // empty' <<<"$input" | first_line)
+  [[ -n $answer ]] || answer=$(last_answer "$(jq -r '.transcript_path // empty' <<<"$input")")
+  "$OMARCHY_BIN/omarchy-notification-send" --app-name "$app" "${icon[@]}" \
+    -g $'\U000F012C' -u normal -t "$TOAST_MS" "$agent ist fertig${title:+: $title}" \
     "${answer:-Die Antwort ist da}" --exec "$SELF" "${click[@]}" >/dev/null 2>&1
   exit 0
 fi
@@ -398,7 +412,7 @@ fi
 
 # The headline doubles as the handle for dismissing the toast later, so it
 # carries the terminal's title to tell two waiting sessions apart.
-headline="Claude wartet${title:+: $title}"
+headline="$agent wartet${title:+: $title}"
 
 if [[ -e $QUIET ]]; then
   log "quiet ($key, ${event:-?}): $headline"
@@ -415,7 +429,7 @@ log "toast ($key, ${event:-?}): $headline"
 token="$$.$(now_ms)"
 printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
 
-"$OMARCHY_BIN/omarchy-notification-send" --app-name "Claude Code" "${icon[@]}" \
+"$OMARCHY_BIN/omarchy-notification-send" --app-name "$app" "${icon[@]}" \
   -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
   --exec "$SELF" "${click[@]}" >/dev/null 2>&1
 

@@ -8,6 +8,13 @@
           "formatAlt": "d MMMM 'W'ww yyyy",
           "id": "omarchy.clock",
           "verticalFormat": "HH\n—\nmm"
+        },
+        {
+          "id": "omarchy.indicators",
+          "items": [
+            "Dnd"
+          ],
+          "alwaysShow": true
         }
       ],
       "centerBegin": [],
@@ -58,6 +65,9 @@
           "id": "omarchy.network"
         },
         {
+          "id": "omarchy.monitor"
+        },
+        {
           "id": "omarchy.power",
           "showPercentage": false
         }
@@ -70,10 +80,7 @@
   "dock": {
     "pinned": [
       "org.gnome.Nautilus",
-      "foot",
-      "chromium",
-      "X",
-      "YouTube"
+      "foot"
     ],
     "position": "bottom"
   },
