@@ -76,8 +76,8 @@ through Omarchy's menus.
   Stock themes kept besides it: Last Horizon, Kanagawa (with an own Big Sur
   coast background), Vantablack and Solitude; the other stock themes are
   removed.
-- **Bar:** thinner than stock (22 px); workspaces as short lines, the active
-  one long in the theme's urgent colour, its layout as an outline glyph
+- **Bar:** thinner than stock (22 px); workspaces as dots, the active one a
+  capsule in the theme's urgent colour, its layout as an outline glyph
   after them; a
   terminal icon that lights up while Claude Code sessions wait for a
   permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute,

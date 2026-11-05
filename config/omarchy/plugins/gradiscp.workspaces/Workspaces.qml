@@ -9,10 +9,10 @@ import qs.Ui
 
 // Clone of the stock omarchy.workspaces widget as of Omarchy 4.5.0
 // (/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml): the same
-// per-monitor workspace logic and layout mode, an own look (short lines
-// instead of numbers, the layout as one outline glyph after the row, a click
-// never cycles the layout). A clone gets no stock fixes: diff it against that
-// file after an Omarchy update.
+// per-monitor workspace logic and layout mode, an own look (dots and a
+// capsule instead of numbers, the layout as one outline glyph after the row,
+// a click never cycles the layout). A clone gets no stock fixes: diff it
+// against that file after an Omarchy update.
 BarWidget {
   id: root
   moduleName: "omarchy.workspaces"
@@ -266,11 +266,11 @@ BarWidget {
         Layout.topMargin: firstGuest && root.vertical ? Style.space(6) : 0
 
         bar: root.bar
-        // A short line per workspace ("E" of the 2026-11-05 variants; dots and
-        // a filled layout glyph before, which read as too heavy): the one this
-        // bar's monitor shows = long and in the bar's urgent colour
-        // (`bar.urgent`, the theme's `urgent` or the shell default), occupied
-        // = the bar's text colour, empty = the same, faint.
+        // A dot per workspace ("D" of the 2026-11-05 variants; a filled layout
+        // glyph on the shown one read as too heavy): the one this bar's
+        // monitor shows = capsule in the bar's urgent colour (`bar.urgent`,
+        // the theme's `urgent` or the shell default), occupied = filled dot,
+        // empty = hollow ring. The layout sits once after the row.
         // `text` stays set even though the built-in label is hidden -
         // WidgetButton renders itself at opacity 0 when text is empty.
         text: slot === root.slots ? "0" : String(slot)
@@ -287,14 +287,15 @@ BarWidget {
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
 
         Rectangle {
-          readonly property real length: Style.spaceReal(ws.shown ? 15 : 9)
-          readonly property real weight: Style.spaceReal(ws.shown ? 2.5 : 1.5)
+          readonly property real length: Style.space(ws.shown ? 14 : 7)
 
           anchors.centerIn: parent
-          width: root.vertical ? weight : length
-          height: root.vertical ? length : weight
-          radius: weight / 2
-          color: ws.shown ? root.accent : (ws.occupied ? root.ink : Util.alpha(root.ink, 0.28))
+          width: root.vertical ? Style.space(7) : length
+          height: root.vertical ? length : Style.space(7)
+          radius: Style.space(7) / 2
+          color: ws.shown ? root.accent : (ws.occupied ? root.ink : "transparent")
+          border.width: ws.shown || ws.occupied ? 0 : Math.max(1, Style.space(1))
+          border.color: Util.alpha(root.ink, 0.45)
 
           Behavior on width {
             NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
