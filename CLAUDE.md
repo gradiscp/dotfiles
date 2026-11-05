@@ -166,11 +166,11 @@ straight into the repo, which the drift check cannot see:
   nothing else (`grep -r`, scripts): a guard rail, not a boundary.
 - `claude-notify` logs every decision to `$XDG_RUNTIME_DIR/claude-notify/log`;
   read it before debugging a missing toast.
-- **Only Claude Code via mise.** Omarchy's installer and migrations drop lazy
-  `~/.local/bin` wrappers for other agents and tools that install on first
-  run; `install.sh` removes them (check `ls ~/.local/bin` and `mise ls`
-  after an update). The `omarchy.agents` widget polls only Claude: its codex
-  poll once re-added codex via such a wrapper. Node is pinned in mise's
+- **Only Claude Code and Codex via mise** (plus gh, node). `install.sh`
+  opts out of Omarchy's lazy agent list (`omarchy-mise-default-tools
+  disable`, a line in `miserc.toml`): `mise ls --current` shows only our
+  config. Old `~/.local/bin` wrappers go via `remove-unwanted-apps.sh`.
+  The `omarchy.agents` widget polls only Claude. Node is pinned in mise's
   config: a `mise use -g node@...` diff there is meant to be committed.
 
 ## Packages and boot

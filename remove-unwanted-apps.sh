@@ -12,21 +12,24 @@ set -euo pipefail
 
 # Anything that is really needed runs in a container instead.
 unwanted=(
-  # Stock Omarchy apps not used here
+  # Stock Omarchy apps not used here. mpv and tesseract stay: owe (wallpaper
+  # engine) and omasnap (screenshots) depend on them since Omarchy 4.5.
   aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
-  dua-cli gnome-disk-utility mpv mpv-mpris obsidian tensaku
+  dua-cli gnome-disk-utility mpv-mpris obsidian tensaku
   # PDF viewer: Papers (GNOME's successor, a dependency of Nautilus' sushi
   # preview since Omarchy 4.0.5) does the job; mimeapps.list points PDFs at it
   evince
   # herdr replaces tmux (config/herdr mirrors the old tmux keys); the docker
   # and git terminal UIs and the screen recorder are not used
   tmux lazydocker lazygit gpu-screen-recorder
-  # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere)
+  # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere);
+  # an Omarchy 4.5 migration adds the four language add-ons
   noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
+  fcitx5-mozc fcitx5-hangul fcitx5-chinese-addons fcitx5-chewing
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
   # 90 packages, ~1.8 GiB, nothing from Omarchy, Hyprland, the shell or the boot chain)
   libreoffice-fresh clang llvm dotnet-runtime ruby tobi-try mariadb-libs postgresql-libs
-  yt-dlp tesseract tesseract-data-eng tesseract-data-osd webkit2gtk-4.1 frei0r-plugins
+  yt-dlp webkit2gtk-4.1 frei0r-plugins
   qemu-user-static qemu-user-static-binfmt
   cups cups-filters cups-pk-helper system-config-printer
 )
@@ -43,9 +46,10 @@ APPS="$HOME/.local/share/applications"
 
 # Lazy wrappers Omarchy's installer and migrations drop into ~/.local/bin:
 # they run `mise use -g <tool>` on first call, which installs the tool AND
-# writes it into the linked mise config, i.e. this repo. Only Claude Code is
-# wanted. Only files carrying the wrapper's marker are touched.
-wrappers=(codex copilot crush cursor-agent gemini grok hermes muse omp opencode pi playwright ghui)
+# writes it into the linked mise config, i.e. this repo. Only Claude Code and
+# Codex are wanted (both in config/mise). Only files carrying the wrapper's
+# marker are touched.
+wrappers=(copilot crush cursor-agent gemini grok hermes muse omp opencode pi playwright ghui)
 BIN="$HOME/.local/bin"
 
 # Stock themes kept on disk; every other shipped theme is deleted and kept
