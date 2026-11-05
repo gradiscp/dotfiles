@@ -10,27 +10,27 @@
           "verticalFormat": "HH\n—\nmm"
         },
         {
+          "alwaysShow": true,
           "id": "omarchy.indicators",
           "items": [
             "NightLight"
-          ],
-          "alwaysShow": true
+          ]
         },
         {
+          "alwaysShow": true,
           "id": "omarchy.indicators",
           "items": [
             "StayAwake"
-          ],
-          "alwaysShow": true
+          ]
         }
       ],
       "centerBegin": [
         {
+          "alwaysShow": true,
           "id": "omarchy.indicators",
           "items": [
             "Dnd"
-          ],
-          "alwaysShow": true
+          ]
         }
       ],
       "centerEnd": [
@@ -98,7 +98,6 @@
   "cloneSourceRestores": [],
   "dock": {
     "pinned": [
-      "org.gnome.Nautilus",
       "foot"
     ],
     "position": "bottom"
