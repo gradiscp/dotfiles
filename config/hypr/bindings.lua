@@ -91,7 +91,7 @@ hl.unbind("ALT + PRINT")
 
 -- CTRL+SHIFT+ESCAPE -> shutdown. No conflicts (Windows' Task Manager
 -- shortcut, not used by anything on Linux).
-o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")
+o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system shutdown")
 
 -- Reboot on SUPER+CTRL+SHIFT+R, not bare CTRL+SHIFT+R - that's hard-refresh
 -- in every browser, a global bind there would break it everywhere. Stock has
@@ -100,4 +100,4 @@ o.bind("CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")
 -- Spelled in stock's modifier order on purpose: hl.unbind matches the string
 -- as written, "SUPER + CTRL + SHIFT + R" left both binds in place.
 hl.unbind("SUPER + SHIFT + CTRL + R")
-o.bind("SUPER + CTRL + SHIFT + R", "Reboot", "omarchy-system-reboot")
+o.bind("SUPER + CTRL + SHIFT + R", "Reboot", "omarchy-system reboot")
