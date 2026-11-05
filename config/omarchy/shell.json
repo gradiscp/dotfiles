@@ -1,6 +1,6 @@
 {
   "bar": {
-    "background": "glassy",
+    "background": "opaque",
     "layout": {
       "center": [
         {
@@ -35,7 +35,7 @@
               "enabled": true
             },
             "codex": {
-              "enabled": false
+              "enabled": true
             },
             "fireworks": {
               "enabled": false
@@ -74,7 +74,8 @@
       "chromium",
       "X",
       "YouTube"
-    ]
+    ],
+    "position": "bottom"
   },
   "idle": {
     "lock": 420,

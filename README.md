@@ -81,8 +81,8 @@ through Omarchy's menus.
   terminal icon that lights up while Claude Code sessions wait for a
   permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute
   and Tailscale. No tray, weather, indicators, display or menu button.
-- **Notifications:** stock. Claude permission requests pop up and jump back
-  to their terminal on click.
+- **Notifications:** stock. Claude permission requests and finished answers
+  pop up with Claude's logo and jump back to their terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
   after 7; a fullscreen browser window (a film) keeps the machine awake.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
