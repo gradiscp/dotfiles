@@ -21,9 +21,13 @@
 #             projects    ~/Projects
 #             home        all of ~ (also tools installed there, e.g. by mise)
 #             images      all of ~ plus every tagged local Docker image
-#             everything  the whole computer as for viruses computer (also
-#                         language packages bundled under /opt and /usr),
+#             everything  the whole computer as for viruses computer,
 #                         git-ignored paths too, plus every Docker image
+#             Never scanned for projects: tool caches and the packages tools
+#             bring along (TOOL_DIRS below; not your code, the tools update
+#             them, arch-audit covers the system's), and every path listed in
+#             ~/.config/security-audit/ignore (one per line, ~ allowed, #
+#             comments; local, so private paths stay out of this repo).
 #   viruses   clamscan. Reports only, never deletes (false alarms).
 #             downloads ~/Downloads and mounted USB sticks
 #             home      all of ~ and USB sticks
@@ -58,6 +62,12 @@ KEEP=20
 LOCK=${XDG_RUNTIME_DIR:-/tmp}/security-audit.lock
 UNIT=security-audit.service
 PROJECTS=$HOME/Projects
+IGNORE=${XDG_CONFIG_HOME:-$HOME/.config}/security-audit/ignore
+TOOL_DIRS=(
+  "$HOME/.cache" "$HOME/.cargo" "$HOME/.rustup" "$HOME/.npm" "$HOME/.codex"
+  "$HOME/.claude" "$HOME/.local/share" "$HOME/.vscode-oss" "$HOME/.config"
+  /usr /opt /etc
+)
 GLYPH=$'\uf132'
 
 bold=$'\e[1m' dim=$'\e[2m' red=$'\e[31m' green=$'\e[32m' off=$'\e[0m'
@@ -193,7 +203,7 @@ osv_count() {
 
 check_projects() {
   local scope=$1 json=$STATE_DIR/projects.json err=$STATE_DIR/projects.err
-  local code n=0 in_images=0 image ijson cnt targets=() flags=() strip="" what
+  local code n=0 in_images=0 image ijson cnt targets=() flags=() strip="" what item
   # shellcheck disable=SC2088  # "~" here is text for the report, not a path
   case $scope in
     projects) targets=("$PROJECTS") strip="$PROJECTS/" what="~/Projects" ;;
@@ -205,6 +215,16 @@ check_projects() {
       what="ganzer Rechner, auch git-ignorierte Ordner, und Docker-Images"
       ;;
   esac
+  # Skipped: tool dirs and the ignore file's paths (exact directories).
+  for item in "${TOOL_DIRS[@]}"; do
+    flags+=(--x-exclude "$item")
+  done
+  if [[ -r $IGNORE ]]; then
+    while read -r item; do
+      [[ -z $item || $item == \#* ]] && continue
+      flags+=(--x-exclude "${item/#\~/$HOME}")
+    done <"$IGNORE"
+  fi
   heading projects "osv-scanner, $what"
   echo "Schickt Paketnamen und Versionen an osv.dev, keinen Code."
   osv-scanner scan source -r "${flags[@]}" --format json --output-file "$json" "${targets[@]}" >/dev/null 2>"$err"
