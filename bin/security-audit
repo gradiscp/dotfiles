@@ -6,7 +6,8 @@
 #                                          bar widget does); toast when done
 #   security-audit <check> [scope]         the same here, in this terminal
 #   security-audit stop                    cancel the background run
-#   security-audit report                  last run's output, floating terminal
+#   security-audit report [file]           a report (default: the newest) in a
+#                                          floating terminal
 #   security-audit status                  last results as JSON (for the widget)
 #
 # Checks and their scopes (the first one is the default):
@@ -37,10 +38,12 @@
 # A background run is the transient user unit security-audit.service at idle
 # CPU and I/O priority: it never slows the desktop, and only one runs at a time
 # (clamscan alone takes about 1 GB of RAM); a run in a terminal takes the same
-# lock. The running check and each check's last result are kept in
-# $XDG_STATE_HOME/security-audit/state.json (read by the gradiscp.security
-# widget), the last run's output in last.log next to it. Exit status 1 means a
-# check could not run, not that it found something.
+# lock. The running check, each check's last result and the list of reports
+# are kept in $XDG_STATE_HOME/security-audit/state.json (read by the
+# gradiscp.security widget). Each run's output is a report in reports/ next to
+# it, named <date>_<time>-<check>-<scope>.log; the newest 20 are kept, and
+# last.log points at the newest. Exit status 1 means a check could not run,
+# not that it found something.
 # jq filters and hints for the user are single-quoted on purpose; the check_*
 # functions are called by name; `finished` is read in the EXIT trap.
 # shellcheck disable=SC2016,SC2329,SC2034
@@ -49,11 +52,13 @@ set -uo pipefail
 SELF=$(readlink -f "$0")
 STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/security-audit
 STATE=$STATE_DIR/state.json
-LOG=$STATE_DIR/last.log
+REPORTS=$STATE_DIR/reports
+LAST=$STATE_DIR/last.log
+KEEP=20
 LOCK=${XDG_RUNTIME_DIR:-/tmp}/security-audit.lock
 UNIT=security-audit.service
 PROJECTS=$HOME/Projects
-GLYPH=$''
+GLYPH=$'\uf132'
 
 bold=$'\e[1m' dim=$'\e[2m' red=$'\e[31m' green=$'\e[32m' off=$'\e[0m'
 
@@ -169,16 +174,17 @@ check_packages() {
   return 0
 }
 
-# Prints one line per affected package of an osv-scanner JSON report; paths
-# relative to $2 if given, else with ~ for the home directory.
+# Prints the affected packages of an osv-scanner JSON report, grouped under
+# their file; paths relative to $2 if given, else with ~ for the home directory.
 osv_table() {
-  jq -r --arg root "$2" --arg home "$HOME" '
-    .results[]
-    | (.source.path | if $root != "" then ltrimstr($root)
+  jq -r --arg root "$2" --arg home "$HOME" --arg red "$red" --arg off "$off" '
+    [.results[] | .source.path as $path | .packages[] | select((.groups | length) > 0)
+      | {path: $path, line: "\(.package.name) \(.package.version)\t\(.groups | length) Lücke(n), max. \(([.groups[].max_severity | tonumber?] | max) // "?")"}]
+    | group_by(.path)[]
+    | (.[0].path | if $root != "" then ltrimstr($root)
         elif startswith($home) then "~" + ltrimstr($home) else . end) as $file
-    | .packages[] | select((.groups | length) > 0)
-    | "\($file)\t\(.package.name) \(.package.version)\t\(.groups | length) Lücke(n), max. \(([.groups[].max_severity | tonumber?] | max) // "?")"
-  ' "$1" | column -t -s $'\t' | sed "s/^/  $red/;s/\$/$off/"
+    | "  \($file)", (unique_by(.line)[] | "    \($red)\(.line | sub("\t"; "\($off)  "))")
+  ' "$1"
 }
 
 osv_count() {
@@ -288,34 +294,53 @@ check_viruses() {
   return 0
 }
 
+# history_add <status: done|failed|aborted> <findings or null>: puts this run
+# first in the state's report list and deletes reports beyond the newest
+# $KEEP (the names sort by time).
+history_add() {
+  local files excess
+  state_set --arg f "$run_report" --argjson t "$run_started" --arg c "$run_check" \
+    --arg s "$run_scope" --arg st "$1" --argjson n "$2" --argjson keep "$KEEP" \
+    '.history = ([{file: $f, time: $t, check: $c, scope: $s, status: $st, found: $n}] + (.history // []))[:$keep]'
+  files=("$REPORTS"/*.log)
+  excess=$((${#files[@]} - KEEP))
+  ((excess > 0)) && rm -f -- "${files[@]:0:excess}"
+}
+
 run() {
-  local check=$1 scope=$2 plan item failed=0 found=0 line n headline
+  local plan item failed=0 found=0 line n headline
   local summary=()
-  mkdir -p "$STATE_DIR"
+  # Globals, not locals: the EXIT trap reads them.
+  run_check=$1 run_scope=$2
+  mkdir -p "$REPORTS"
   exec 9>"$LOCK"
   if ! flock -n 9; then
     echo "Ein Sicherheits-Check läuft schon." >&2
     exit 1
   fi
-  exec > >(tee "$LOG") 2>&1
+  run_started=$(date +%s)
+  run_report=$(date -d "@$run_started" +%Y-%m-%d_%H%M%S)-$run_check-$run_scope.log
+  ln -sfn "reports/$run_report" "$LAST"
+  exec > >(tee "$REPORTS/$run_report") 2>&1
 
   finished=0
-  # Cancelled or the terminal closed: no "running" left behind in the widget.
-  trap 'state_set ".running = null"; ((finished)) || toast "Sicherheits-Check abgebrochen"' EXIT
+  # Cancelled or the terminal closed: no "running" left behind in the widget,
+  # and the report so far stays in the list.
+  trap 'state_set ".running = null"; ((finished)) || { history_add aborted null; toast "Sicherheits-Check abgebrochen"; }' EXIT
   trap 'exit 129' HUP
   trap 'exit 130' INT
   trap 'exit 143' TERM
-  state_set --arg c "$check" --arg s "$scope" --argjson t "$(date +%s)" \
+  state_set --arg c "$run_check" --arg s "$run_scope" --argjson t "$run_started" \
     '.running = {check: $c, scope: $s, since: $t}'
 
-  if [[ $check == all && $scope == full ]]; then
+  if [[ $run_check == all && $run_scope == full ]]; then
     plan=(packages:all projects:everything viruses:computer)
-  elif [[ $check == all ]]; then
+  elif [[ $run_check == all ]]; then
     plan=(packages:fixable projects:projects viruses:downloads)
   else
-    plan=("$check:$scope")
+    plan=("$run_check:$run_scope")
   fi
-  printf '%sSicherheits-Check%s %s, %s\n' "$bold" "$off" "$(label "$check")" "$(date '+%d.%m.%Y %H:%M')"
+  printf '%sSicherheits-Check%s %s (%s), %s\n' "$bold" "$off" "$(label "$run_check")" "$run_scope" "$(date -d "@$run_started" '+%d.%m.%Y %H:%M')"
   for item in "${plan[@]}"; do
     state_set --arg p "${item%%:*}" '.running.part = $p'
     "check_${item%%:*}" "${item#*:}" || failed=1
@@ -333,13 +358,16 @@ run() {
 
   if ((failed)); then
     headline="Sicherheits-Check: nicht alles lief"
+    history_add failed "$found"
   elif ((found > 0)); then
     headline="Sicherheits-Check: $found Fund(e)"
+    history_add "done" "$found"
   else
     headline="Sicherheits-Check: alles sauber"
+    history_add "done" 0
   fi
   finished=1
-  toast -u normal "$headline" "$(printf '%s\n' "${summary[@]}" "Klick öffnet den Bericht.")" --exec "$SELF" report
+  toast -u normal "$headline" "$(printf '%s\n' "${summary[@]}" "Klick öffnet den Bericht.")" --exec "$SELF" report "$run_report"
   exit "$failed"
 }
 
@@ -365,11 +393,19 @@ case ${1:-} in
     systemctl --user stop "$UNIT" 2>/dev/null
     ;;
   report)
-    if [[ ! -s $LOG ]]; then
-      toast "Noch kein Bericht"
+    # Only a plain name from reports/: it comes from a click in the panel.
+    if [[ -z ${2:-} ]]; then
+      path=$LAST
+    elif [[ $2 =~ ^[0-9A-Za-z_-]+\.log$ ]]; then
+      path=$REPORTS/$2
+    else
+      usage
+    fi
+    if [[ ! -s $path ]]; then
+      toast "Bericht nicht gefunden" "Aufgehoben werden die letzten $KEEP."
       exit 0
     fi
-    exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.omarchy.terminal --title="Sicherheits-Bericht" -e less -R "$LOG"
+    exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.omarchy.terminal --title="Sicherheits-Bericht" -e less -R "$path"
     ;;
   packages | projects | viruses | all)
     scope=${2:-$(default_scope "$1")}

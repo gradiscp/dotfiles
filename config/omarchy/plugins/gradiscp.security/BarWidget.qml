@@ -10,14 +10,16 @@ import qs.Ui
 // `security-audit` in the background: all of them, or one, each with a choice
 // of how far it reaches (chips), up to "Komplett" = the whole computer. The
 // row's play button starts it, the same button stops a running one; the
-// script sends a toast when done, and "Bericht" opens the last run's output.
+// script sends a toast when done.
 // The shield lights up (bar.urgent) while a last result holds a finding and
 // is drawn in full while a check runs.
 //
 // Everything it shows comes from $XDG_STATE_HOME/security-audit/state.json,
 // which only the script writes (it replaces the file, so a timer re-reads it
 // besides the file watch: every 2 s while the panel is open or a check runs,
-// else every 30 s). The chips start at each check's last used scope. Keys:
+// else every 30 s). Below the checks, the kept reports (the newest 20, newest
+// first); a click opens one. The chips start at each check's last used scope.
+// Keys:
 // j/k row, h/l scope, Enter start/stop. Each check is a card that names its
 // tool (badge) and what that tool looks for. Same bones as gradiscp.ai-status.
 Panel {
@@ -28,6 +30,7 @@ Panel {
 
   property var running: null
   property var checks: ({})
+  property var history: []
   property var choice: ({ all: "quick", packages: "fixable", projects: "projects", viruses: "downloads" })
   property double nowS: Date.now() / 1000
   property int cursor: 0
@@ -142,21 +145,35 @@ Panel {
     root.close()
   }
 
-  function openReport() {
-    Quickshell.execDetached([root.script, "report"])
+  function openReport(file) {
+    Quickshell.execDetached([root.script, "report", String(file)])
     root.close()
   }
 
+  // "Alles prüfen · Komplett", "Viren · Ganzer PC"
+  function runName(entry) {
+    var scope = root.option(entry.check, entry.scope)
+    return root.title(entry.check) + (scope ? " · " + scope.label : "")
+  }
+
+  function runOutcome(entry) {
+    if (entry.status === "aborted") return "abgebrochen"
+    if (entry.status === "failed") return "nicht alles lief"
+    if (entry.found > 0) return entry.found + " Fund(e)"
+    return "nichts gefunden"
+  }
+
+  // Cursor: the check cards first, then the reports.
   function moveCursor(dx, dy) {
     root.cursorActive = true
-    if (dy !== 0) root.cursor = Math.max(0, Math.min(root.rows.length, root.cursor + dy))
+    if (dy !== 0) root.cursor = Math.max(0, Math.min(root.rows.length + root.history.length - 1, root.cursor + dy))
     else if (dx !== 0 && root.cursor < root.rows.length) root.stepChoice(root.rows[root.cursor].id, dx)
   }
 
   function activateCursor() {
     if (!root.cursorActive) return
     if (root.cursor < root.rows.length) root.startOrStop(root.rows[root.cursor].id)
-    else root.openReport()
+    else if (root.cursor - root.rows.length < root.history.length) root.openReport(root.history[root.cursor - root.rows.length].file)
   }
 
   function applyState(text) {
@@ -165,11 +182,13 @@ Panel {
     root.nowS = Date.now() / 1000
     root.running = data && data.running ? data.running : null
     root.checks = data && data.checks ? data.checks : ({})
+    root.history = data && data.history instanceof Array ? data.history : []
   }
 
   onOpenedChanged: if (opened) {
     cursorActive = false
     cursor = 0
+    if (panelFlick) panelFlick.contentY = 0
     stateFile.reload()
     var next = Object.assign({}, root.choice)
     for (var k in root.checks) if (root.option(k, root.checks[k].scope)) next[k] = root.checks[k].scope
@@ -197,8 +216,8 @@ Panel {
     id: button
     anchors.fill: parent
     bar: root.bar
-    // nf-fa-shield as , written as an escape so an edit cannot drop it.
-    text: ""
+    // nf-fa-shield as \uf132, written as an escape so an edit cannot drop it.
+    text: "\uf132"
     foreground: root.findings > 0 ? root.alertColor : (root.runningCheck !== "" ? root.foreground : root.idleColor)
     tooltipText: root.runningCheck !== "" ? "Sicherheits-Check läuft: " + root.title(root.runningCheck)
       : (root.findings > 0 ? "Sicherheits-Check: " + root.findings + " Fund(e)" : "Sicherheits-Checks")
@@ -224,9 +243,20 @@ Panel {
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
+      Flickable {
+        id: panelFlick
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: column.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
+        interactive: contentHeight > height
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
       Column {
         id: column
-        width: parent.width
+        width: panelFlick.width
         spacing: Style.space(12)
 
         PanelHero {
@@ -280,20 +310,114 @@ Panel {
 
         PanelSeparator { foreground: root.foreground }
 
-        Button {
-          text: "Letzten Bericht öffnen"
-          iconText: ""
-          hasCursor: root.cursorActive && root.cursor === root.rows.length
-          foreground: root.foreground
-          fontFamily: root.fontFamily
-          onClicked: root.openReport()
-          onHovered: function(isHovered) {
-            if (!isHovered) return
-            root.cursorActive = true
-            root.cursor = root.rows.length
+        Column {
+          id: reportSection
+          width: parent.width
+          spacing: Style.spacing.xxs
+
+          PanelSectionHeader {
+            width: parent.width
+            text: "BERICHTE"
+            foreground: root.foreground
+            fontFamily: root.fontFamily
+          }
+
+          Text {
+            visible: root.history.length === 0
+            width: parent.width
+            topPadding: Style.spacing.md
+            bottomPadding: Style.spacing.md
+            text: "Noch kein Bericht. Aufgehoben werden die letzten 20."
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            wrapMode: Text.WordWrap
+          }
+
+          Repeater {
+            model: root.history
+
+            ReportRow {
+              required property var modelData
+              required property int index
+              width: reportSection.width
+              entry: modelData
+              rowIndex: root.rows.length + index
+            }
           }
         }
       }
+      }
+    }
+  }
+
+  // One kept report: what ran (check and scope), when, and how it ended; a
+  // click opens it in a floating terminal.
+  component ReportRow: CursorSurface {
+    id: report
+    property var entry: null
+    property int rowIndex: 0
+
+    readonly property bool found: entry !== null && entry.found > 0
+
+    hasCursor: root.cursorActive && root.cursor === rowIndex
+    foreground: root.foreground
+    implicitHeight: reportContent.implicitHeight + Style.spacing.md * 2
+
+    Item {
+      id: reportContent
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Style.spacing.rowPaddingX
+      anchors.rightMargin: Style.spacing.rowPaddingX
+      implicitHeight: Math.max(nameText.implicitHeight + whenText.implicitHeight, outcomeText.implicitHeight)
+
+      Text {
+        id: nameText
+        textFormat: Text.PlainText
+        anchors.left: parent.left
+        anchors.top: parent.top
+        width: parent.width - outcomeText.width - Style.spacing.xl
+        text: report.entry ? root.runName(report.entry) : ""
+        color: root.foreground
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.body
+        elide: Text.ElideRight
+      }
+
+      Text {
+        id: whenText
+        textFormat: Text.PlainText
+        anchors.left: parent.left
+        anchors.top: nameText.bottom
+        text: report.entry ? Qt.formatDateTime(new Date(report.entry.time * 1000), "dd.MM.yyyy HH:mm") : ""
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+
+      Text {
+        id: outcomeText
+        textFormat: Text.PlainText
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        text: report.entry ? root.runOutcome(report.entry) : ""
+        color: report.found ? root.alertColor : root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onContainsMouseChanged: if (containsMouse) {
+        root.cursorActive = true
+        root.cursor = report.rowIndex
+      }
+      onClicked: if (report.entry) root.openReport(report.entry.file)
     }
   }
 
@@ -434,7 +558,7 @@ Panel {
       anchors.rightMargin: Style.spacing.rowPaddingX
       anchors.verticalCenter: parent.verticalCenter
       // nf-fa-stop / nf-fa-play
-      iconText: row.runningHere ? "" : ""
+      iconText: row.runningHere ? "\uf04d" : "\uf04b"
       tooltipText: row.runningHere ? "Abbrechen" : "Im Hintergrund starten"
       foreground: row.runningHere ? root.alertColor : root.foreground
       fontFamily: root.fontFamily
