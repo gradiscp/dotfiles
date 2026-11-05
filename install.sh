@@ -244,8 +244,16 @@ fi
 # bin/claude-notify. Claude Code rewrites this file through the link
 # (/model, /config, "always allow"): diff it before committing.
 link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
-# Codex runs claude-notify on the same two events (PermissionRequest, Stop).
-# Codex only runs a new or changed hook once it is trusted: /hooks in Codex.
+# Codex: claude-notify on the same two events (PermissionRequest, Stop), and
+# herdr's session hook so herdr can resume Codex after a restart. Same
+# pattern as Claude above: herdr writes its script plus an absolute-path
+# entry into hooks.json, so it runs only before the link exists; the repo
+# copy carries that entry with $HOME. Codex runs a new or changed hook only
+# once it is trusted: /hooks in Codex.
+if command -v herdr >/dev/null && [[ ! -f $HOME/.codex/herdr-agent-state.sh && ! -L $HOME/.codex/hooks.json ]]; then
+  mkdir -p "$HOME/.codex"
+  herdr integration install codex || echo "WARN: 'herdr integration install codex' failed"
+fi
 link "$REPO_DIR/config/codex/hooks.json" "$HOME/.codex/hooks.json"
 # Global instructions for every project (e.g. ask instead of guessing).
 # Whole directory, so a new rule file in the repo is live without relinking;
