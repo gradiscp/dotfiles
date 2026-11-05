@@ -1,8 +1,11 @@
 {
-  "description": "Toasts and sounds through claude-notify when Codex asks for a permission or finishes its turn (see bin/claude-notify).",
+  "description": "Toasts and sounds through claude-notify when Codex asks for a permission or finishes its turn (see bin/claude-notify); herdr's session hook so herdr can resume Codex after a restart.",
   "hooks": {
     "PermissionRequest": [
       { "hooks": [{ "type": "command", "command": "claude-notify codex", "timeout": 10 }] }
+    ],
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "bash \"$HOME/.codex/herdr-agent-state.sh\" session", "timeout": 10 }] }
     ],
     "Stop": [
       { "hooks": [{ "type": "command", "command": "claude-notify codex", "timeout": 10 }] }
