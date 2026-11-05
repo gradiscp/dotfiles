@@ -87,6 +87,14 @@ label() {
   esac
 }
 
+tool() {
+  case $1 in
+    packages) echo arch-audit ;;
+    projects) echo osv-scanner ;;
+    viruses) echo clamscan ;;
+  esac
+}
+
 toast() {
   omarchy-notification-send -g "$GLYPH" "$@" >/dev/null 2>&1
 }
@@ -302,8 +310,8 @@ run() {
     line=$(jq -r --arg c "$item" '.checks[$c].summary // "?"' "$STATE")
     n=$(jq -r --arg c "$item" '.checks[$c].findings // 0' "$STATE")
     ((n > 0)) && found=$((found + n))
-    printf '  %-9s %s\n' "$(label "$item")" "$line"
-    summary+=("$(label "$item"): $line")
+    printf '  %-9s %-12s %s\n' "$(label "$item")" "$(tool "$item")" "$line"
+    summary+=("$(label "$item") ($(tool "$item")): $line")
   done
 
   if ((failed)); then
