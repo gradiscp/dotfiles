@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -8,10 +9,10 @@ import qs.Ui
 
 // Clone of the stock omarchy.workspaces widget as of Omarchy 4.5.0
 // (/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml): the same
-// per-monitor workspace logic and layout glyph, an own look (dots instead of
-// numbers, the glyph in the accent colour, a click never cycles the layout).
-// A clone gets no stock fixes: diff it against that file after an Omarchy
-// update.
+// per-monitor workspace logic and layout mode, an own look (short lines
+// instead of numbers, the layout as one outline glyph after the row, a click
+// never cycles the layout). A clone gets no stock fixes: diff it against that
+// file after an Omarchy update.
 BarWidget {
   id: root
   moduleName: "omarchy.workspaces"
@@ -138,16 +139,10 @@ BarWidget {
     if (target !== ids[index]) root.focusWorkspace(target)
   }
 
-  // The workspace each monitor shows carries its layout: a square tiles, a
-  // circle scrolls, and a triangle floats.
+  // The layout of the workspace this monitor shows: drawn after the row as a
+  // square (tiles), a circle (scrolls) or a triangle (floats).
   property string activeMode: "dwindle"
   property bool modeStale: false
-
-  function modeGlyph(mode) {
-    if (mode === "scrolling") return "󰝥"
-    if (mode === "floating") return "󰔶"
-    return "󱓻"
-  }
 
   // A layout only changes through the layout commands, which ask for a refresh,
   // or a config reload, so each workspace's mode is read once and cached rather
@@ -237,6 +232,8 @@ BarWidget {
   }
 
   readonly property real trailingGap: root.vertical ? 0 : Style.spaceReal(1.5)
+  readonly property color ink: root.bar ? root.bar.barForeground : Color.foreground
+  readonly property color accent: root.bar ? root.bar.urgent : Color.urgent
 
   implicitWidth: grid.implicitWidth + trailingGap
   implicitHeight: grid.implicitHeight
@@ -245,7 +242,8 @@ BarWidget {
     id: grid
     anchors.fill: parent
     anchors.rightMargin: root.trailingGap
-    columns: root.vertical ? 1 : root.workspaceIds().length
+    // The workspaces, then the divider and the layout glyph.
+    columns: root.vertical ? 1 : root.workspaceIds().length + 2
     columnSpacing: root.vertical ? 0 : Style.space(1)
     rowSpacing: root.vertical ? Style.space(2) : 0
 
@@ -262,23 +260,21 @@ BarWidget {
         readonly property bool shown: root.monitor !== null && root.monitor.activeWorkspace !== null && root.monitor.activeWorkspace.id === modelData
         readonly property int slot: root.slotOf(modelData)
         readonly property bool firstGuest: root.blockOf(modelData) !== root.block && index > 0 && root.blockOf(root.workspaceIds()[index - 1]) === root.block
-        readonly property color ink: root.bar ? root.bar.barForeground : Color.foreground
 
         // A gap sets visiting workspaces apart from the monitor's own.
         Layout.leftMargin: firstGuest && !root.vertical ? Style.space(6) : 0
         Layout.topMargin: firstGuest && root.vertical ? Style.space(6) : 0
 
         bar: root.bar
-        // A dot per workspace ("C" of the 2026-09-13 mockups): the one this
-        // bar's monitor shows = its layout glyph in the bar's urgent colour
-        // (`bar.urgent`, the theme's `urgent` or the shell default; `active`
-        // paints the label in it), occupied = filled dot, empty = hollow ring.
-        // Numbers were tried underneath on 2026-09-16 and dropped again.
-        // `text` stays set even where the built-in label is hidden -
+        // A short line per workspace ("E" of the 2026-11-05 variants; dots and
+        // a filled layout glyph before, which read as too heavy): the one this
+        // bar's monitor shows = long and in the bar's urgent colour
+        // (`bar.urgent`, the theme's `urgent` or the shell default), occupied
+        // = the bar's text colour, empty = the same, faint.
+        // `text` stays set even though the built-in label is hidden -
         // WidgetButton renders itself at opacity 0 when text is empty.
-        text: shown ? root.modeGlyph(root.activeMode) : (slot === root.slots ? "0" : String(slot))
-        labelVisible: shown
-        active: shown
+        text: slot === root.slots ? "0" : String(slot)
+        labelVisible: false
         horizontalMargin: 5
         verticalPadding: 3
         fixedWidth: root.vertical ? root.barSize : Style.space(18)
@@ -291,14 +287,83 @@ BarWidget {
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
 
         Rectangle {
+          readonly property real length: Style.spaceReal(ws.shown ? 15 : 9)
+          readonly property real weight: Style.spaceReal(ws.shown ? 2.5 : 1.5)
+
           anchors.centerIn: parent
-          visible: !ws.shown
-          width: Style.space(7)
-          height: Style.space(7)
-          radius: height / 2
-          color: ws.occupied ? ws.ink : "transparent"
-          border.width: ws.occupied ? 0 : Math.max(1, Style.space(1))
-          border.color: Util.alpha(ws.ink, 0.45)
+          width: root.vertical ? weight : length
+          height: root.vertical ? length : weight
+          radius: weight / 2
+          color: ws.shown ? root.accent : (ws.occupied ? root.ink : Util.alpha(root.ink, 0.28))
+
+          Behavior on width {
+            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+          }
+          Behavior on height {
+            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+          }
+        }
+      }
+    }
+
+    // A hairline between the workspaces and the layout glyph.
+    Item {
+      Layout.preferredWidth: root.vertical ? root.barSize : Style.space(9)
+      Layout.preferredHeight: root.vertical ? Style.space(9) : root.barSize
+
+      Rectangle {
+        anchors.centerIn: parent
+        width: root.vertical ? Style.space(8) : Math.max(1, Style.spaceReal(0.8))
+        height: root.vertical ? Math.max(1, Style.spaceReal(0.8)) : Style.space(8)
+        color: Util.alpha(root.ink, 0.45)
+      }
+    }
+
+    // The layout of the workspace this monitor shows, as a thin outline:
+    // a square tiles, a circle scrolls, a triangle floats.
+    Item {
+      id: layoutGlyph
+
+      readonly property real size: Style.spaceReal(8)
+      readonly property real stroke: Style.spaceReal(1.25)
+
+      Layout.preferredWidth: root.vertical ? root.barSize : Style.space(16)
+      Layout.preferredHeight: root.vertical ? Style.space(16) : root.barSize
+
+      Rectangle {
+        anchors.centerIn: parent
+        visible: root.activeMode !== "floating"
+        width: layoutGlyph.size
+        height: layoutGlyph.size
+        radius: root.activeMode === "scrolling" ? width / 2 : Style.spaceReal(1.5)
+        color: "transparent"
+        border.width: layoutGlyph.stroke
+        border.color: root.ink
+      }
+
+      Shape {
+        id: triangle
+
+        // The path runs half a stroke inside the box, so no edge is clipped.
+        readonly property real inset: layoutGlyph.stroke / 2
+
+        anchors.centerIn: parent
+        visible: root.activeMode === "floating"
+        width: Style.spaceReal(9)
+        height: layoutGlyph.size
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+          strokeColor: root.ink
+          strokeWidth: layoutGlyph.stroke
+          fillColor: "transparent"
+          joinStyle: ShapePath.RoundJoin
+          startX: triangle.width / 2
+          startY: triangle.inset
+
+          PathLine { x: triangle.width - triangle.inset; y: triangle.height - triangle.inset }
+          PathLine { x: triangle.inset; y: triangle.height - triangle.inset }
+          PathLine { x: triangle.width / 2; y: triangle.inset }
         }
       }
     }
