@@ -88,7 +88,8 @@ through Omarchy's menus.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
   stock set (no LibreOffice, Obsidian, Disks, CJK input, tmux,
-  lazydocker, lazygit, screen recorder, Evince: PDFs open in Papers);
+  lazydocker, lazygit, screen recorder, Monologue, Hype, Gliff, vi,
+  Evince: PDFs open in Papers);
   anything heavier runs in a
   container instead of being installed. Only Claude Code and Codex as coding
   agents.
@@ -108,7 +109,7 @@ through Omarchy's menus.
 Unbound because the app is not wanted (stock would offer to install it):
 webapp keys, Spotify, Signal, 1Password, Obsidian, cliamp,
 Share (`SUPER+CTRL+S`), weather (`SUPER+CTRL+ALT+W`), OCR
-(`SUPER+CTRL+PRINT`, needs tesseract), tmux (`SUPER+ALT+RETURN`,
+(`SUPER+CTRL+PRINT`), tmux (`SUPER+ALT+RETURN`,
 `SUPER+ALT+K`; herdr instead), Docker TUI (`SUPER+SHIFT+D`), screen
 recording (`ALT+PRINT`). Full list:
 `omarchy menu keybindings --print`.
