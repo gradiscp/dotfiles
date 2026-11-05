@@ -8,17 +8,19 @@
           "formatAlt": "d MMMM 'W'ww yyyy",
           "id": "omarchy.clock",
           "verticalFormat": "HH\n—\nmm"
-        },
-        {
-          "id": "omarchy.indicators",
-          "items": [
-            "Dnd"
-          ],
-          "alwaysShow": true
         }
       ],
       "centerBegin": [],
       "centerEnd": [
+        {
+          "alwaysShow": true,
+          "id": "omarchy.indicators",
+          "items": [
+            "NightLight",
+            "StayAwake",
+            "Dnd"
+          ]
+        },
         {
           "id": "omarchy.media"
         },
@@ -32,6 +34,9 @@
         }
       ],
       "right": [
+        {
+          "id": "omarchy.tailscale"
+        },
         {
           "id": "gradiscp.claude-status"
         },
@@ -48,9 +53,6 @@
               "enabled": false
             }
           }
-        },
-        {
-          "id": "omarchy.tailscale"
         },
         {
           "id": "omarchy.bluetooth"
