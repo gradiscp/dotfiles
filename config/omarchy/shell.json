@@ -1,20 +1,27 @@
 {
   "bar": {
+    "background": "glassy",
     "layout": {
       "center": [
         {
-          "id": "omarchy.clock",
           "format": "ddd d MMM HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
+          "id": "omarchy.clock",
           "verticalFormat": "HH\n—\nmm"
+        }
+      ],
+      "centerBegin": [],
+      "centerEnd": [
+        {
+          "id": "omarchy.media"
+        },
+        {
+          "id": "omarchy.system-update"
         }
       ],
       "left": [
         {
           "id": "gradiscp.workspaces"
-        },
-        {
-          "id": "omarchy.workspaces"
         }
       ],
       "right": [
@@ -55,21 +62,20 @@
           "showPercentage": false
         }
       ],
-      "centerBegin": [],
-      "centerEnd": [
-        {
-          "id": "omarchy.media"
-        },
-        {
-          "id": "omarchy.system-update"
-        }
-      ],
       "tray": []
     },
-    "position": "top",
-    "transparent": false
+    "position": "top"
   },
   "cloneSourceRestores": [],
+  "dock": {
+    "pinned": [
+      "org.gnome.Nautilus",
+      "foot",
+      "chromium",
+      "X",
+      "YouTube"
+    ]
+  },
   "idle": {
     "lock": 420,
     "screensaver": 300

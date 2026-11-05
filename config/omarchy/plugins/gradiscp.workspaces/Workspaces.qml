@@ -8,9 +8,10 @@ import qs.Ui
 
 // Clone of the stock omarchy.workspaces widget as of Omarchy 4.5.0
 // (/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml): the same
-// per-monitor workspace logic, an own look (dots instead of numbers, no layout
-// glyph, a click never cycles the layout). A clone gets no stock fixes: diff
-// it against that file after an Omarchy update.
+// per-monitor workspace logic and layout glyph, an own look (dots instead of
+// numbers, the glyph in the accent colour, a click never cycles the layout).
+// A clone gets no stock fixes: diff it against that file after an Omarchy
+// update.
 BarWidget {
   id: root
   moduleName: "omarchy.workspaces"
@@ -134,10 +135,90 @@ BarWidget {
     if (target !== ids[index]) root.focusWorkspace(target)
   }
 
+  // The workspace each monitor shows carries its layout: a square tiles, a
+  // circle scrolls, and a triangle floats.
+  property string activeMode: "dwindle"
+  property bool modeStale: false
+
+  function modeGlyph(mode) {
+    if (mode === "scrolling") return "󰝥"
+    if (mode === "floating") return "󰔶"
+    return "󱓻"
+  }
+
+  // A layout only changes through the layout commands, which ask for a refresh,
+  // or a config reload, so each workspace's mode is read once and cached rather
+  // than running the script on every workspace switch.
+  property var modeCache: ({})
+  property int modeGeneration: 0
+  property int modeProcWorkspace: -1
+  property int modeProcGeneration: 0
+
+  function showActiveMode() {
+    var mode = root.modeCache[root.activeWorkspaceId()]
+    if (mode !== undefined) root.activeMode = mode
+    else readMode()
+  }
+
+  function readMode() {
+    if (modeProc.running) {
+      root.modeStale = true
+      return
+    }
+    var id = root.activeWorkspaceId()
+    if (id === -1) return
+    root.modeProcWorkspace = id
+    root.modeProcGeneration = root.modeGeneration
+    modeProc.command = ["omarchy-hyprland-workspace-layout-current", String(id)]
+    modeProc.running = true
+  }
+
+  function refresh() {
+    root.modeCache = ({})
+    root.modeGeneration++
+    readMode()
+  }
+
+  Component.onCompleted: refresh()
+  onMonitorChanged: root.showActiveMode()
+
+  Connections {
+    target: root.monitor
+    function onActiveWorkspaceChanged() { root.showActiveMode() }
+  }
+
+  Process {
+    id: modeProc
+    stdout: StdioCollector {
+      onStreamFinished: {
+        var mode = text.trim()
+        // A read that started before a refresh may predate the change.
+        if (!mode || root.modeProcGeneration !== root.modeGeneration) return
+        root.modeCache[root.modeProcWorkspace] = mode
+        if (root.modeProcWorkspace === root.activeWorkspaceId()) root.activeMode = mode
+      }
+    }
+    onExited: {
+      if (!root.modeStale) return
+      root.modeStale = false
+      // Deferred: the process still reports running while it signals exit.
+      Qt.callLater(root.showActiveMode)
+    }
+  }
+
+  // The layout commands (SUPER+H) change the mode without a focus change, so
+  // they ask every bar to read it again.
+  ShellIpc {
+    target: "omarchy.workspaces"
+
+    function refresh(): void { root.broadcast("refresh") }
+  }
+
   Connections {
     target: Hyprland
     function onRawEvent(event) {
       var name = event ? String(event.name) : ""
+      if (name === "configreloaded") root.refresh()
       // Quickshell credits every workspace switch to the focused monitor, as
       // the event doesn't say which one switched, and misses the workspace a
       // monitor falls back to when its own is moved away. Moving workspaces
@@ -179,7 +260,6 @@ BarWidget {
         readonly property int slot: root.slotOf(modelData)
         readonly property bool firstGuest: root.blockOf(modelData) !== root.block && index > 0 && root.blockOf(root.workspaceIds()[index - 1]) === root.block
         readonly property color ink: root.bar ? root.bar.barForeground : Color.foreground
-        readonly property color accent: root.bar ? root.bar.urgent : Color.urgent
 
         // A gap sets visiting workspaces apart from the monitor's own.
         Layout.leftMargin: firstGuest && !root.vertical ? Style.space(6) : 0
@@ -187,14 +267,15 @@ BarWidget {
 
         bar: root.bar
         // A dot per workspace ("C" of the 2026-09-13 mockups): the one this
-        // bar's monitor shows = capsule in the bar's urgent colour
-        // (`bar.urgent`, the theme's `urgent` or the shell default), occupied
-        // = filled dot, empty = hollow ring. Numbers were tried underneath on
-        // 2026-09-16 and dropped again.
-        // `text` stays set even though the built-in label is hidden -
+        // bar's monitor shows = its layout glyph in the bar's urgent colour
+        // (`bar.urgent`, the theme's `urgent` or the shell default; `active`
+        // paints the label in it), occupied = filled dot, empty = hollow ring.
+        // Numbers were tried underneath on 2026-09-16 and dropped again.
+        // `text` stays set even where the built-in label is hidden -
         // WidgetButton renders itself at opacity 0 when text is empty.
-        text: slot === root.slots ? "0" : String(slot)
-        labelVisible: false
+        text: shown ? root.modeGlyph(root.activeMode) : (slot === root.slots ? "0" : String(slot))
+        labelVisible: shown
+        active: shown
         horizontalMargin: 5
         verticalPadding: 3
         fixedWidth: root.vertical ? root.barSize : Style.space(18)
@@ -208,16 +289,13 @@ BarWidget {
 
         Rectangle {
           anchors.centerIn: parent
-          width: ws.shown ? Style.space(14) : Style.space(7)
+          visible: !ws.shown
+          width: Style.space(7)
           height: Style.space(7)
           radius: height / 2
-          color: ws.shown ? ws.accent : (ws.occupied ? ws.ink : "transparent")
-          border.width: ws.shown || ws.occupied ? 0 : Math.max(1, Style.space(1))
+          color: ws.occupied ? ws.ink : "transparent"
+          border.width: ws.occupied ? 0 : Math.max(1, Style.space(1))
           border.color: Util.alpha(ws.ink, 0.45)
-
-          Behavior on width {
-            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-          }
         }
       }
     }
