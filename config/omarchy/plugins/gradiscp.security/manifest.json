@@ -4,7 +4,7 @@
   "name": "Sicherheit",
   "version": "1.0.0",
   "author": "gradiscp",
-  "description": "Starts the security checks of security-audit (installed packages, project dependencies, virus scan), all in a row or one at a time, and shows the last result of each.",
+  "description": "Runs the security checks of security-audit in the background (installed packages, project dependencies and Docker images, virus scan), one or all, each from quick up to the whole computer, and shows the last result of each.",
   "kinds": [
     "bar-widget"
   ],
@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "Sicherheit",
-    "description": "Shield that lights up in the bar's urgent colour while the last checks found something; a click opens the panel to start them.",
+    "description": "Shield that lights up in the bar's urgent colour while the last checks found something; a click opens the panel to choose and start them.",
     "category": "System",
     "allowMultiple": false
   }

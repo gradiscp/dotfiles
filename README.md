@@ -84,9 +84,10 @@ through Omarchy's menus.
   permission, with a sessions panel and toast/sound switches on click;
   media controls while something plays, microphone mute; night light,
   stay-awake and do-not-disturb next to the clock. The tray drawer holds
-  Tailscale, the display widget and a shield that starts the security
-  checks (`security-audit`: packages, project dependencies, virus scan;
-  all or one) and lights up while the last ones found something. No
+  Tailscale, the display widget and a shield that runs the security
+  checks in the background (`security-audit`: packages, project
+  dependencies, virus scan; one or all, from quick up to the whole
+  computer) and lights up while the last ones found something. No
   weather or menu button.
 - **Notifications:** stock. Claude Code and Codex permission requests and
   finished answers pop up with the agent's logo and jump back to their
