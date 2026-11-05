@@ -18,7 +18,8 @@ import qs.Ui
 // which only the script writes (it replaces the file, so a timer re-reads it
 // besides the file watch: every 2 s while the panel is open or a check runs,
 // else every 30 s). The chips start at each check's last used scope. Keys:
-// j/k row, h/l scope, Enter start/stop. Same bones as gradiscp.ai-status.
+// j/k row, h/l scope, Enter start/stop. Each check is a card that names its
+// tool (badge) and what that tool looks for. Same bones as gradiscp.ai-status.
 Panel {
   id: root
   moduleName: "gradiscp.security"
@@ -36,20 +37,24 @@ Panel {
   readonly property string statePath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/security-audit/state.json"
   readonly property string runningCheck: running && running.check ? String(running.check) : ""
   readonly property var rows: [
-    { id: "all", title: "Alles prüfen", options: [
+    { id: "all", title: "Alles prüfen", tools: ["arch-audit", "osv-scanner", "clamscan"],
+      tests: "", options: [
       { value: "quick", label: "Schnell", what: "Pakete, ~/Projects, Downloads und USB-Sticks" },
       { value: "full", label: "Komplett", what: "Alle Pakete, Home + Images, ganzer Rechner" }
     ] },
-    { id: "packages", title: "Pakete", options: [
+    { id: "packages", title: "Pakete", tools: ["arch-audit"],
+      tests: "Lücken in installierten Systempaketen", options: [
       { value: "fixable", label: "Mit Update", what: "Pakete mit Lücke, die ein Update behebt" },
       { value: "all", label: "Alle", what: "Auch Lücken ohne Fix bisher auflisten" }
     ] },
-    { id: "projects", title: "Projekte", options: [
-      { value: "projects", label: "Projekte", what: "Abhängigkeiten unter ~/Projects (osv.dev)" },
+    { id: "projects", title: "Projekte", tools: ["osv-scanner"],
+      tests: "Lücken in Abhängigkeiten (osv.dev)", options: [
+      { value: "projects", label: "Projekte", what: "Lockfiles unter ~/Projects" },
       { value: "home", label: "Home", what: "Ganz ~, auch per mise installierte Tools" },
       { value: "images", label: "+ Images", what: "Home und alle lokalen Docker-Images" }
     ] },
-    { id: "viruses", title: "Viren", options: [
+    { id: "viruses", title: "Viren", tools: ["clamscan"],
+      tests: "Schadsoftware in Dateien (ClamAV)", options: [
       { value: "downloads", label: "Downloads", what: "Downloads und eingesteckte USB-Sticks" },
       { value: "home", label: "Home", what: "Der ganze Home-Ordner und USB-Sticks" },
       { value: "computer", label: "Ganzer PC", what: "Alles Lesbare auf dem Rechner, dauert lange" }
@@ -250,7 +255,7 @@ Panel {
         Column {
           id: checkSection
           width: parent.width
-          spacing: Style.spacing.xs
+          spacing: Style.spacing.md
 
           PanelSectionHeader {
             width: parent.width
@@ -291,8 +296,9 @@ Panel {
     }
   }
 
-  // One check: title and last result (or "läuft"), what the chosen scope
-  // covers, the scope chips, and a play button (stop while it runs).
+  // One check as a card: title and last result (or "läuft"), the tool as a
+  // badge and what it looks for, what the chosen scope covers, the scope
+  // chips, and a play button (stop while it runs).
   component CheckRow: CursorSurface {
     id: row
     property var check: null
@@ -304,6 +310,7 @@ Panel {
     readonly property var chosen: root.option(checkId, root.choice[checkId])
 
     hasCursor: root.cursorActive && root.cursor === rowIndex
+    bordered: true
     foreground: root.foreground
     opacity: root.runningCheck !== "" && !runningHere ? 0.5 : 1
     implicitHeight: rowContent.implicitHeight + Style.spacing.lg * 2
@@ -354,6 +361,48 @@ Panel {
           font.pixelSize: Style.font.caption
           horizontalAlignment: Text.AlignRight
           elide: Text.ElideLeft
+        }
+      }
+
+      // Tool badge(s), then what the tool looks for.
+      Row {
+        width: parent.width
+        spacing: Style.spacing.sm
+
+        Repeater {
+          model: row.check ? row.check.tools : []
+
+          Rectangle {
+            required property var modelData
+            width: toolText.implicitWidth + Style.spacing.sm * 2
+            height: toolText.implicitHeight + Style.spacing.xxs * 2
+            radius: Style.cornerRadius
+            color: Util.alpha(row.found ? root.alertColor : root.foreground, 0.08)
+            border.width: 1
+            border.color: Util.alpha(row.found ? root.alertColor : root.foreground, 0.35)
+
+            Text {
+              id: toolText
+              anchors.centerIn: parent
+              textFormat: Text.PlainText
+              text: String(parent.modelData)
+              color: root.foreground
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+            }
+          }
+        }
+
+        Text {
+          textFormat: Text.PlainText
+          anchors.verticalCenter: parent.verticalCenter
+          width: Math.max(0, parent.width - x)
+          text: row.check ? String(row.check.tests) : ""
+          color: root.foreground
+          opacity: 0.8
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+          elide: Text.ElideRight
         }
       }
 
