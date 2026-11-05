@@ -69,8 +69,8 @@ SELF="$(realpath -s "$0")"
 # Codex runs the same two hooks (config/codex/hooks.json, linked to
 # ~/.codex/hooks.json) with "codex" as the first word; that only changes the
 # name and the logo on the toasts.
-agent=Claude app="Claude Code"
-[[ ${1:-} == codex ]] && { agent=Codex app=Codex; shift; }
+name=Claude app="Claude Code"
+[[ ${1:-} == codex ]] && { name=Codex app=Codex; shift; }
 # Needs XDG_RUNTIME_DIR (always set under uwsm); no /tmp fallback. Exit 0 so
 # a hook never blocks Claude.
 [[ -n ${XDG_RUNTIME_DIR:-} ]] || { echo "claude-notify: XDG_RUNTIME_DIR unset" >&2; exit 0; }
@@ -100,7 +100,7 @@ active_window() { hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty
 # The agent's logo from Omarchy's agents panel (claude.svg, codex.svg) for the
 # toasts, as --image: the shell draws no app icon (-i) given as a path. The
 # glyph each toast also sends stands in when an update moves the file.
-AGENT_ICON="${OMARCHY_PATH:-/usr/share/omarchy}/shell/plugins/agents/assets/${agent,,}.svg"
+AGENT_ICON="${OMARCHY_PATH:-/usr/share/omarchy}/shell/plugins/agents/assets/${name,,}.svg"
 icon=()
 [[ -f $AGENT_ICON ]] && icon=(--image "$AGENT_ICON")
 
@@ -373,7 +373,7 @@ if [[ $event == Stop ]]; then
   answer=$(jq -r '.last_assistant_message // empty' <<<"$input" | first_line)
   [[ -n $answer ]] || answer=$(last_answer "$(jq -r '.transcript_path // empty' <<<"$input")")
   "$OMARCHY_BIN/omarchy-notification-send" --app-name "$app" "${icon[@]}" \
-    -g $'\U000F012C' -u normal -t "$TOAST_MS" "$agent ist fertig${title:+: $title}" \
+    -g $'\U000F012C' -u normal -t "$TOAST_MS" "$name ist fertig${title:+: $title}" \
     "${answer:-Die Antwort ist da}" --exec "$SELF" "${click[@]}" >/dev/null 2>&1
   exit 0
 fi
@@ -412,7 +412,7 @@ fi
 
 # The headline doubles as the handle for dismissing the toast later, so it
 # carries the terminal's title to tell two waiting sessions apart.
-headline="$agent wartet${title:+: $title}"
+headline="$name wartet${title:+: $title}"
 
 if [[ -e $QUIET ]]; then
   log "quiet ($key, ${event:-?}): $headline"
