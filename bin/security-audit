@@ -1,0 +1,208 @@
+#!/bin/bash
+# security-audit - the on-demand security checks from CHEATSHEET.md, one at
+# a time or all in a row, with a short result per check at the end.
+#
+#   security-audit all|packages|projects|viruses   run here, in this terminal
+#   security-audit open <check>                    the same in a floating terminal
+#                                                  (what the bar widget runs)
+#   security-audit status                          last results as JSON
+#
+#   packages  arch-audit: installed packages with a known vulnerability. Counts
+#             the ones an update already fixes (-u); the rest are only noted.
+#   projects  osv-scanner over every lockfile under ~/Projects; git-ignored
+#             paths (node_modules, target) are skipped. Sends package names
+#             and versions to osv.dev, no code.
+#   viruses   clamscan of ~/Downloads and every mounted USB stick
+#             (/run/media/$USER/*). Reports only, never deletes (false alarms).
+#
+# One run at a time (flock): clamscan alone takes about 1 GB of RAM. The last
+# result of each check and the running one are kept in
+# $XDG_STATE_HOME/security-audit/state.json, which the gradiscp.security bar
+# widget reads. Exit status 1 means a check could not run, not that it found
+# something.
+# jq filters and the hint for the user are single-quoted on purpose; the
+# check_* functions are called by name.
+# shellcheck disable=SC2016,SC2329
+set -uo pipefail
+
+STATE_DIR=${XDG_STATE_HOME:-$HOME/.local/state}/security-audit
+STATE=$STATE_DIR/state.json
+LOCK=${XDG_RUNTIME_DIR:-/tmp}/security-audit.lock
+PROJECTS=$HOME/Projects
+
+bold=$'\e[1m' dim=$'\e[2m' red=$'\e[31m' green=$'\e[32m' off=$'\e[0m'
+
+usage() {
+  echo "usage: security-audit all|packages|projects|viruses | open <check> | status" >&2
+  exit 2
+}
+
+label() {
+  case $1 in
+    packages) echo Pakete ;;
+    projects) echo Projekte ;;
+    viruses) echo Viren ;;
+  esac
+}
+
+# Rewrites the state file with a jq filter; only the lock holder writes.
+state_set() {
+  local current
+  mkdir -p "$STATE_DIR"
+  current=$(cat "$STATE" 2>/dev/null)
+  jq "$@" <<<"${current:-"{}"}" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+}
+
+# record <check> <findings, -1 = could not run> <summary>
+record() {
+  state_set --arg c "$1" --argjson n "$2" --arg s "$3" --argjson t "$(date +%s)" \
+    '.checks[$c] = {time: $t, findings: $n, summary: $s}'
+}
+
+heading() {
+  printf '\n%s%s%s %s(%s)%s\n' "$bold" "$(label "$1")" "$off" "$dim" "$2" "$off"
+}
+
+check_packages() {
+  local fixable all n rest
+  heading packages "arch-audit"
+  if ! fixable=$(arch-audit -u 2>&1); then
+    printf '%s\n' "$fixable"
+    record packages -1 "konnte nicht laufen"
+    return 1
+  fi
+  all=$(arch-audit 2>/dev/null)
+  n=$(grep -c . <<<"$fixable")
+  rest=$(( $(grep -c . <<<"$all") - n ))
+  if (( n > 0 )); then
+    printf '%s%s%s\n' "$red" "$fixable" "$off"
+    echo "Ein Update behebt sie: omarchy update"
+    record packages "$n" "$n mit Update"
+  else
+    printf '%sKeine Lücke, für die es schon ein Update gibt.%s\n' "$green" "$off"
+    record packages 0 "nichts zu tun"
+  fi
+  (( rest > 0 )) && printf '%s%d weitere ohne Fix bisher (arch-audit zeigt sie).%s\n' "$dim" "$rest" "$off"
+  return 0
+}
+
+check_projects() {
+  local json=$STATE_DIR/projects.json err=$STATE_DIR/projects.err code n
+  heading projects "osv-scanner, Lockfiles unter ~/Projects"
+  echo "Schickt Paketnamen und Versionen an osv.dev, keinen Code."
+  mkdir -p "$STATE_DIR"
+  osv-scanner scan source -r --format json --output "$json" "$PROJECTS" >/dev/null 2>"$err"
+  code=$?
+  case $code in
+    0 | 1) ;;
+    128)
+      echo "Keine Lockfiles gefunden."
+      record projects 0 "keine Lockfiles"
+      return 0
+      ;;
+    *)
+      tail -n 5 "$err"
+      record projects -1 "konnte nicht laufen"
+      return 1
+      ;;
+  esac
+  n=$(jq '[.results[].packages[] | select((.groups | length) > 0)] | length' "$json")
+  if (( n > 0 )); then
+    # One line per affected package: lockfile, package, how many and how bad.
+    jq -r --arg root "$PROJECTS/" '
+      .results[] | (.source.path | ltrimstr($root)) as $file
+      | .packages[] | select((.groups | length) > 0)
+      | "\($file)\t\(.package.name) \(.package.version)\t\(.groups | length) Lücke(n), max. \(([.groups[].max_severity | tonumber?] | max) // "?")"
+    ' "$json" | column -t -s $'\t' | sed "s/^/$red/;s/\$/$off/"
+    echo "Details: osv-scanner scan source -r <Projektordner>"
+    record projects "$n" "$n Paket(e) mit Lücke"
+  else
+    printf '%sKeine bekannte Lücke in den Abhängigkeiten.%s\n' "$green" "$off"
+    record projects 0 "keine bekannte Lücke"
+  fi
+  return 0
+}
+
+check_viruses() {
+  local targets=("$HOME/Downloads") dir log=$STATE_DIR/viruses.log code n
+  for dir in /run/media/"$USER"/*/; do
+    [[ -d $dir ]] && targets+=("${dir%/}")
+  done
+  heading viruses "clamscan: ${targets[*]/#$HOME/\~}"
+  echo "Lädt zuerst die Signaturen, das dauert einen Moment."
+  mkdir -p "$STATE_DIR"
+  clamscan -r -i "${targets[@]}" 2>&1 | tee "$log"
+  code=${PIPESTATUS[0]}
+  n=$(sed -n 's/^Infected files: //p' "$log")
+  if [[ ! $n =~ ^[0-9]+$ ]]; then
+    record viruses -1 "konnte nicht laufen"
+    return 1
+  fi
+  if (( n > 0 )); then
+    printf '%sNichts gelöscht. In Quarantäne verschieben: clamscan -r -i --move=$HOME/quarantine <Pfad>%s\n' "$red" "$off"
+    record viruses "$n" "$n Fund(e)"
+  else
+    record viruses 0 "nichts gefunden"
+  fi
+  # 2 = some files could not be read; the count above still stands.
+  (( code == 2 )) && printf '%sManche Dateien waren nicht lesbar (siehe oben).%s\n' "$dim" "$off"
+  return 0
+}
+
+case ${1:-} in
+  status)
+    cat "$STATE" 2>/dev/null || echo '{}'
+    exit 0
+    ;;
+  open)
+    [[ ${2:-} =~ ^(all|packages|projects|viruses)$ ]] || usage
+    if ! flock -n "$LOCK" true; then
+      omarchy-notification-send -g $'' "Sicherheits-Check läuft schon"
+      exit 0
+    fi
+    printf -v cmd '%q %q' "$0" "$2"
+    exec omarchy-launch-floating-terminal-with-presentation "$cmd"
+    ;;
+  all) checks=(packages projects viruses) ;;
+  packages | projects | viruses) checks=("$1") ;;
+  *) usage ;;
+esac
+
+exec 9>"$LOCK"
+if ! flock -n 9; then
+  echo "Ein Sicherheits-Check läuft schon." >&2
+  exit 1
+fi
+
+# Closing the terminal mid-run must not leave "running" behind in the widget.
+trap 'state_set ".running = null"' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+state_set --arg c "$1" '.running = $c'
+
+failed=0
+for check in "${checks[@]}"; do
+  "check_$check" || failed=1
+done
+
+# The result of this run, also as a toast in case the terminal is behind.
+summary=() found=0
+printf '\n%sErgebnis%s\n' "$bold" "$off"
+for check in "${checks[@]}"; do
+  line=$(jq -r --arg c "$check" '.checks[$c].summary // "?"' "$STATE")
+  n=$(jq -r --arg c "$check" '.checks[$c].findings // 0' "$STATE")
+  (( n > 0 )) && found=$((found + n))
+  printf '  %-9s %s\n' "$(label "$check")" "$line"
+  summary+=("$(label "$check"): $line")
+done
+
+if (( found > 0 )); then
+  headline="Sicherheits-Check: $found Fund(e)"
+else
+  headline="Sicherheits-Check: alles sauber"
+fi
+(( failed )) && headline="Sicherheits-Check: nicht alles lief"
+omarchy-notification-send -g $'' -u normal "$headline" "$(printf '%s\n' "${summary[@]}")" >/dev/null 2>&1
+
+exit "$failed"

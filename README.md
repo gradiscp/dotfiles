@@ -80,9 +80,13 @@ through Omarchy's menus.
   capsule turned to its layout (lying for tiles, long and low for
   scrolling, upright for floating) in the theme's urgent colour; a
   terminal icon that lights up while Claude Code sessions wait for a
-  permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute,
-  Tailscale, the display widget and the do-not-disturb bell next to the
-  clock. No tray, weather or menu button.
+  permission, with a sessions panel and toast/sound switches on click;
+  media controls while something plays, microphone mute; night light,
+  stay-awake and do-not-disturb next to the clock. The tray drawer holds
+  Tailscale, the display widget and a shield that starts the security
+  checks (`security-audit`: packages, project dependencies, virus scan;
+  all or one) and lights up while the last ones found something. No
+  weather or menu button.
 - **Notifications:** stock. Claude Code and Codex permission requests and
   finished answers pop up with the agent's logo and jump back to their
   terminal on click.
@@ -125,7 +129,8 @@ config/
   omarchy/
     shell.json         Bar layout, idle timing, plugin list
     shell.toml         Shell values over every theme: font size, thinner bar
-    plugins/           gradiscp.* - close dialog, workspaces, AI status (Claude, Codex)
+    plugins/           gradiscp.* - close dialog, workspaces, AI status (Claude, Codex),
+                       security checks
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
   brave/               Privacy policies, launch flags, uBlock Origin backup
@@ -136,6 +141,7 @@ config/
   code-oss/            Code - OSS settings: Matte Black, Material icons, no window buttons
   fontconfig/ herdr/ git/ mise/ mimeapps.list
 bin/                   ai-notify, window-close-guard, omarchy-drift-check,
+                       security-audit (the cheatsheet's security checks, one or all),
                        git-all (status/fetch/pull/push over every repo below),
                        git-tidy (deletes a repo's merged or gone local branches)
 install.sh             Fresh-machine setup
