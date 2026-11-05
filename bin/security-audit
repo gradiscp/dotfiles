@@ -16,10 +16,13 @@
 #             Only the fixable ones count as findings either way.
 #   projects  osv-scanner: lockfiles and installed language packages against
 #             osv.dev. Sends package names and versions, no code. Git-ignored
-#             paths (node_modules, target) are skipped.
-#             projects  ~/Projects
-#             home      all of ~ (also tools installed there, e.g. by mise)
-#             images    all of ~ plus every tagged local Docker image
+#             paths (node_modules, target) are skipped, except with everything.
+#             projects    ~/Projects
+#             home        all of ~ (also tools installed there, e.g. by mise)
+#             images      all of ~ plus every tagged local Docker image
+#             everything  the whole computer as for viruses computer (also
+#                         language packages bundled under /opt and /usr),
+#                         git-ignored paths too, plus every Docker image
 #   viruses   clamscan. Reports only, never deletes (false alarms).
 #             downloads ~/Downloads and mounted USB sticks
 #             home      all of ~ and USB sticks
@@ -29,7 +32,7 @@
 #                       untrusted files, and root-only files are few (they
 #                       are counted as unreadable).
 #   all       quick     packages fixable, projects projects, viruses downloads
-#             full      packages all, projects images, viruses computer
+#             full      packages all, projects everything, viruses computer
 #
 # A background run is the transient user unit security-audit.service at idle
 # CPU and I/O priority: it never slows the desktop, and only one runs at a time
@@ -62,7 +65,7 @@ usage() {
 valid() {
   case "$1:$2" in
     packages:fixable | packages:all) ;;
-    projects:projects | projects:home | projects:images) ;;
+    projects:projects | projects:home | projects:images | projects:everything) ;;
     viruses:downloads | viruses:home | viruses:computer) ;;
     all:quick | all:full) ;;
     *) return 1 ;;
@@ -124,6 +127,18 @@ usb_sticks() {
   done
 }
 
+# The top-level directories of the whole computer, one by one: excluding /run
+# would also exclude the USB sticks below it, and the /bin -> usr/bin style
+# links would scan /usr twice.
+system_dirs() {
+  local dir
+  for dir in /*; do
+    [[ -L $dir || ! -d $dir ]] && continue
+    case $dir in /proc | /sys | /dev | /run | /.snapshots) continue ;; esac
+    echo "$dir"
+  done
+}
+
 check_packages() {
   local scope=$1 fixable all n rest
   heading packages "arch-audit, alle installierten Pakete"
@@ -154,11 +169,13 @@ check_packages() {
   return 0
 }
 
-# Prints one line per affected package of an osv-scanner JSON report and
-# echoes nothing else; the count comes from osv_count.
+# Prints one line per affected package of an osv-scanner JSON report; paths
+# relative to $2 if given, else with ~ for the home directory.
 osv_table() {
-  jq -r --arg root "$2" '
-    .results[] | (.source.path | ltrimstr($root)) as $file
+  jq -r --arg root "$2" --arg home "$HOME" '
+    .results[]
+    | (.source.path | if $root != "" then ltrimstr($root)
+        elif startswith($home) then "~" + ltrimstr($home) else . end) as $file
     | .packages[] | select((.groups | length) > 0)
     | "\($file)\t\(.package.name) \(.package.version)\t\(.groups | length) Lücke(n), max. \(([.groups[].max_severity | tonumber?] | max) // "?")"
   ' "$1" | column -t -s $'\t' | sed "s/^/  $red/;s/\$/$off/"
@@ -169,19 +186,28 @@ osv_count() {
 }
 
 check_projects() {
-  local scope=$1 root json=$STATE_DIR/projects.json err=$STATE_DIR/projects.err
-  local code n=0 in_images=0 image ijson cnt
-  root=$PROJECTS
-  [[ $scope == projects ]] || root=$HOME
-  heading projects "osv-scanner, ${root/#$HOME/\~}$([[ $scope == images ]] && echo " und Docker-Images")"
+  local scope=$1 json=$STATE_DIR/projects.json err=$STATE_DIR/projects.err
+  local code n=0 in_images=0 image ijson cnt targets=() flags=() strip="" what
+  # shellcheck disable=SC2088  # "~" here is text for the report, not a path
+  case $scope in
+    projects) targets=("$PROJECTS") strip="$PROJECTS/" what="~/Projects" ;;
+    home) targets=("$HOME") what="~" ;;
+    images) targets=("$HOME") what="~ und Docker-Images" ;;
+    everything)
+      mapfile -t targets < <(system_dirs)
+      flags=(--no-ignore)
+      what="ganzer Rechner, auch git-ignorierte Ordner, und Docker-Images"
+      ;;
+  esac
+  heading projects "osv-scanner, $what"
   echo "Schickt Paketnamen und Versionen an osv.dev, keinen Code."
-  osv-scanner scan source -r --format json --output "$json" "$root" >/dev/null 2>"$err"
+  osv-scanner scan source -r "${flags[@]}" --format json --output-file "$json" "${targets[@]}" >/dev/null 2>"$err"
   code=$?
   case $code in
     0 | 1)
       n=$(osv_count "$json")
       if ((n > 0)); then
-        osv_table "$json" "$root/"
+        osv_table "$json" "$strip"
       else
         printf '%sKeine bekannte Lücke in den Abhängigkeiten.%s\n' "$green" "$off"
       fi
@@ -194,7 +220,7 @@ check_projects() {
       ;;
   esac
 
-  if [[ $scope == images ]]; then
+  if [[ $scope == images || $scope == everything ]]; then
     if ! docker info >/dev/null 2>&1; then
       echo "Docker läuft nicht, die Images sind übersprungen."
     else
@@ -202,7 +228,7 @@ check_projects() {
       while read -r image; do
         ijson=$STATE_DIR/image.json
         # </dev/null: the scanner must not eat the image list on stdin.
-        osv-scanner scan image --format json --output "$ijson" "$image" </dev/null >/dev/null 2>"$err"
+        osv-scanner scan image --format json --output-file "$ijson" "$image" </dev/null >/dev/null 2>"$err"
         code=$?
         if ((code > 1)); then
           printf '  %s: konnte nicht geprüft werden\n' "$image"
@@ -230,20 +256,11 @@ check_projects() {
 }
 
 check_viruses() {
-  local scope=$1 targets=() dir out=$STATE_DIR/viruses.out err=$STATE_DIR/viruses.err n unreadable
+  local scope=$1 targets=() out=$STATE_DIR/viruses.out err=$STATE_DIR/viruses.err n unreadable
   case $scope in
     downloads) [[ -d $HOME/Downloads ]] && targets+=("$HOME/Downloads") ;;
     home) targets+=("$HOME") ;;
-    computer)
-      # Top-level directories one by one: excluding /run would also exclude
-      # the USB sticks below it, and the /bin -> usr/bin style links would
-      # scan /usr twice.
-      for dir in /*; do
-        [[ -L $dir || ! -d $dir ]] && continue
-        case $dir in /proc | /sys | /dev | /run | /.snapshots) continue ;; esac
-        targets+=("$dir")
-      done
-      ;;
+    computer) mapfile -t targets < <(system_dirs) ;;
   esac
   mapfile -t -O "${#targets[@]}" targets < <(usb_sticks)
   heading viruses "clamscan: ${targets[*]/#$HOME/\~}"
@@ -292,7 +309,7 @@ run() {
     '.running = {check: $c, scope: $s, since: $t}'
 
   if [[ $check == all && $scope == full ]]; then
-    plan=(packages:all projects:images viruses:computer)
+    plan=(packages:all projects:everything viruses:computer)
   elif [[ $check == all ]]; then
     plan=(packages:fixable projects:projects viruses:downloads)
   else

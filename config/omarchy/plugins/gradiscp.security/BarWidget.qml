@@ -40,7 +40,7 @@ Panel {
     { id: "all", title: "Alles prüfen", tools: ["arch-audit", "osv-scanner", "clamscan"],
       tests: "", options: [
       { value: "quick", label: "Schnell", what: "Pakete, ~/Projects, Downloads und USB-Sticks" },
-      { value: "full", label: "Komplett", what: "Alle Pakete, Home + Images, ganzer Rechner" }
+      { value: "full", label: "Komplett", what: "Alle Pakete, ganzer PC, Docker-Images" }
     ] },
     { id: "packages", title: "Pakete", tools: ["arch-audit"],
       tests: "Lücken in installierten Systempaketen", options: [
@@ -51,7 +51,8 @@ Panel {
       tests: "Lücken in Abhängigkeiten (osv.dev)", options: [
       { value: "projects", label: "Projekte", what: "Lockfiles unter ~/Projects" },
       { value: "home", label: "Home", what: "Ganz ~, auch per mise installierte Tools" },
-      { value: "images", label: "+ Images", what: "Home und alle lokalen Docker-Images" }
+      { value: "images", label: "+ Images", what: "Home und alle lokalen Docker-Images" },
+      { value: "everything", label: "Alles", what: "Ganzer PC, auch node_modules, + Images" }
     ] },
     { id: "viruses", title: "Viren", tools: ["clamscan"],
       tests: "Schadsoftware in Dateien (ClamAV)", options: [
