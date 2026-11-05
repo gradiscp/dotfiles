@@ -16,6 +16,9 @@ unwanted=(
   # engine) and omasnap (screenshots) depend on them since Omarchy 4.5.
   aether cliamp omacut kdenlive localsend moonlight-qt obs-studio pinta xournalpp
   dua-cli gnome-disk-utility mpv-mpris obsidian tensaku
+  # added by Omarchy 4.5: webcam recorder, Markdown slides, remote desktop, vi;
+  # afr is only the language pack pacman picked for tesseract's tessdata
+  monologue hype gliff vi tesseract-data-afr
   # PDF viewer: Papers (GNOME's successor, a dependency of Nautilus' sushi
   # preview since Omarchy 4.0.5) does the job; mimeapps.list points PDFs at it
   evince

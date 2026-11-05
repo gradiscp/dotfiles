@@ -83,7 +83,8 @@ o.bind("SUPER + W", "Close window", "window-close-guard")
 -- only works while the weather widget is in the bar - it was removed.
 hl.unbind("SUPER + CTRL + S")
 hl.unbind("SUPER + CTRL + ALT + W")
--- SUPER+CTRL+PRINT (extract text, OCR) needs tesseract, which is removed.
+-- SUPER+CTRL+PRINT (extract text, OCR) is not used. tesseract stays installed
+-- only because omasnap (screenshots) depends on it.
 hl.unbind("SUPER + CTRL + PRINT")
 -- tmux is removed (herdr does the job): its terminal launcher and help menu.
 hl.unbind("SUPER + ALT + RETURN")
