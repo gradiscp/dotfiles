@@ -9,7 +9,7 @@ import qs.Ui
 // Clone of the stock omarchy.workspaces widget as of Omarchy 4.5.0
 // (/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml): the same
 // per-monitor workspace logic and layout mode, an own look (dots instead of
-// numbers, the shown one as a tiny picture of its layout, a click never
+// numbers, the shown one as a capsule turned to its layout, a click never
 // cycles the layout). A clone gets no stock fixes: diff it against that file
 // after an Omarchy update.
 BarWidget {
@@ -264,12 +264,12 @@ BarWidget {
         Layout.topMargin: firstGuest && root.vertical ? Style.space(6) : 0
 
         bar: root.bar
-        // A dot per workspace ("G" of the 2026-11-05 variants; a filled layout
-        // glyph on the shown one read as too heavy): occupied = filled dot,
-        // empty = hollow ring, and the one this bar's monitor shows = a tiny
-        // picture of its layout in the bar's urgent colour (`bar.urgent`, the
-        // theme's `urgent` or the shell default): two tiles, a strip of
-        // columns, or two stacked windows.
+        // A dot per workspace ("J" of the 2026-11-05 variants; filled layout
+        // glyphs read as too heavy, mini pictures as indistinct): occupied =
+        // filled dot, empty = hollow ring, and the one this bar's monitor
+        // shows = a capsule in the bar's urgent colour (`bar.urgent`, the
+        // theme's `urgent` or the shell default), lying for tiles, long and
+        // low for scrolling columns, upright for a floating window.
         // `text` stays set even though the built-in label is hidden -
         // WidgetButton renders itself at opacity 0 when text is empty.
         text: slot === root.slots ? "0" : String(slot)
@@ -296,88 +296,17 @@ BarWidget {
           border.color: Util.alpha(root.ink, 0.45)
         }
 
-        // The shown workspace as a tiny picture of its layout, sized in px of
-        // the 18 x 22 button.
-        Item {
-          id: picture
-
+        // The shown workspace as one capsule, sized in px of the 18 x 22
+        // button and turned to match its layout.
+        Rectangle {
           readonly property string mode: root.activeMode
-          readonly property bool scrolling: mode === "scrolling"
-          readonly property bool floating: mode === "floating"
 
           anchors.centerIn: parent
           visible: ws.shown
-          width: Style.spaceReal(17)
-          height: Style.spaceReal(11)
-
-          // Tiles: two side by side.
-          Row {
-            anchors.centerIn: parent
-            visible: !picture.scrolling && !picture.floating
-            spacing: Style.spaceReal(1)
-
-            Repeater {
-              model: 2
-
-              Rectangle {
-                width: Style.spaceReal(5.5)
-                height: Style.spaceReal(7)
-                radius: Style.spaceReal(1.25)
-                color: root.accent
-              }
-            }
-          }
-
-          // Scrolling: a strip of columns that runs off both edges.
-          Row {
-            anchors.centerIn: parent
-            visible: picture.scrolling
-            spacing: Style.spaceReal(1.5)
-
-            Rectangle {
-              width: Style.spaceReal(3.5)
-              height: Style.spaceReal(7)
-              radius: Style.spaceReal(1)
-              color: Util.alpha(root.accent, 0.4)
-            }
-            Rectangle {
-              width: Style.spaceReal(7)
-              height: Style.spaceReal(7)
-              radius: Style.spaceReal(1.25)
-              color: root.accent
-            }
-            Rectangle {
-              width: Style.spaceReal(3.5)
-              height: Style.spaceReal(7)
-              radius: Style.spaceReal(1)
-              color: Util.alpha(root.accent, 0.4)
-            }
-          }
-
-          // Floating: two stacked windows, the one behind as an outline.
-          Item {
-            anchors.centerIn: parent
-            visible: picture.floating
-            width: Style.spaceReal(12)
-            height: Style.spaceReal(10.5)
-
-            Rectangle {
-              width: Style.spaceReal(8.5)
-              height: Style.spaceReal(6.5)
-              radius: Style.spaceReal(1.25)
-              color: "transparent"
-              border.width: Style.spaceReal(1.2)
-              border.color: root.accent
-            }
-            Rectangle {
-              x: Style.spaceReal(3.5)
-              y: Style.spaceReal(4)
-              width: Style.spaceReal(8.5)
-              height: Style.spaceReal(6.5)
-              radius: Style.spaceReal(1.25)
-              color: root.accent
-            }
-          }
+          width: Style.spaceReal(mode === "scrolling" ? 16.5 : mode === "floating" ? 7.5 : 14)
+          height: Style.spaceReal(mode === "scrolling" ? 4.5 : mode === "floating" ? 12 : 7.5)
+          radius: Math.min(width, height) / 2
+          color: root.accent
         }
       }
     }

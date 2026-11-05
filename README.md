@@ -77,8 +77,8 @@ through Omarchy's menus.
   coast background), Vantablack and Solitude; the other stock themes are
   removed.
 - **Bar:** thinner than stock (22 px); workspaces as dots, the active one a
-  tiny picture of its layout (tiles, columns, stacked windows) in the
-  theme's urgent colour; a
+  capsule turned to its layout (lying for tiles, long and low for
+  scrolling, upright for floating) in the theme's urgent colour; a
   terminal icon that lights up while Claude Code sessions wait for a
   permission, with a sessions panel and toast/sound switches on click; media controls while something plays, microphone mute,
   Tailscale, the display widget and the do-not-disturb bell next to the
