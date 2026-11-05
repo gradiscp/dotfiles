@@ -99,7 +99,7 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.closeconfirm" "$CONFIG_DIR/omarc
 # Clone of omarchy.workspaces (dot workspaces) and the Claude waiting-count
 # widget. shell.json above already points the bar at these ids.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.workspaces" "$CONFIG_DIR/omarchy/plugins/gradiscp.workspaces"
-link "$REPO_DIR/config/omarchy/plugins/gradiscp.claude-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.claude-status"
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.ai-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.ai-status"
 # An own background for the stock Kanagawa theme. User backgrounds sort before
 # the theme's own, so it is the first one when Kanagawa is set. Directory
 # link: `omarchy theme bg install` adds files here, i.e. into the repo.
@@ -135,12 +135,12 @@ if [[ ! -d $CURSOR_DIR/cursors || ! -f $CURSOR_DIR/index.theme ]]; then
   rm -rf "$tmp"; trap - EXIT
 fi
 
-echo "== Claude sounds (herdr's request/done, played by claude-notify) =="
+echo "== Agent sounds (herdr's request/done, played by ai-notify) =="
 # herdr's own two sounds (Apache-2.0), pinned to the v0.9.1 tag - the files
 # are byte-identical to the ones built into that herdr. herdr is silenced for
-# Claude in config/herdr/config.toml; claude-notify plays these instead, so
+# Claude in config/herdr/config.toml; ai-notify plays these instead, so
 # the bar panel can switch them off without touching that linked file.
-SOUND_DIR="$HOME/.local/share/claude-notify/sounds"
+SOUND_DIR="$HOME/.local/share/ai-notify/sounds"
 SOUND_URL="https://raw.githubusercontent.com/herdrdev/herdr/v0.9.1/assets/sounds"
 declare -A SOUND_SHA256=(
   [request]="44c077ce28a0a48cec29da204beb627fd17140e5bde1f92dbaecf3d478bdda6f"
@@ -213,7 +213,7 @@ link "$REPO_DIR/config/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
 
 echo "== Scripts =="
 mkdir -p "$HOME/.local/bin"
-link "$REPO_DIR/bin/claude-notify" "$HOME/.local/bin/claude-notify"
+link "$REPO_DIR/bin/ai-notify" "$HOME/.local/bin/ai-notify"
 link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
 # Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
 link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
@@ -240,11 +240,11 @@ echo "== Claude Code =="
 if command -v herdr >/dev/null && [[ ! -f $HOME/.claude/hooks/herdr-agent-state.sh && ! -L $HOME/.claude/settings.json ]]; then
   herdr integration install claude || echo "WARN: 'herdr integration install claude' failed"
 fi
-# Carries the hooks that run claude-notify above - see the header of
-# bin/claude-notify. Claude Code rewrites this file through the link
+# Carries the hooks that run ai-notify above - see the header of
+# bin/ai-notify. Claude Code rewrites this file through the link
 # (/model, /config, "always allow"): diff it before committing.
 link "$REPO_DIR/config/claude/settings.json" "$HOME/.claude/settings.json"
-# Codex: claude-notify on the same two events (PermissionRequest, Stop), and
+# Codex: ai-notify on the same two events (PermissionRequest, Stop), and
 # herdr's session hook so herdr can resume Codex after a restart. Same
 # pattern as Claude above: herdr writes its script plus an absolute-path
 # entry into hooks.json, so it runs only before the link exists; the repo

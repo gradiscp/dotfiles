@@ -109,7 +109,8 @@ agent_panel_sort = "spaces"
 delay_seconds = 0
 
 [ui.sound.agents]
-# claude-notify plays herdr's two sounds for Claude itself, so the panel of
-# the gradiscp.claude-status bar widget can switch them off at runtime
+# ai-notify plays herdr's two sounds for Claude and Codex itself, so the panel of
+# the gradiscp.ai-status bar widget can switch them off at runtime
 # without editing this linked file. herdr would play them a second time.
 claude = "off"
+codex = "off"

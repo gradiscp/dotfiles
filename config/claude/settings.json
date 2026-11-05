@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "claude-notify"
+            "command": "ai-notify"
           }
         ]
       }
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "claude-notify"
+            "command": "ai-notify"
           }
         ]
       }
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "claude-notify"
+            "command": "ai-notify"
           }
         ]
       }

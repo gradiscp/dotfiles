@@ -164,7 +164,7 @@ straight into the repo, which the drift check cannot see:
 - The `Read`/`Edit` deny list covers Claude's file tools, the Bash file
   commands it recognises (`cat`, `head`, `sed`, `tee`, redirections) and
   nothing else (`grep -r`, scripts): a guard rail, not a boundary.
-- `claude-notify` logs every decision to `$XDG_RUNTIME_DIR/claude-notify/log`;
+- `ai-notify` logs every decision to `$XDG_RUNTIME_DIR/ai-notify/log`;
   read it before debugging a missing toast.
 - **Only Claude Code and Codex via mise** (plus gh, node). `install.sh`
   opts out of Omarchy's lazy agent list (`omarchy-mise-default-tools

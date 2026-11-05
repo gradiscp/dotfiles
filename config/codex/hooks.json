@@ -1,11 +1,11 @@
 {
-  "description": "Toasts and sounds through claude-notify when Codex asks for a permission or finishes its turn (see bin/claude-notify); herdr's session hook so herdr can resume Codex after a restart.",
+  "description": "Toasts and sounds through ai-notify when Codex asks for a permission or finishes its turn (see bin/ai-notify); herdr's session hook so herdr can resume Codex after a restart.",
   "hooks": {
     "PermissionRequest": [
       {
         "hooks": [
           {
-            "command": "claude-notify codex",
+            "command": "ai-notify codex",
             "timeout": 10,
             "type": "command"
           }
@@ -27,7 +27,7 @@
       {
         "hooks": [
           {
-            "command": "claude-notify codex",
+            "command": "ai-notify codex",
             "timeout": 10,
             "type": "command"
           }

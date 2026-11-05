@@ -8,19 +8,32 @@
           "formatAlt": "d MMMM 'W'ww yyyy",
           "id": "omarchy.clock",
           "verticalFormat": "HH\n—\nmm"
-        }
-      ],
-      "centerBegin": [],
-      "centerEnd": [
+        },
         {
-          "alwaysShow": true,
           "id": "omarchy.indicators",
           "items": [
-            "NightLight",
-            "StayAwake",
-            "Dnd"
-          ]
+            "NightLight"
+          ],
+          "alwaysShow": true
         },
+        {
+          "id": "omarchy.indicators",
+          "items": [
+            "StayAwake"
+          ],
+          "alwaysShow": true
+        }
+      ],
+      "centerBegin": [
+        {
+          "id": "omarchy.indicators",
+          "items": [
+            "Dnd"
+          ],
+          "alwaysShow": true
+        }
+      ],
+      "centerEnd": [
         {
           "id": "omarchy.media"
         },
@@ -35,10 +48,10 @@
       ],
       "right": [
         {
-          "id": "omarchy.tailscale"
+          "id": "omarchy.tray"
         },
         {
-          "id": "gradiscp.claude-status"
+          "id": "gradiscp.ai-status"
         },
         {
           "id": "omarchy.agents",
@@ -67,14 +80,18 @@
           "id": "omarchy.network"
         },
         {
-          "id": "omarchy.monitor"
-        },
-        {
           "id": "omarchy.power",
           "showPercentage": false
         }
       ],
-      "tray": []
+      "tray": [
+        {
+          "id": "omarchy.tailscale"
+        },
+        {
+          "id": "omarchy.monitor"
+        }
+      ]
     },
     "position": "top"
   },
