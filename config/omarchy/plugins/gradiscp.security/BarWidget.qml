@@ -7,34 +7,53 @@ import qs.Commons as Commons
 import qs.Ui
 
 // A shield (meant for the tray drawer) that starts the checks of
-// `security-audit`: all of them in a row, or one. A click opens the panel; a
-// row there opens a floating terminal running that check and shows the
-// check's last result. The shield lights up (bar.urgent) while a last result
-// holds a finding and is drawn in full while a check runs.
+// `security-audit` in the background: all of them, or one, each with a choice
+// of how far it reaches (chips), up to "Komplett" = the whole computer. The
+// row's play button starts it, the same button stops a running one; the
+// script sends a toast when done, and "Bericht" opens the last run's output.
+// The shield lights up (bar.urgent) while a last result holds a finding and
+// is drawn in full while a check runs.
 //
 // Everything it shows comes from $XDG_STATE_HOME/security-audit/state.json,
 // which only the script writes (it replaces the file, so a timer re-reads it
 // besides the file watch: every 2 s while the panel is open or a check runs,
-// else every 30 s). Same bones as gradiscp.ai-status.
+// else every 30 s). The chips start at each check's last used scope. Keys:
+// j/k row, h/l scope, Enter start/stop. Same bones as gradiscp.ai-status.
 Panel {
   id: root
   moduleName: "gradiscp.security"
   // Panel's own IpcHandler: `omarchy-shell gradiscp.security toggle`.
   ipcTarget: "gradiscp.security"
 
-  property string running: ""
+  property var running: null
   property var checks: ({})
+  property var choice: ({ all: "quick", packages: "fixable", projects: "projects", viruses: "downloads" })
   property double nowS: Date.now() / 1000
   property int cursor: 0
   property bool cursorActive: false
 
   readonly property string script: Quickshell.env("HOME") + "/.local/bin/security-audit"
   readonly property string statePath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/security-audit/state.json"
+  readonly property string runningCheck: running && running.check ? String(running.check) : ""
   readonly property var rows: [
-    { id: "all", title: "Alles prüfen", what: "Pakete, Projekte und Viren nacheinander" },
-    { id: "packages", title: "Pakete", what: "Installierte Pakete mit bekannter Lücke" },
-    { id: "projects", title: "Projekte", what: "Abhängigkeiten unter ~/Projects (osv.dev)" },
-    { id: "viruses", title: "Viren", what: "Downloads und eingesteckte USB-Sticks" }
+    { id: "all", title: "Alles prüfen", options: [
+      { value: "quick", label: "Schnell", what: "Pakete, ~/Projects, Downloads und USB-Sticks" },
+      { value: "full", label: "Komplett", what: "Alle Pakete, Home + Images, ganzer Rechner" }
+    ] },
+    { id: "packages", title: "Pakete", options: [
+      { value: "fixable", label: "Mit Update", what: "Pakete mit Lücke, die ein Update behebt" },
+      { value: "all", label: "Alle", what: "Auch Lücken ohne Fix bisher auflisten" }
+    ] },
+    { id: "projects", title: "Projekte", options: [
+      { value: "projects", label: "Projekte", what: "Abhängigkeiten unter ~/Projects (osv.dev)" },
+      { value: "home", label: "Home", what: "Ganz ~, auch per mise installierte Tools" },
+      { value: "images", label: "+ Images", what: "Home und alle lokalen Docker-Images" }
+    ] },
+    { id: "viruses", title: "Viren", options: [
+      { value: "downloads", label: "Downloads", what: "Downloads und eingesteckte USB-Sticks" },
+      { value: "home", label: "Home", what: "Der ganze Home-Ordner und USB-Sticks" },
+      { value: "computer", label: "Ganzer PC", what: "Alles Lesbare auf dem Rechner, dauert lange" }
+    ] }
   ]
   readonly property int findings: {
     var n = 0
@@ -56,50 +75,89 @@ Panel {
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
-  function title(id) {
-    for (var i = 0; i < root.rows.length; i++) if (root.rows[i].id === id) return root.rows[i].title
-    return id
+  function rowOf(id) {
+    for (var i = 0; i < root.rows.length; i++) if (root.rows[i].id === id) return root.rows[i]
+    return null
   }
 
-  function ago(t) {
+  function title(id) {
+    var row = root.rowOf(id)
+    return row ? row.title : id
+  }
+
+  function option(id, value) {
+    var row = root.rowOf(id)
+    if (!row) return null
+    for (var i = 0; i < row.options.length; i++) if (row.options[i].value === value) return row.options[i]
+    return null
+  }
+
+  function ago(t, prefix) {
     var minutes = Math.floor((root.nowS - Number(t)) / 60)
-    if (!(minutes >= 1)) return "gerade eben"
-    if (minutes < 60) return "vor " + minutes + " min"
+    if (!(minutes >= 1)) return prefix === "seit" ? "gerade gestartet" : "gerade eben"
+    if (minutes < 60) return prefix + " " + minutes + " min"
     var hours = Math.floor(minutes / 60)
-    if (hours < 48) return "vor " + hours + " h"
-    return "vor " + Math.floor(hours / 24) + " Tagen"
+    if (hours < 48) return prefix + " " + hours + " h"
+    return prefix + " " + Math.floor(hours / 24) + " Tagen"
   }
 
   function result(id) {
+    if (root.runningCheck === id) return "läuft, " + root.ago(root.running.since, "seit")
+    if (id === "all") return ""
     var c = root.checks[id]
     if (!c) return "noch nie geprüft"
-    return String(c.summary) + " · " + root.ago(c.time)
+    return String(c.summary) + " · " + root.ago(c.time, "vor")
   }
 
-  // The script decides whether a check may start (its lock); a busy panel only
-  // greys the rows, so a "running" left behind can never block a new run.
-  function start(id) {
-    // Shown at once (and the fast re-read starts); the script's own state
-    // takes over with the next read, also when it refuses to run.
-    if (root.running === "") root.running = id
-    Quickshell.execDetached([root.script, "open", id])
+  function choose(id, value) {
+    var next = Object.assign({}, root.choice)
+    next[id] = value
+    root.choice = next
+  }
+
+  function stepChoice(id, dx) {
+    var row = root.rowOf(id)
+    if (!row) return
+    var i = 0
+    for (; i < row.options.length; i++) if (row.options[i].value === root.choice[id]) break
+    i = Math.max(0, Math.min(row.options.length - 1, i + dx))
+    root.choose(id, row.options[i].value)
+  }
+
+  // The script decides whether a check may start (its unit and lock) and says
+  // so in a toast; a busy panel only greys the other rows.
+  function startOrStop(id) {
+    if (root.runningCheck === id) {
+      Quickshell.execDetached([root.script, "stop"])
+    } else {
+      if (root.runningCheck === "") root.running = { check: id, scope: root.choice[id], since: Date.now() / 1000 }
+      Quickshell.execDetached([root.script, "start", id, root.choice[id]])
+    }
     root.close()
   }
 
-  function moveCursor(dy) {
+  function openReport() {
+    Quickshell.execDetached([root.script, "report"])
+    root.close()
+  }
+
+  function moveCursor(dx, dy) {
     root.cursorActive = true
-    root.cursor = Math.max(0, Math.min(root.rows.length - 1, root.cursor + dy))
+    if (dy !== 0) root.cursor = Math.max(0, Math.min(root.rows.length, root.cursor + dy))
+    else if (dx !== 0 && root.cursor < root.rows.length) root.stepChoice(root.rows[root.cursor].id, dx)
   }
 
   function activateCursor() {
-    if (root.cursorActive) root.start(root.rows[root.cursor].id)
+    if (!root.cursorActive) return
+    if (root.cursor < root.rows.length) root.startOrStop(root.rows[root.cursor].id)
+    else root.openReport()
   }
 
   function applyState(text) {
     var data
     try { data = JSON.parse(text) } catch (e) { data = {} }
     root.nowS = Date.now() / 1000
-    root.running = data && data.running ? String(data.running) : ""
+    root.running = data && data.running ? data.running : null
     root.checks = data && data.checks ? data.checks : ({})
   }
 
@@ -107,6 +165,9 @@ Panel {
     cursorActive = false
     cursor = 0
     stateFile.reload()
+    var next = Object.assign({}, root.choice)
+    for (var k in root.checks) if (root.option(k, root.checks[k].scope)) next[k] = root.checks[k].scope
+    root.choice = next
   }
 
   FileView {
@@ -120,7 +181,7 @@ Panel {
   }
 
   Timer {
-    interval: root.opened || root.running !== "" ? 2000 : 30000
+    interval: root.opened || root.runningCheck !== "" ? 2000 : 30000
     running: true
     repeat: true
     onTriggered: stateFile.reload()
@@ -132,8 +193,8 @@ Panel {
     bar: root.bar
     // nf-fa-shield as , written as an escape so an edit cannot drop it.
     text: ""
-    foreground: root.findings > 0 ? root.alertColor : (root.running !== "" ? root.foreground : root.idleColor)
-    tooltipText: root.running !== "" ? "Sicherheits-Check läuft: " + root.title(root.running)
+    foreground: root.findings > 0 ? root.alertColor : (root.runningCheck !== "" ? root.foreground : root.idleColor)
+    tooltipText: root.runningCheck !== "" ? "Sicherheits-Check läuft: " + root.title(root.runningCheck)
       : (root.findings > 0 ? "Sicherheits-Check: " + root.findings + " Fund(e)" : "Sicherheits-Checks")
     onPressed: function(button) { root.toggle() }
   }
@@ -145,14 +206,14 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(340))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(520))
+    contentWidth: panel.fittedContentWidth(Style.space(380))
+    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(640))
 
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
 
-      onMoveRequested: function(dx, dy) { if (dy !== 0) root.moveCursor(dy) }
+      onMoveRequested: function(dx, dy) { root.moveCursor(dx, dy) }
       onActivateRequested: root.activateCursor()
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
@@ -165,10 +226,11 @@ Panel {
         PanelHero {
           width: parent.width
           title: "Sicherheit"
-          meta: root.running !== "" ? "Läuft: " + root.title(root.running)
+          meta: root.runningCheck !== ""
+            ? "Läuft im Hintergrund: " + root.title(root.running.part ? String(root.running.part) : root.runningCheck)
             : (root.findings > 0 ? root.findings + " Fund(e) beim letzten Check"
               : (root.lastRun > 0 ? "Nichts gefunden" : "Noch nicht geprüft"))
-          detail: root.lastRun > 0 ? "Zuletzt " + root.ago(root.lastRun) : ""
+          detail: root.lastRun > 0 ? "Zuletzt " + root.ago(root.lastRun, "vor") : ""
           foreground: root.foreground
           fontFamily: root.fontFamily
 
@@ -209,35 +271,58 @@ Panel {
             }
           }
         }
+
+        PanelSeparator { foreground: root.foreground }
+
+        Button {
+          text: "Letzten Bericht öffnen"
+          iconText: ""
+          hasCursor: root.cursorActive && root.cursor === root.rows.length
+          foreground: root.foreground
+          fontFamily: root.fontFamily
+          onClicked: root.openReport()
+          onHovered: function(isHovered) {
+            if (!isHovered) return
+            root.cursorActive = true
+            root.cursor = root.rows.length
+          }
+        }
       }
     }
   }
 
-  // One check: what it looks at, its last result (or "läuft"), a click starts
-  // it. Greyed out while any check runs: one at a time.
+  // One check: title and last result (or "läuft"), what the chosen scope
+  // covers, the scope chips, and a play button (stop while it runs).
   component CheckRow: CursorSurface {
     id: row
     property var check: null
     property int rowIndex: 0
 
     readonly property string checkId: check ? String(check.id) : ""
-    readonly property bool busy: root.running !== ""
-    readonly property bool runningHere: root.running === checkId
+    readonly property bool runningHere: root.runningCheck === checkId
     readonly property bool found: root.checks[checkId] !== undefined && root.checks[checkId].findings > 0
+    readonly property var chosen: root.option(checkId, root.choice[checkId])
 
     hasCursor: root.cursorActive && root.cursor === rowIndex
     foreground: root.foreground
-    opacity: busy && !runningHere ? 0.5 : 1
+    opacity: root.runningCheck !== "" && !runningHere ? 0.5 : 1
     implicitHeight: rowContent.implicitHeight + Style.spacing.lg * 2
+
+    HoverHandler {
+      onHoveredChanged: if (hovered) {
+        root.cursorActive = true
+        root.cursor = row.rowIndex
+      }
+    }
 
     Column {
       id: rowContent
       anchors.left: parent.left
-      anchors.right: parent.right
+      anchors.right: playButton.left
       anchors.verticalCenter: parent.verticalCenter
       anchors.leftMargin: Style.spacing.rowPaddingX
-      anchors.rightMargin: Style.spacing.rowPaddingX
-      spacing: Style.spacing.xxs
+      anchors.rightMargin: Style.spacing.md
+      spacing: Style.spacing.xs
 
       // Title on the left, the last result (or "läuft") on the right.
       Item {
@@ -262,8 +347,8 @@ Panel {
           textFormat: Text.PlainText
           anchors.right: parent.right
           anchors.verticalCenter: titleText.verticalCenter
-          text: row.runningHere ? "läuft …" : (row.checkId === "all" ? "" : root.result(row.checkId))
-          width: Math.min(implicitWidth, parent.width * 0.6)
+          text: root.result(row.checkId)
+          width: Math.min(implicitWidth, parent.width * 0.65)
           color: row.found || row.runningHere ? root.alertColor : root.dim
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
@@ -275,23 +360,35 @@ Panel {
       Text {
         textFormat: Text.PlainText
         width: parent.width
-        text: row.check ? String(row.check.what) : ""
+        text: row.chosen ? String(row.chosen.what) : ""
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
         elide: Text.ElideRight
       }
+
+      ButtonGroup {
+        options: row.check ? row.check.options : []
+        value: root.choice[row.checkId] || ""
+        foreground: root.foreground
+        fontFamily: root.fontFamily
+        fontSize: Style.font.caption
+        focusable: false
+        onChanged: function(v) { root.choose(row.checkId, v) }
+      }
     }
 
-    MouseArea {
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onContainsMouseChanged: if (containsMouse) {
-        root.cursorActive = true
-        root.cursor = row.rowIndex
-      }
-      onClicked: root.start(row.checkId)
+    PanelActionButton {
+      id: playButton
+      anchors.right: parent.right
+      anchors.rightMargin: Style.spacing.rowPaddingX
+      anchors.verticalCenter: parent.verticalCenter
+      // nf-fa-stop / nf-fa-play
+      iconText: row.runningHere ? "" : ""
+      tooltipText: row.runningHere ? "Abbrechen" : "Im Hintergrund starten"
+      foreground: row.runningHere ? root.alertColor : root.foreground
+      fontFamily: root.fontFamily
+      onClicked: root.startOrStop(row.checkId)
     }
   }
 }
