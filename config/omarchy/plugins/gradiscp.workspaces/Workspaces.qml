@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -9,10 +8,10 @@ import qs.Ui
 
 // Clone of the stock omarchy.workspaces widget as of Omarchy 4.5.0
 // (/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml): the same
-// per-monitor workspace logic and layout mode, an own look (dots and a
-// capsule instead of numbers, the layout as one outline glyph after the row,
-// a click never cycles the layout). A clone gets no stock fixes: diff it
-// against that file after an Omarchy update.
+// per-monitor workspace logic and layout mode, an own look (dots instead of
+// numbers, the shown one as a tiny picture of its layout, a click never
+// cycles the layout). A clone gets no stock fixes: diff it against that file
+// after an Omarchy update.
 BarWidget {
   id: root
   moduleName: "omarchy.workspaces"
@@ -242,8 +241,7 @@ BarWidget {
     id: grid
     anchors.fill: parent
     anchors.rightMargin: root.trailingGap
-    // The workspaces, then the divider and the layout glyph.
-    columns: root.vertical ? 1 : root.workspaceIds().length + 2
+    columns: root.vertical ? 1 : root.workspaceIds().length
     columnSpacing: root.vertical ? 0 : Style.space(1)
     rowSpacing: root.vertical ? Style.space(2) : 0
 
@@ -266,11 +264,12 @@ BarWidget {
         Layout.topMargin: firstGuest && root.vertical ? Style.space(6) : 0
 
         bar: root.bar
-        // A dot per workspace ("D" of the 2026-11-05 variants; a filled layout
-        // glyph on the shown one read as too heavy): the one this bar's
-        // monitor shows = capsule in the bar's urgent colour (`bar.urgent`,
-        // the theme's `urgent` or the shell default), occupied = filled dot,
-        // empty = hollow ring. The layout sits once after the row.
+        // A dot per workspace ("G" of the 2026-11-05 variants; a filled layout
+        // glyph on the shown one read as too heavy): occupied = filled dot,
+        // empty = hollow ring, and the one this bar's monitor shows = a tiny
+        // picture of its layout in the bar's urgent colour (`bar.urgent`, the
+        // theme's `urgent` or the shell default): two tiles, a strip of
+        // columns, or two stacked windows.
         // `text` stays set even though the built-in label is hidden -
         // WidgetButton renders itself at opacity 0 when text is empty.
         text: slot === root.slots ? "0" : String(slot)
@@ -287,84 +286,98 @@ BarWidget {
         onWheelMoved: function(delta) { root.scrollWorkspaces(delta) }
 
         Rectangle {
-          readonly property real length: Style.space(ws.shown ? 14 : 7)
+          anchors.centerIn: parent
+          visible: !ws.shown
+          width: Style.space(7)
+          height: Style.space(7)
+          radius: height / 2
+          color: ws.occupied ? root.ink : "transparent"
+          border.width: ws.occupied ? 0 : Math.max(1, Style.space(1))
+          border.color: Util.alpha(root.ink, 0.45)
+        }
+
+        // The shown workspace as a tiny picture of its layout, sized in px of
+        // the 18 x 22 button.
+        Item {
+          id: picture
+
+          readonly property string mode: root.activeMode
+          readonly property bool scrolling: mode === "scrolling"
+          readonly property bool floating: mode === "floating"
 
           anchors.centerIn: parent
-          width: root.vertical ? Style.space(7) : length
-          height: root.vertical ? length : Style.space(7)
-          radius: Style.space(7) / 2
-          color: ws.shown ? root.accent : (ws.occupied ? root.ink : "transparent")
-          border.width: ws.shown || ws.occupied ? 0 : Math.max(1, Style.space(1))
-          border.color: Util.alpha(root.ink, 0.45)
+          visible: ws.shown
+          width: Style.spaceReal(17)
+          height: Style.spaceReal(11)
 
-          Behavior on width {
-            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+          // Tiles: two side by side.
+          Row {
+            anchors.centerIn: parent
+            visible: !picture.scrolling && !picture.floating
+            spacing: Style.spaceReal(1)
+
+            Repeater {
+              model: 2
+
+              Rectangle {
+                width: Style.spaceReal(5.5)
+                height: Style.spaceReal(7)
+                radius: Style.spaceReal(1.25)
+                color: root.accent
+              }
+            }
           }
-          Behavior on height {
-            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+
+          // Scrolling: a strip of columns that runs off both edges.
+          Row {
+            anchors.centerIn: parent
+            visible: picture.scrolling
+            spacing: Style.spaceReal(1.5)
+
+            Rectangle {
+              width: Style.spaceReal(3.5)
+              height: Style.spaceReal(7)
+              radius: Style.spaceReal(1)
+              color: Util.alpha(root.accent, 0.4)
+            }
+            Rectangle {
+              width: Style.spaceReal(7)
+              height: Style.spaceReal(7)
+              radius: Style.spaceReal(1.25)
+              color: root.accent
+            }
+            Rectangle {
+              width: Style.spaceReal(3.5)
+              height: Style.spaceReal(7)
+              radius: Style.spaceReal(1)
+              color: Util.alpha(root.accent, 0.4)
+            }
           }
-        }
-      }
-    }
 
-    // A hairline between the workspaces and the layout glyph.
-    Item {
-      Layout.preferredWidth: root.vertical ? root.barSize : Style.space(9)
-      Layout.preferredHeight: root.vertical ? Style.space(9) : root.barSize
+          // Floating: two stacked windows, the one behind as an outline.
+          Item {
+            anchors.centerIn: parent
+            visible: picture.floating
+            width: Style.spaceReal(12)
+            height: Style.spaceReal(10.5)
 
-      Rectangle {
-        anchors.centerIn: parent
-        width: root.vertical ? Style.space(8) : Math.max(1, Style.spaceReal(0.8))
-        height: root.vertical ? Math.max(1, Style.spaceReal(0.8)) : Style.space(8)
-        color: Util.alpha(root.ink, 0.45)
-      }
-    }
-
-    // The layout of the workspace this monitor shows, as a thin outline:
-    // a square tiles, a circle scrolls, a triangle floats.
-    Item {
-      id: layoutGlyph
-
-      readonly property real size: Style.spaceReal(8)
-      readonly property real stroke: Style.spaceReal(1.25)
-
-      Layout.preferredWidth: root.vertical ? root.barSize : Style.space(16)
-      Layout.preferredHeight: root.vertical ? Style.space(16) : root.barSize
-
-      Rectangle {
-        anchors.centerIn: parent
-        visible: root.activeMode !== "floating"
-        width: layoutGlyph.size
-        height: layoutGlyph.size
-        radius: root.activeMode === "scrolling" ? width / 2 : Style.spaceReal(1.5)
-        color: "transparent"
-        border.width: layoutGlyph.stroke
-        border.color: root.ink
-      }
-
-      Shape {
-        id: triangle
-
-        // The path runs half a stroke inside the box, so no edge is clipped.
-        readonly property real inset: layoutGlyph.stroke / 2
-
-        anchors.centerIn: parent
-        visible: root.activeMode === "floating"
-        width: Style.spaceReal(9)
-        height: layoutGlyph.size
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-          strokeColor: root.ink
-          strokeWidth: layoutGlyph.stroke
-          fillColor: "transparent"
-          joinStyle: ShapePath.RoundJoin
-          startX: triangle.width / 2
-          startY: triangle.inset
-
-          PathLine { x: triangle.width - triangle.inset; y: triangle.height - triangle.inset }
-          PathLine { x: triangle.inset; y: triangle.height - triangle.inset }
-          PathLine { x: triangle.width / 2; y: triangle.inset }
+            Rectangle {
+              width: Style.spaceReal(8.5)
+              height: Style.spaceReal(6.5)
+              radius: Style.spaceReal(1.25)
+              color: "transparent"
+              border.width: Style.spaceReal(1.2)
+              border.color: root.accent
+            }
+            Rectangle {
+              x: Style.spaceReal(3.5)
+              y: Style.spaceReal(4)
+              width: Style.spaceReal(8.5)
+              height: Style.spaceReal(6.5)
+              radius: Style.spaceReal(1.25)
+              color: root.accent
+            }
+          }
         }
       }
     }
