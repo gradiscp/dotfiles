@@ -102,7 +102,7 @@ through Omarchy's menus.
 |---|---|
 | `SUPER+L` | Lock (stock `SUPER+CTRL+L` unbound) |
 | `SUPER+H` | Toggle workspace layout (was on `SUPER+L`) |
-| `SUPER+P` | Jump to the Claude session waiting for a permission |
+| `SUPER+P` | Jump to the Claude or Codex session waiting for a permission, else the one that finished last |
 | `SUPER+W` | Close window - asks first if a terminal still runs something (stock `SUPER+Q` unbound) |
 | `SUPER+SHIFT+S` | Screenshot to clipboard (was `PRINT`) |
 | `CTRL+SHIFT+ESC` | Shutdown |

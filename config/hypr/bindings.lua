@@ -57,12 +57,13 @@ hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy")
 
 -- SUPER+P: jump to the Claude session (herdr pane or plain terminal) that is
--- waiting for a permission - the keyboard half of the claude-notify toast,
+-- waiting for a permission, else to the one that finished last - the keyboard
+-- half of the claude-notify toasts,
 -- and it still works after that toast has gone (10s). Was: "Pseudo window",
 -- which only means anything in the dwindle layout, not the scrolling one
 -- used here.
 hl.unbind("SUPER + P")
-o.bind("SUPER + P", "Jump to waiting Claude", "claude-notify jump")
+o.bind("SUPER + P", "Jump to waiting or finished agent", "claude-notify jump")
 
 -- SUPER+W: close the window, but ask first when it is a terminal with
 -- something still running in it (Claude, herdr, ssh, ...) - see
