@@ -39,12 +39,6 @@ hl.unbind("SUPER + SHIFT + ALT + X")    -- X post
 -- Still bound and still working: Omawrite (SUPER+SHIFT+W), Herdr
 -- (SUPER+CTRL+RETURN).
 
--- Persistent workspaces 6-8 so they always show in the bar's workspace
--- indicator, not just once you've actually switched to them.
-hl.workspace_rule({ workspace = "6", persistent = true })
-hl.workspace_rule({ workspace = "7", persistent = true })
-hl.workspace_rule({ workspace = "8", persistent = true })
-
 -- SUPER+L: lock, instead of stock's SUPER+CTRL+L (unbound: one lock key).
 -- Was: SUPER+L -> Toggle workspace layout, which moved to SUPER+H (unused).
 hl.unbind("SUPER + L")
