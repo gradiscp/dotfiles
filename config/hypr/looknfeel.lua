@@ -21,6 +21,18 @@ hl.config({
   },
 })
 
+-- Focus on click, not on hover (stock 1 = focus follows the mouse). With a
+-- monitor to the right, the scrolling layout's off-screen columns lie where
+-- that monitor begins, and crossing the edge with the mouse focused such a
+-- hidden column and scrolled to it. 2: hovering moves no focus; a click or
+-- a key does, and the wheel still scrolls the window under the pointer.
+-- Omarchy's floating workspaces set 0 while active and restore this value.
+hl.config({
+  input = {
+    follow_mouse = 2,
+  },
+})
+
 -- Square corners. Set explicitly (not just left out) because a theme's own
 -- hyprland.lua loads before this file and may set a radius (stock solitude
 -- uses 6). The shell reads this value only at start: `omarchy restart shell`
