@@ -20,7 +20,9 @@ import qs.Ui
 // else every 30 s). Below the checks, the kept reports (the newest 20, newest
 // first); a click opens one. The chips start at each check's last used scope.
 // Keys:
-// j/k row, h/l scope, Enter start/stop. Each check is a card that names its
+// j/k row, h/l scope, Enter start/stop, e mark as dealt with (the check button:
+// findings someone has looked at stop lighting the shield until the next run
+// of that check finds something). Each check is a card that names its
 // tool (badge) and what that tool looks for. Same bones as gradiscp.ai-status.
 Panel {
   id: root
@@ -64,9 +66,10 @@ Panel {
       { value: "computer", label: "Ganzer PC", what: "Alles Lesbare auf dem Rechner, dauert lange" }
     ] }
   ]
+  // Findings not marked as dealt with: these light up the shield.
   readonly property int findings: {
     var n = 0
-    for (var k in checks) if (checks[k] && checks[k].findings > 0) n += checks[k].findings
+    for (var k in checks) if (root.unresolved(k)) n += checks[k].findings
     return n
   }
   readonly property double lastRun: {
@@ -115,7 +118,28 @@ Panel {
     if (id === "all") return ""
     var c = root.checks[id]
     if (!c) return "noch nie geprüft"
-    return String(c.summary) + " · " + root.ago(c.time, "vor")
+    return String(c.summary) + (c.acked ? " · erledigt" : "") + " · " + root.ago(c.time, "vor")
+  }
+
+  // A check with findings nobody has marked as dealt with; "all": any of them.
+  function unresolved(id) {
+    if (id === "all") {
+      for (var k in root.checks) if (root.unresolved(k)) return true
+      return false
+    }
+    var c = root.checks[id]
+    return c !== undefined && c.findings > 0 && c.acked !== true
+  }
+
+  // Shown at once; the script writes the mark, the next read confirms it.
+  function ack(id) {
+    if (!root.unresolved(id)) return
+    var next = Object.assign({}, root.checks)
+    for (var k in next) {
+      if ((id === "all" || k === id) && root.unresolved(k)) next[k] = Object.assign({}, next[k], { acked: true })
+    }
+    root.checks = next
+    Quickshell.execDetached(id === "all" ? [root.script, "ack"] : [root.script, "ack", id])
   }
 
   function choose(id, value) {
@@ -242,6 +266,9 @@ Panel {
       onActivateRequested: root.activateCursor()
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
+      onTextKey: function(t) {
+        if ((t === "e" || t === "E") && root.cursorActive && root.cursor < root.rows.length) root.ack(root.rows[root.cursor].id)
+      }
 
       Flickable {
         id: panelFlick
@@ -431,7 +458,7 @@ Panel {
 
     readonly property string checkId: check ? String(check.id) : ""
     readonly property bool runningHere: root.runningCheck === checkId
-    readonly property bool found: root.checks[checkId] !== undefined && root.checks[checkId].findings > 0
+    readonly property bool found: root.unresolved(checkId)
     readonly property var chosen: root.option(checkId, root.choice[checkId])
 
     hasCursor: root.cursorActive && root.cursor === rowIndex
@@ -450,7 +477,7 @@ Panel {
     Column {
       id: rowContent
       anchors.left: parent.left
-      anchors.right: playButton.left
+      anchors.right: ackButton.visible ? ackButton.left : playButton.left
       anchors.verticalCenter: parent.verticalCenter
       anchors.leftMargin: Style.spacing.rowPaddingX
       anchors.rightMargin: Style.spacing.md
@@ -550,6 +577,19 @@ Panel {
         focusable: false
         onChanged: function(v) { root.choose(row.checkId, v) }
       }
+    }
+
+    // nf-fa-check: mark the findings as dealt with (only while there are some).
+    PanelActionButton {
+      id: ackButton
+      visible: row.found
+      anchors.right: playButton.left
+      anchors.verticalCenter: parent.verticalCenter
+      iconText: "\uf00c"
+      tooltipText: row.checkId === "all" ? "Alle Funde als erledigt markieren" : "Als erledigt markieren"
+      foreground: root.alertColor
+      fontFamily: root.fontFamily
+      onClicked: root.ack(row.checkId)
     }
 
     PanelActionButton {
