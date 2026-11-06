@@ -9,6 +9,10 @@
 #   security-audit report [file]           a report (default: the newest) in a
 #                                          floating terminal
 #   security-audit status                  last results as JSON (for the widget)
+#   security-audit ack [check]             mark the findings of a check (default:
+#                                          all) as dealt with: the bar shield
+#                                          stops lighting up for them until a
+#                                          run of that check records new results
 #
 # Checks and their scopes (the first one is the default):
 #   packages  arch-audit: installed packages with a known vulnerability.
@@ -73,7 +77,7 @@ GLYPH=$'\uf132'
 bold=$'\e[1m' dim=$'\e[2m' red=$'\e[31m' green=$'\e[32m' off=$'\e[0m'
 
 usage() {
-  sed -n '5,10p' "$SELF" | sed 's/^# \{0,1\}//' >&2
+  sed -n '5,15p' "$SELF" | sed 's/^# \{0,1\}//' >&2
   exit 2
 }
 
@@ -117,12 +121,16 @@ toast() {
   omarchy-notification-send -g "$GLYPH" "$@" >/dev/null 2>&1
 }
 
-# Rewrites the state file with a jq filter; only the lock holder writes.
+# Rewrites the state file with a jq filter. A lock of its own, because `ack`
+# writes while a run may be writing too.
 state_set() {
   local current
   mkdir -p "$STATE_DIR"
-  current=$(cat "$STATE" 2>/dev/null)
-  jq "$@" <<<"${current:-"{}"}" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+  (
+    flock 8
+    current=$(cat "$STATE" 2>/dev/null)
+    jq "$@" <<<"${current:-"{}"}" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+  ) 8>"$STATE_DIR/state.lock"
 }
 
 # record <check> <scope> <findings, -1 = could not run> <summary>
@@ -394,6 +402,14 @@ run() {
 case ${1:-} in
   status)
     cat "$STATE" 2>/dev/null || echo '{}'
+    ;;
+  ack)
+    # A new result of the check replaces its entry, and with it the mark.
+    case ${2:-all} in
+      all) state_set '.checks |= with_entries(if .value.findings > 0 then .value.acked = true else . end)' ;;
+      packages | projects | viruses) state_set --arg c "$2" 'if .checks[$c].findings > 0 then .checks[$c].acked = true else . end' ;;
+      *) usage ;;
+    esac
     ;;
   start)
     check=${2:-}
