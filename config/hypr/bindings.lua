@@ -71,6 +71,14 @@ o.bind("SUPER + P", "Jump to waiting or finished agent", "ai-notify jump")
 -- closes at once, as stock.
 hl.unbind("SUPER + W")
 o.bind("SUPER + W", "Close window", "window-close-guard")
+
+-- ALT+SHIFT+1 / 2: focus the monitor to the left / right (stock
+-- CTRL+ALT+TAB still cycles). By direction, not by name: the dock's port
+-- names change (DP-6/7, DP-8/9, ...). Not ALT+1/2: herdr switches tabs with
+-- alt+1..9; not SUPER+ALT+1..5: stock's group windows. Key codes, because
+-- SHIFT turns the keysym of 1/2 into ! and ".
+o.bind("ALT + SHIFT + code:10", "Focus monitor left", hl.dsp.focus({ monitor = "l" }))
+o.bind("ALT + SHIFT + code:11", "Focus monitor right", hl.dsp.focus({ monitor = "r" }))
 -- Stock (since 4.5) also closes on SUPER+Q, which would skip the guard.
 hl.unbind("SUPER + Q")
 

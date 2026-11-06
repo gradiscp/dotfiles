@@ -113,6 +113,7 @@ through Omarchy's menus.
 | `SUPER+P` | Jump to the Claude or Codex session waiting for a permission, else the one that finished last |
 | `SUPER+W` | Close window - asks first if a terminal still runs something (stock `SUPER+Q` unbound) |
 | `SUPER+SHIFT+S` | Screenshot to clipboard (was `PRINT`) |
+| `ALT+SHIFT+1` / `2` | Focus the monitor to the left / right (stock `CTRL+ALT+TAB` still cycles) |
 | `CTRL+SHIFT+ESC` | Shutdown |
 | `SUPER+CTRL+SHIFT+R` | Reboot |
 
