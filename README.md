@@ -71,7 +71,8 @@ through Omarchy's menus.
 ## What's customized
 
 - **Look:** Tokyo Night (stock), square corners, no blur, stock opacity,
-  `scrolling` layout with 2/3 px gaps, JetBrains Mono Nerd Font for
+  `scrolling` layout with 2/3 px gaps, focus on click (not hover: hidden
+  scrolling columns sit where the right monitor begins), JetBrains Mono Nerd Font for
   everything that names no font (UI, terminal, the generic sans/serif
   families), Bibata cursor at 14 (one small download, not the 322 MB package).
   Stock themes kept besides it: Last Horizon, Kanagawa (with an own Big Sur
