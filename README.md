@@ -76,7 +76,7 @@ through Omarchy's menus.
   everything that names no font (UI, terminal, the generic sans/serif
   families), Bibata cursor at 14 (one small download, not the 322 MB package).
   Stock themes kept besides it: Last Horizon, Kanagawa (with an own Big Sur
-  coast background), Vantablack and Solitude; the other stock themes are
+  coast background), Vantablack and Starship; the other stock themes are
   removed.
 - **Bar:** thinner than stock (22 px); workspaces as dots, the active one a
   capsule turned to its layout (lying for tiles, long and low for
