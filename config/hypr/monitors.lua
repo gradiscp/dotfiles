@@ -14,9 +14,9 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy
 
 -- Samsung Odyssey G3 at 60 instead of 144 Hz: at 144 the dock link ran near
 -- capacity and gave sparkles and short blackouts (incidents repo,
--- 2026-10-02). Mounted in portrait: transform 1 = rotated 90 degrees, 3 = the
--- other way round (use 3 if the picture is upside down).
-hl.monitor({ output = "desc:Samsung Electric Company LS24AG30x", mode = "1920x1080@60", position = "auto", scale = 1, transform = 1 })
+-- 2026-10-02). Landscape; for portrait add transform = 1 (rotated 90
+-- degrees) or 3 (the other way round, if the picture is upside down).
+hl.monitor({ output = "desc:Samsung Electric Company LS24AG30x", mode = "1920x1080@60", position = "auto", scale = 1 })
 
 -- Dell Alienware 25" next to it, pinned to 1 like the Samsung (it used to
 -- follow the laptop's omarchy_monitor_scale through the catch-all rule).
