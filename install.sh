@@ -88,6 +88,18 @@ echo "== Power profile on battery =="
 # plug/unplug; on battery it is power-saver here (AC keeps Omarchy's default).
 omarchy-powerprofiles-set battery power-saver || echo "WARN: run: omarchy-powerprofiles-set battery power-saver"
 
+echo "== Suspend, then hibernate =="
+# A closed lid on battery and the menu's Suspend (omarchy-menu.jsonc) hibernate
+# after 2 hours in suspend; see the headers of the two files. Only where
+# Omarchy set up hibernation (swapfile, resume, RTC alarm).
+if omarchy-hibernation-available; then
+  sudo install -Dm644 "$REPO_DIR/config/systemd/sleep.conf.d/hibernate-delay.conf" /etc/systemd/sleep.conf.d/hibernate-delay.conf
+  sudo install -Dm644 "$REPO_DIR/config/systemd/logind.conf.d/30-lid-suspend-then-hibernate.conf" /etc/systemd/logind.conf.d/30-lid-suspend-then-hibernate.conf
+  sudo systemctl reload systemd-logind
+else
+  echo "WARN: hibernation not set up - run omarchy-hibernation-setup, then this script again"
+fi
+
 echo "== Hyprland config =="
 for f in "$REPO_DIR"/config/hypr/*.lua; do
   link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
