@@ -299,7 +299,7 @@ cat <<'EOT'
 Done. Manual steps still needed on this machine:
   1. Log out and in again: cursor and environment variables reach apps only
      from a fresh session.
-  2. Review config/hypr/monitors.lua - the laptop scale (1 on a 1920x1080
+  2. Review config/hypr/monitors.lua - the laptop scale (1.6 on a 2880x1920
      panel) may need adjusting for a different panel. Use
      `omarchy hyprland monitor scaling <N>`, not a raw file edit - see
      CLAUDE.md for why. The external monitors keep their own literal scale.

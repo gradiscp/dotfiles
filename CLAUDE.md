@@ -1,6 +1,6 @@
 # dotfiles
 
-Omarchy config for my laptop (built-in 1920x1080 panel at scale 1). This
+Omarchy config for my laptop (built-in 2880x1920 panel at scale 1.6). This
 file holds only what is true now and must not be broken: the invariants and
 the traps. History lives in commit messages and in the incidents repo
 (`~/Projects/paulgradischnig/incidents`); the overview and the keybind table
@@ -70,13 +70,13 @@ straight into the repo, which the drift check cannot see:
 
 ## Hyprland
 
-- **Laptop scale only via `omarchy hyprland monitor scaling <N>`**, never a
-  hand edit of the `omarchy_monitor_scale` line in `monitors.lua` (hand
-  edits got reset; the catch-all monitor rule also pulls a stale value back
-  when an external display is plugged in). Intended value: 1. Run the drift
-  check afterwards. The external monitors in that file carry literal
-  `scale =` values on purpose: the command rewrites the variable, and a
-  shared variable dragged the laptop to the 4K monitor's 1.6 once.
+- **Laptop scale only via `omarchy hyprland monitor scaling <N>`** with the
+  laptop panel focused, never a hand edit: it keeps its own one-line
+  `output = "eDP-1"` rule after the catch-all and sets `omarchy_gdk_scale`
+  from the lowest monitor scale. Intended value: 1.6. Run the drift check
+  afterwards. The external monitors carry literal `scale =` values on
+  purpose: a shared variable dragged the laptop to the 4K monitor's 1.6
+  once.
 - **`~/.local/state/omarchy/workspace-layouts/` beats the global layout.**
   `SUPER+H` (toggle layout) writes a per-workspace override there that
   silently beats `layout = "scrolling"` and survives reboots. When windows

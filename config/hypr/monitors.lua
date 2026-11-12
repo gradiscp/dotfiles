@@ -1,16 +1,17 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 -- List current monitors and supported resolutions with: hyprctl monitors all
 
-local omarchy_gdk_scale = 1
+local omarchy_gdk_scale = 2
 local omarchy_monitor_scale = 1
 
 hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
+hl.monitor({ output = "eDP-1", mode = "preferred", position = "auto", scale = 1.6 })
 
 -- External monitors are matched by description because the DP-n names change
 -- on every dock reset, and they carry literal scale values on purpose:
--- `omarchy hyprland monitor scaling` rewrites omarchy_monitor_scale above
--- (the laptop panel), which must not drag the externals along.
+-- `omarchy hyprland monitor scaling` writes a rule for the focused output
+-- (eDP-1 above), so the externals keep theirs whatever the laptop uses.
 
 -- Samsung Odyssey G3 at 60 instead of 144 Hz: at 144 the dock link ran near
 -- capacity and gave sparkles and short blackouts (incidents repo,
