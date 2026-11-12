@@ -95,7 +95,7 @@ through Omarchy's menus.
   terminal on click.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
   after 7; a fullscreen browser window (a film) keeps the machine awake.
-  Lid closed on battery, or Suspend in the menu: hibernates after 2 hours.
+  Lid closed or Suspend in the menu: hibernates after 2 hours on battery.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`), Bitwarden and uBlock
   Origin's filter lists by policy (`config/brave/extensions.json`); trimmed

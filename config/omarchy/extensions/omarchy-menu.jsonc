@@ -11,6 +11,6 @@
   // Tmux keybindings help: tmux is removed (herdr instead).
   "learn.tmux-keybindings": {"icon":"","label":"Tmux","action":"omarchy-menu-tmux-keybindings","when":"omarchy-cmd-present tmux"},
   // Suspend hibernates after HibernateDelaySec (config/systemd/sleep.conf.d),
-  // like a closed lid on battery. Only the action differs from stock.
+  // on battery, like a closed lid. Only the action differs from stock.
   "system.suspend": {"icon":"󰒲","label":"Suspend","when":"! omarchy-toggle-enabled suspend-off && ! omarchy-sleep-disabled","action":"systemctl suspend-then-hibernate"},
 }

@@ -89,8 +89,8 @@ echo "== Power profile on battery =="
 omarchy-powerprofiles-set battery power-saver || echo "WARN: run: omarchy-powerprofiles-set battery power-saver"
 
 echo "== Suspend, then hibernate =="
-# A closed lid on battery and the menu's Suspend (omarchy-menu.jsonc) hibernate
-# after 2 hours in suspend; see the headers of the two files. Only where
+# A closed lid and the menu's Suspend (omarchy-menu.jsonc) hibernate after
+# 2 hours in suspend on battery; see the headers of the two files. Only where
 # Omarchy set up hibernation (swapfile, resume, RTC alarm).
 if omarchy-hibernation-available; then
   sudo install -Dm644 "$REPO_DIR/config/systemd/sleep.conf.d/hibernate-delay.conf" /etc/systemd/sleep.conf.d/hibernate-delay.conf
