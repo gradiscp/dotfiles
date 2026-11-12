@@ -3,7 +3,7 @@
 Omarchy config for my laptop (built-in 2880x1920 panel at scale 1.6). This
 file holds only what is true now and must not be broken: the invariants and
 the traps. History lives in commit messages and in the incidents repo
-(`~/Projects/paulgradischnig/incidents`); the overview and the keybind table
+(`~/Projects/gradiscp/incidents`); the overview and the keybind table
 live in `README.md`; component details live in the headers of the scripts
 and plugins themselves. Budget: 12 KiB. The principles that decide what
 belongs here at all (stock first, lightweight, private, simple,

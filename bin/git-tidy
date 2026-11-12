@@ -33,7 +33,10 @@ if [[ -z $merged && -z $gone ]]; then
   echo "git-tidy: nothing to delete"
   exit 0
 fi
+# Unquoted on purpose: one branch name per word, one line each.
+# shellcheck disable=SC2086
 [[ -n $merged ]] && { echo "Merged into origin/$default:"; printf '  %s\n' $merged; }
+# shellcheck disable=SC2086
 [[ -n $gone ]] && { echo "Gone on the remote (deleted only if merged):"; printf '  %s\n' $gone; }
 
 if ! $yes; then

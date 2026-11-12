@@ -47,7 +47,7 @@ Look, do not assume:
   with `tags:`/`date:` frontmatter - copy the shape of an existing note.
 - `docs/` subfolders (features, guides, technical, handoffs, roadmap,
   research, archive), `README.md`s, `CLAUDE.md`, `AGENTS.md`.
-- A related incidents repo (`~/Projects/paulgradischnig/incidents`) for
+- A related incidents repo (`~/Projects/gradiscp/incidents`) for
   real failures - the `incidents` rule already says when to offer one.
 
 If the project has **no** documentation at all, ask before creating a

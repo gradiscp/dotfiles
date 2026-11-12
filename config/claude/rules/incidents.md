@@ -2,7 +2,7 @@
 
 Gilt für jede Aufgabe, in jedem Projekt.
 
-`~/Projects/paulgradischnig/incidents` sammelt Postmortems zu Dingen, die auf
+`~/Projects/gradiscp/incidents` sammelt Postmortems zu Dingen, die auf
 diesen Rechnern und in diesen Projekten schon kaputtgegangen sind: Ursache,
 was nicht funktioniert hat, und was eine Wiederholung verhindert. Fehlt der
 Ordner (anderer Rechner), einmal erwähnen und normal weitermachen.
@@ -18,7 +18,7 @@ Ordner (anderer Rechner), einmal erwähnen und normal weitermachen.
 
 ## Bei Fehlern
 - Tritt ein Fehler oder unerwartetes Verhalten auf, zuerst im Repo nach dem
-  Symptom suchen (`grep -ril <stichwort> ~/Projects/paulgradischnig/incidents`),
+  Symptom suchen (`grep -ril <stichwort> ~/Projects/gradiscp/incidents`),
   bevor eigene Ursachen vermutet oder Lösungen ausprobiert werden.
 - Passt ein Incident: **Resolution** und **What didn't work** lesen und
   bekannte Sackgassen nicht wiederholen.

@@ -102,13 +102,13 @@ Erledigtes fliegt hier raus und steht dann in der README.
 - [ ] **Kubernetes lernen:** `k3d` mit `kubectl`, `k9s`, `helm` über mise,
   nur in einem eigenen Lern-Ordner. k3d nutzt das vorhandene Docker und
   braucht im Leerlauf laut einem Vergleich etwa 350 MB (minikube ~1 GB),
-  wichtig bei 15 GB RAM. Lernpfad: eine eigene App mit Helm-Chart in k3d,
+  wichtig bei 30 GB RAM. Lernpfad: eine eigene App mit Helm-Chart in k3d,
   dann GitOps mit Flux oder Argo CD, später k3s in einer Proxmox-VM, erreichbar
   über den Tailscale-Operator.
 
 ## Bewusst nicht
 
-- Lokale KI: Claude und Codex reichen, der Laptop (keine GPU) lohnt es nicht.
+- Lokale KI: Claude und Codex reichen, der Laptop (nur integrierte Grafik) lohnt es nicht.
 - atuin: Strg+R mit fzf, zoxide und starship bringt Omarchy schon mit.
 - lazygit, lazydocker: bewusst entfernt.
 - `act` (Actions lokal): schwer, und Schritte mit Cloud-Login laufen lokal

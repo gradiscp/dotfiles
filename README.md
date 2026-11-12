@@ -43,8 +43,8 @@ these, in this order:
 2. Clone over HTTPS (public repo, no key needed). The clone path is free,
    but the symlinks `install.sh` creates bake it in, so pick the final one:
    ```bash
-   git clone https://github.com/gradiscp/dotfiles.git ~/Projects/paulgradischnig/dotfiles
-   cd ~/Projects/paulgradischnig/dotfiles && ./install.sh
+   git clone https://github.com/gradiscp/dotfiles.git ~/Projects/gradiscp/dotfiles
+   cd ~/Projects/gradiscp/dotfiles && ./install.sh
    ```
    It asks for the sudo password a few times and refuses to run as root.
    It installs `packages.txt`, links every config into place, sets the text
@@ -138,7 +138,7 @@ config/
                        security checks
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
-  brave/               Policies (privacy, extensions), launch flags, uBlock backup
+  brave/               Policies (privacy, extensions) and launch flags
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify

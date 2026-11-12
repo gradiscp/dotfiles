@@ -10,10 +10,10 @@ anhängen.
 | wöchentlich | `omarchy update` | Snapshot, `pacman -Syu`, Omarchy-Migrationen, Drift-Check, dann AUR und mise-Tools. Neustart annehmen, wenn Kernel oder Hyprland dabei war. |
 | danach, kurz | `sudo pacdiff` | Geänderte Configs in `/etc` (`.pacnew`) zusammenführen. Meist leer. |
 | nach Änderungen über Omarchy-Menüs | `omarchy-drift-check` | Läuft nach `omarchy update` automatisch; von Hand prüfen, ob alle Configs noch ins Repo zeigen, Theme-Sperre und Pakete stimmen. Ergebnis als Toast, Log in `~/.local/state/omarchy-drift-check.log`. |
-| nach jedem Update (automatisch) | `bash ~/Projects/paulgradischnig/dotfiles/remove-unwanted-apps.sh` | Läuft als Hook nach `omarchy update`: entfernt, was das Update an unerwünschten Paketen, Launchern, Agent-Wrappern und Themes zurückgebracht hat. Von Hand jederzeit; `--check` zeigt nur an. |
+| nach jedem Update (automatisch) | `bash ~/Projects/gradiscp/dotfiles/remove-unwanted-apps.sh` | Läuft als Hook nach `omarchy update`: entfernt, was das Update an unerwünschten Paketen, Launchern, Agent-Wrappern und Themes zurückgebracht hat. Von Hand jederzeit; `--check` zeigt nur an. |
 | alle paar Wochen | `docker pull <Basis-Images der Projekte>` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
 | alle paar Monate | `omarchy-update-firmware` | BIOS/SSD-Firmware über fwupd. Der erste Lauf installiert fwupd. |
-| neues Repo klonen | `git clone git@github.com:<owner>/<repo>.git` oder `gh repo clone` | Key und Commit-Adresse wählt git selbst (Regeln in `~/.config/git/config.local`, siehe "Zwei GitHub-Konten"); kein `set-url` mehr nötig. |
+| neues Repo klonen | `git clone git@github.com:<owner>/<repo>.git` oder `gh repo clone` | Key und Commit-Adresse wählt git selbst (Regeln in `~/.config/git/config.local`, siehe "GitHub: zwei Konten"); kein `set-url` mehr nötig. |
 
 
 **Nicht** `sudo pacman -Syu` direkt: Omarchy blockt das mit einem pacman-Hook
@@ -34,7 +34,7 @@ die Auswahl im uBlock-Dashboard). Von Hand bleiben:
 | Wo | Was |
 |---|---|
 | `brave://settings/shields` | Tracker & Werbung auf "Aggressiv"; "Store contact information for broken site reports" aus |
-| `brave://settings/appearance` | Page zoom 80 % (Seiten passen so zur Oberfläche bei Scale 1; keine Policy dafür) |
+| `brave://settings/appearance` | Page zoom nach Augenmaß (80 % passte zu Scale 1 auf dem alten Laptop; bei Scale 1.6 neu wählen; keine Policy dafür) |
 | `brave://settings/search` | Suchmaschine nach Wahl (absichtlich keine Policy, sonst gesperrt) |
 | `brave://settings/extensions/v2` | uBlock Origin einschalten (Brave hostet die volle Manifest-V2-Version; keine Policy installiert sie). Die Filterlisten kommen danach aus der Policy |
 
@@ -63,7 +63,7 @@ nicht benutzen.
 |---|---|
 | Skript geändert | `shellcheck install.sh remove-unwanted-apps.sh bin/*` und `bash -n` darauf |
 | vor jedem Commit | `git diff` lesen: Tools schreiben durch die Links ins Repo (CLAUDE.md, "Write-through writers"); `git add <Pfade>`, nicht `-A` |
-| vor jedem Push | `git grep -niE -f ~/.config/git/leak-patterns HEAD` muss leer sein |
+| vor jedem Push | `git grep -niE -f ~/.config/git/leak-patterns HEAD` muss leer sein. Die Muster (Arbeitgeber, eigene Projekte, Hostnamen; ein regulärer Ausdruck pro Zeile) liegen nur lokal, nie im Repo: sie wären selbst ein Leak |
 
 ### Sicherheit (Viren, bekannte Lücken)
 
@@ -79,15 +79,9 @@ nicht benutzen.
 Die ClamAV-Signaturen aktualisiert `clamav-freshclam-once.timer` täglich;
 Stand: `clamscan --version`. Kein `clamd`-Daemon (dauerhaft 1,6 GB+ RAM).
 
-### Github gh 
+### GitHub: zwei Konten (eigenes und Arbeit)
 
-| Wann | Befehl |
-| -------------- | --------------- |
-| Account switchen von gh | `gh auth switch` (bei zwei Konten wechselt es zum anderen) |
-
-### Zwei GitHub-Konten (eigenes und Arbeit)
-
-Ein SSH-Key pro Konto (GitHub ordnet einen Key genau einem Konto zu). Beide
+`gh auth switch` wechselt zwischen den beiden angemeldeten Konten. Ein SSH-Key pro Konto (GitHub ordnet einen Key genau einem Konto zu). Beide
 Dateien sind lokal, nicht im Repo. `~/.ssh/config` (chmod 600):
 
 ```
