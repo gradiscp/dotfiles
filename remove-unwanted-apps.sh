@@ -26,9 +26,11 @@ unwanted=(
   # and git terminal UIs and the screen recorder are not used
   tmux lazydocker lazygit gpu-screen-recorder
   # CJK fonts and input method: no CJK text here (JetBrains Mono everywhere);
-  # an Omarchy 4.5 migration adds the four language add-ons
+  # an Omarchy 4.5 migration adds the language add-ons. table-extra (Cangjie)
+  # comes with a fresh install (omarchy-base.packages) and needs chinese-addons:
+  # left out, pacman refuses the whole removal and nothing goes (2026-11-12)
   noto-fonts-cjk fcitx5 fcitx5-gtk fcitx5-qt
-  fcitx5-mozc fcitx5-hangul fcitx5-chinese-addons fcitx5-chewing
+  fcitx5-mozc fcitx5-hangul fcitx5-chinese-addons fcitx5-chewing fcitx5-table-extra
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
   # 90 packages, ~1.8 GiB, nothing from Omarchy, Hyprland, the shell or the boot chain)
   libreoffice-fresh clang llvm dotnet-runtime ruby tobi-try mariadb-libs postgresql-libs
