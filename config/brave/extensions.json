@@ -1,0 +1,36 @@
+{
+  "ExtensionSettings": {
+    "nngceckbapebfimnlniiiahkandclblb": {
+      "installation_mode": "normal_installed",
+      "update_url": "https://clients2.google.com/service/update2/crx"
+    }
+  },
+  "3rdparty": {
+    "extensions": {
+      "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
+        "toOverwrite": {
+          "filterLists": [
+            "user-filters",
+            "ublock-filters",
+            "ublock-badware",
+            "ublock-privacy",
+            "ublock-quick-fixes",
+            "ublock-unbreak",
+            "easylist",
+            "easyprivacy",
+            "urlhaus-1",
+            "plowe-0",
+            "fanboy-cookiemonster",
+            "ublock-cookies-easylist",
+            "fanboy-ai-suggestions",
+            "easylist-newsletters",
+            "easylist-notifications",
+            "easylist-annoyances",
+            "ublock-annoyances",
+            "DEU-0"
+          ]
+        }
+      }
+    }
+  }
+}

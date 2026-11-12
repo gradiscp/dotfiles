@@ -49,13 +49,16 @@ echo "== Browser (Brave Origin) =="
 # policy. It `cp -f`s its flags file, which would write through an existing
 # link into the repo - so the link goes first (re-run after a failed install).
 # Privacy defaults go in as a second policy file next to Omarchy's color.json
-# (the only file Omarchy rewrites there). The default browser itself comes
-# from the linked mimeapps.list below.
+# (the only file Omarchy rewrites there); extensions.json installs Bitwarden
+# and sets uBlock Origin's filter lists (uBlock itself is switched on by hand:
+# Brave hosts that Manifest V2 copy, and no policy installs it). The default
+# browser itself comes from the linked mimeapps.list below.
 if ! command -v brave-origin >/dev/null; then
   [[ -L $CONFIG_DIR/brave-origin-flags.conf ]] && rm "$CONFIG_DIR/brave-origin-flags.conf"
   omarchy install browser brave-origin || echo "WARN: 'omarchy install browser brave-origin' failed - no browser until it is installed"
 fi
 sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json
+sudo install -Dm644 "$REPO_DIR/config/brave/extensions.json" /etc/brave/policies/managed/extensions.json
 # Battery stops charging at 80% (see the unit's header); only where the
 # samsung_galaxybook driver offers the threshold, the unit skips itself elsewhere.
 sudo install -Dm644 "$REPO_DIR/config/systemd/battery-charge-limit.service" /etc/systemd/system/battery-charge-limit.service
@@ -306,8 +309,8 @@ Done. Manual steps still needed on this machine:
   3. SSH: copy the key into ~/.ssh (chmod 600 / 644), add the host alias to
      ~/.ssh/config, then `git remote set-url origin` to it (CHEATSHEET).
   4. Logins: `sudo tailscale up --accept-routes`, `gh auth login`, `claude`.
-  5. Brave Origin: the hand-set items in CHEATSHEET.md (uBlock Origin from
-     config/brave/ublock-origin-backup.txt, Bitwarden, Shields, zoom, DNS).
+  5. Brave Origin: the hand-set items in CHEATSHEET.md (switch on uBlock
+     Origin, Shields, zoom, DNS).
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra
      git identities and their include files) and
      config/claude/rules/*.local.md (private rules).

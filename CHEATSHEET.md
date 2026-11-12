@@ -27,17 +27,22 @@ aber ungetestet).
 ### Brave Origin: was keine Policy setzt (einmal pro Laptop)
 
 `config/brave/privacy.json` setzt die meisten Datenschutz-Einstellungen als
-Policy (im Browser gesperrt, Gebäude-Symbol). Von Hand bleiben:
+Policy (im Browser gesperrt, Gebäude-Symbol). `config/brave/extensions.json`
+installiert Bitwarden und gibt uBlock Origin die Filterlisten vor (überschreibt
+die Auswahl im uBlock-Dashboard). Von Hand bleiben:
 
 | Wo | Was |
 |---|---|
 | `brave://settings/shields` | Tracker & Werbung auf "Aggressiv"; "Store contact information for broken site reports" aus |
 | `brave://settings/appearance` | Page zoom 80 % (Seiten passen so zur Oberfläche bei Scale 1; keine Policy dafür) |
 | `brave://settings/search` | Suchmaschine nach Wahl (absichtlich keine Policy, sonst gesperrt) |
-| `brave://settings/extensions/v2` | uBlock Origin einschalten (Brave hostet die volle Manifest-V2-Version) |
-| uBlock-Dashboard, Reiter Settings | "Restore from file": `config/brave/ublock-origin-backup.txt` (Filterlisten-Auswahl) |
-| `brave://settings/extensions` | Bitwarden |
+| `brave://settings/extensions/v2` | uBlock Origin einschalten (Brave hostet die volle Manifest-V2-Version; keine Policy installiert sie). Die Filterlisten kommen danach aus der Policy |
 | Omarchy-Netzwerk-Panel | DNS-Provider Cloudflare oder Quad9 (gilt systemweit, nicht nur im Browser) |
+
+Standardbrowser ist Brave Origin schon über Omarchy (`omarchy default browser
+brave-origin`). Braves eigener "Als Standard festlegen"-Knopf (Willkommensseite,
+`brave://settings/getStarted`) brachte Brave Origin 1.99 zum Absturz (2026-11-12):
+nicht benutzen.
 
 ### Wenn nach einem Update etwas nicht stimmt
 

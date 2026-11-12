@@ -96,7 +96,8 @@ through Omarchy's menus.
 - **Lock and idle:** stock lock on `SUPER+L`. Screensaver after 5 min, lock
   after 7; a fullscreen browser window (a film) keeps the machine awake.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
-  managed policies (`config/brave/privacy.json`) and uBlock Origin; trimmed
+  managed policies (`config/brave/privacy.json`), Bitwarden and uBlock
+  Origin's filter lists by policy (`config/brave/extensions.json`); trimmed
   stock set (no LibreOffice, Obsidian, Disks, CJK input, tmux,
   lazydocker, lazygit, screen recorder, Monologue, Hype, Gliff, vi,
   Evince: PDFs open in Papers);
@@ -137,7 +138,7 @@ config/
                        security checks
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
-  brave/               Privacy policies, launch flags, uBlock Origin backup
+  brave/               Policies (privacy, extensions), launch flags, uBlock backup
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify

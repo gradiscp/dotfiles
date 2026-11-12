@@ -126,8 +126,9 @@ straight into the repo, which the drift check cannot see:
 - **A menu override replaces the stock entry completely** (missing fields
   become defaults), so `omarchy-menu.jsonc` entries carry every stock field.
 - **Browser is Brave Origin** (`omarchy install browser brave-origin`, AUR).
-  Privacy defaults are managed policies from `config/brave/privacy.json`
-  (root-owned copy; the drift check compares it); what no policy covers is
+  Privacy defaults and extensions are managed policies from
+  `config/brave/*.json` (root-owned copies; the drift check compares them);
+  what no policy covers is
   in the CHEATSHEET. The stock webapps work with it but are not wanted:
   launchers deleted, keys unbound.
 

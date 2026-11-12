@@ -118,10 +118,12 @@ grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf && problem "harm
 # clicked in Omarchy's Install menu (LibreOffice, 2026-09-24, incidents repo).
 drift=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>/dev/null | tr '\n' ' ')
 [[ -n $drift ]] && problem "removal list not in effect: ${drift}- run remove-unwanted-apps.sh (missing-theme: sudo pacman -S omarchy)"
-# The Brave policy is a root-owned copy, not a link; install.sh refreshes it.
-if ! cmp -s "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json; then
-  problem "/etc/brave/policies/managed/privacy.json differs from the repo - sudo install -Dm644 config/brave/privacy.json /etc/brave/policies/managed/privacy.json"
-fi
+# The Brave policies are root-owned copies, not links; install.sh refreshes them.
+for policy in privacy.json extensions.json; do
+  if ! cmp -s "$REPO_DIR/config/brave/$policy" "/etc/brave/policies/managed/$policy"; then
+    problem "/etc/brave/policies/managed/$policy differs from the repo - sudo install -Dm644 config/brave/$policy /etc/brave/policies/managed/$policy"
+  fi
+done
 
 # ---- report -----------------------------------------------------------------
 say "run finished: ${#repaired[@]} repaired, ${#problems[@]} problems"
