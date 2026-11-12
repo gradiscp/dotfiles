@@ -37,7 +37,11 @@ die Auswahl im uBlock-Dashboard). Von Hand bleiben:
 | `brave://settings/appearance` | Page zoom 80 % (Seiten passen so zur Oberfläche bei Scale 1; keine Policy dafür) |
 | `brave://settings/search` | Suchmaschine nach Wahl (absichtlich keine Policy, sonst gesperrt) |
 | `brave://settings/extensions/v2` | uBlock Origin einschalten (Brave hostet die volle Manifest-V2-Version; keine Policy installiert sie). Die Filterlisten kommen danach aus der Policy |
-| Omarchy-Netzwerk-Panel | DNS-Provider Cloudflare oder Quad9 (gilt systemweit, nicht nur im Browser) |
+
+DNS ist systemweit Cloudflare (`install.sh` ruft `omarchy dns Cloudflare` auf:
+verschlüsselt, wo das Netz es zulässt, Quad9 als Ersatz). Der DNS des Netzes
+wird dabei ignoriert: Wenn interne Namen (Firma, Hotel-Login) nicht gehen,
+`omarchy dns DHCP`, danach wieder `omarchy dns Cloudflare`.
 
 Standardbrowser ist Brave Origin schon über Omarchy (`omarchy default browser
 brave-origin`). Braves eigener "Als Standard festlegen"-Knopf (Willkommensseite,

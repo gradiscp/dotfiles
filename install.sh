@@ -78,6 +78,13 @@ echo "== Tailscale =="
 sudo systemctl enable --now tailscaled.service
 sudo tailscale set --operator="$USER" || echo "WARN: tailscale operator not set - run: sudo tailscale set --operator=$USER"
 
+echo "== DNS (Cloudflare) =="
+# Omarchy's own command: Cloudflare on every Wi-Fi and wired connection, DNS
+# over TLS where the network allows it, Quad9 as fallback. It ignores the
+# network's own DNS, so names only a local network knows (company, hotel
+# login page) need `omarchy dns DHCP` for that while.
+[[ $(omarchy dns 2>/dev/null) == Cloudflare ]] || omarchy dns Cloudflare || echo "WARN: DNS not set - run: omarchy dns Cloudflare"
+
 echo "== Hyprland config =="
 for f in "$REPO_DIR"/config/hypr/*.lua; do
   link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
@@ -310,7 +317,7 @@ Done. Manual steps still needed on this machine:
      ~/.ssh/config, then `git remote set-url origin` to it (CHEATSHEET).
   4. Logins: `sudo tailscale up --accept-routes`, `gh auth login`, `claude`.
   5. Brave Origin: the hand-set items in CHEATSHEET.md (switch on uBlock
-     Origin, Shields, zoom, DNS).
+     Origin, Shields, zoom).
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra
      git identities and their include files) and
      config/claude/rules/*.local.md (private rules).
