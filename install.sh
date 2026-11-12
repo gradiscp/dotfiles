@@ -311,5 +311,6 @@ Done. Manual steps still needed on this machine:
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra
      git identities and their include files) and
      config/claude/rules/*.local.md (private rules).
-  7. Fingerprint: skipped on purpose; check libfprint's device list first.
+  7. Fingerprint: `omarchy-setup-security-fingerprint` (enrolls a finger;
+     sudo, polkit and lock screen) if libfprint supports the reader.
 EOT

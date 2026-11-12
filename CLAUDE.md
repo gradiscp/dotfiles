@@ -190,8 +190,8 @@ straight into the repo, which the drift check cannot see:
   list of all of them) runs as post-update hook 40, before the drift check
   (50), and by hand any time.
 - `packages.txt` installs with `-S --needed`, never `-Sy` (partial upgrade).
-- No fingerprint (the old laptop's EgisTec EH57E has no libfprint driver);
-  check libfprint's device list before setting one up on another machine.
+- Fingerprint is stock `omarchy-setup-security-fingerprint` (Goodix
+  reader): sudo, polkit and lock screen; with the lid shut, password.
 - The cursor is one Bibata variant fetched by `install.sh` from a pinned
   release URL with a checksum into `~/.local/share/icons` (1.7 MB download,
   27 MB unpacked); the 322 MB AUR package was dropped on purpose.
