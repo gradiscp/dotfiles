@@ -1,6 +1,7 @@
 #!/bin/bash
 # Keep the machine down to what is wanted: removes unwanted stock packages,
-# webapp launchers, lazy coding-agent wrappers and stock themes. Re-runnable;
+# webapp launchers, lazy coding-agent wrappers, stock themes and LocalSend's
+# firewall port. Re-runnable;
 # runs after every `omarchy update` as the post-update hook
 # 40-dotfiles-remove-unwanted (linked by install.sh), right before the drift
 # check (50-), because updates, migrations and the Install menu can bring
@@ -79,6 +80,10 @@ for d in "$THEMES"/*/; do
 done
 for t in "${keep_themes[@]}"; do [[ -d $THEMES/$t ]] || missing_themes+=("$t"); done
 grep -qxF "$noextract" /etc/pacman.conf && rule_ok=1 || rule_ok=0
+# Omarchy's installer opens LocalSend's port 53317 (tcp and udp) in ufw; with
+# LocalSend removed nothing listens there, so the rules go too. The rule files
+# are world-readable, so the check needs no root.
+grep -qs -- '--dport 53317 ' /etc/ufw/user.rules /etc/ufw/user6.rules && localsend_port=1 || localsend_port=0
 
 if [[ ${1:-} == --check ]]; then
   problems=("${installed[@]}" "${present[@]}")
@@ -86,6 +91,7 @@ if [[ ${1:-} == --check ]]; then
   for t in "${extra_themes[@]}"; do problems+=("theme:$t"); done
   for t in "${missing_themes[@]}"; do problems+=("missing-theme:$t"); done
   (( rule_ok )) || problems+=("pacman-NoExtract-rule")
+  (( localsend_port )) && problems+=("ufw:localsend-port-53317")
   (( ${#problems[@]} == 0 )) && exit 0
   printf '%s\n' "${problems[@]}"
   exit 1
@@ -102,6 +108,12 @@ if (( ${#installed[@]} > 0 )); then
 fi
 # fcitx5 is gone, so its user service must not fail at every login.
 systemctl --user disable --now omarchy-fcitx5.service 2>/dev/null || true
+
+if (( localsend_port )); then
+  for proto in tcp udp; do
+    sudo ufw delete allow "53317/$proto" >/dev/null || echo "WARN: could not remove the ufw rule 53317/$proto"
+  done
+fi
 
 for l in "${launchers[@]}"; do rm -f "$APPS/$l.desktop"; done
 update-desktop-database "$APPS" 2>/dev/null || true

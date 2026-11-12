@@ -1,7 +1,7 @@
 #!/bin/bash
 # Bring a fresh Omarchy install up to the same config as this repo.
 # Usage: run it from wherever the repo is checked out, e.g.
-#   ~/Projects/paulgradischnig/dotfiles/install.sh
+#   ~/Projects/gradiscp/dotfiles/install.sh
 # REPO_DIR is derived from this file's own location, so the clone path is
 # free - but the symlinks it creates bake it in. Moving the repo afterwards
 # leaves them dangling; re-run this script then. Re-running is safe.
@@ -59,10 +59,6 @@ if ! command -v brave-origin >/dev/null; then
 fi
 sudo install -Dm644 "$REPO_DIR/config/brave/privacy.json" /etc/brave/policies/managed/privacy.json
 sudo install -Dm644 "$REPO_DIR/config/brave/extensions.json" /etc/brave/policies/managed/extensions.json
-# Battery stops charging at 80% (see the unit's header); only where the
-# samsung_galaxybook driver offers the threshold, the unit skips itself elsewhere.
-sudo install -Dm644 "$REPO_DIR/config/systemd/battery-charge-limit.service" /etc/systemd/system/battery-charge-limit.service
-sudo systemctl daemon-reload && sudo systemctl enable --now battery-charge-limit.service
 # ClamAV signatures once a day (and right now). No clamd daemon: scans run on
 # demand only (CHEATSHEET, "Sicherheit"); a resident clamd holds 1.6 GB+ RAM.
 sudo systemctl enable --now clamav-freshclam-once.timer
@@ -74,9 +70,11 @@ link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-
 echo "== Tailscale =="
 # The service and the operator right only (the operator lets the bar widget
 # in shell.json connect and switch without sudo); `sudo tailscale up` (the
-# login) is interactive and stays a manual step.
+# login) is interactive and stays a manual step. Shields up: this laptop
+# offers nothing to the tailnet (no SSH, no Taildrop receive), so incoming
+# tailnet connections are refused; outgoing ones work as before.
 sudo systemctl enable --now tailscaled.service
-sudo tailscale set --operator="$USER" || echo "WARN: tailscale operator not set - run: sudo tailscale set --operator=$USER"
+sudo tailscale set --operator="$USER" --shields-up || echo "WARN: tailscale not set up - run: sudo tailscale set --operator=$USER --shields-up"
 
 echo "== DNS (Cloudflare) =="
 # Omarchy's own command: Cloudflare on every Wi-Fi and wired connection, DNS
@@ -84,6 +82,11 @@ echo "== DNS (Cloudflare) =="
 # network's own DNS, so names only a local network knows (company, hotel
 # login page) need `omarchy dns DHCP` for that while.
 [[ $(omarchy dns 2>/dev/null) == Cloudflare ]] || omarchy dns Cloudflare || echo "WARN: DNS not set - run: omarchy dns Cloudflare"
+
+echo "== Power profile on battery =="
+# Omarchy remembers one profile for AC and one for battery and switches on
+# plug/unplug; on battery it is power-saver here (AC keeps Omarchy's default).
+omarchy-powerprofiles-set battery power-saver || echo "WARN: run: omarchy-powerprofiles-set battery power-saver"
 
 echo "== Hyprland config =="
 for f in "$REPO_DIR"/config/hypr/*.lua; do
@@ -280,7 +283,8 @@ echo "== GTK/GNOME settings =="
 # What Omarchy's own configs don't cover. gsettings set is idempotent and
 # needs a session bus (fails harmlessly on a bare TTY).
 # text-scaling-factor is deliberately NOT set: `omarchy display text size`
-# above drives it together with the shell and terminal font size.
+# drives it together with the shell and terminal font size (the shell's own
+# base size comes from the linked shell.toml).
 {
   gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 11' &&
   gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrainsMono Nerd Font 11' &&
@@ -315,7 +319,7 @@ Done. Manual steps still needed on this machine:
      CLAUDE.md for why. The external monitors keep their own literal scale.
   3. SSH and git: one key per GitHub account into ~/.ssh (chmod 600), then
      ~/.ssh/config and ~/.config/git/config.local as in the CHEATSHEET
-     ("Zwei GitHub-Konten"); switch this repo's origin to
+     ("GitHub: zwei Konten"); switch this repo's origin to
      git@github.com:gradiscp/dotfiles.git.
   4. Logins: `sudo tailscale up --accept-routes`, `gh auth login`, `claude`.
   5. Brave Origin: the hand-set items in CHEATSHEET.md (switch on uBlock
@@ -325,4 +329,8 @@ Done. Manual steps still needed on this machine:
      config/claude/rules/*.local.md (private rules).
   7. Fingerprint: `omarchy-setup-security-fingerprint` (enrolls a finger;
      sudo, polkit and lock screen) if libfprint supports the reader.
+  8. Firmware setup (F2 at boot): battery charge limit 80 % (the kernel
+     leaves charge control to the Framework EC, so there is no OS-side
+     unit) and an administrator password.
+  9. Firmware updates: `omarchy-update-firmware` (installs fwupd first).
 EOT
