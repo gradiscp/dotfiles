@@ -121,6 +121,9 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.security" "$CONFIG_DIR/omarchy/p
 link "$REPO_DIR/config/omarchy/backgrounds/kanagawa" "$CONFIG_DIR/omarchy/backgrounds/kanagawa"
 # Menu override: hides the Share submenu (every entry needs localsend).
 link "$REPO_DIR/config/omarchy/extensions/omarchy-menu.jsonc" "$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
+# Screensaver text: "gradiscp" in lowercase, drawn by hand in the blocks of
+# Omarchy's own logo. `omarchy branding screensaver` writes through this link.
+link "$REPO_DIR/config/omarchy/branding/screensaver.txt" "$CONFIG_DIR/omarchy/branding/screensaver.txt"
 # Default coding agent for Omarchy's menu and SUPER+CTRL+SHIFT+A. Written
 # directly: `omarchy default agent` would run `mise use -g` through the linked
 # mise config and launch the agent.

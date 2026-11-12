@@ -138,6 +138,7 @@ config/
                        security checks
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
+    branding/          Screensaver text (gradiscp, in the style of Omarchy's logo)
   brave/               Policies (privacy, extensions) and launch flags
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills

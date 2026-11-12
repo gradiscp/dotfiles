@@ -55,7 +55,8 @@ straight into the repo, which the drift check cannot see:
   "always allow"); `mise use -g` (any Omarchy lazy wrapper in `~/.local/bin`,
   `omarchy default agent`) into `mise/config.toml`; Omarchy's browser
   installer and two migrations into `brave-origin-flags.conf`; the
-  default-browser menu into `mimeapps.list`; `herdr integration install
+  default-browser menu into `mimeapps.list`; `omarchy branding screensaver`
+  into `screensaver.txt`; `herdr integration install
   claude` into `settings.json` with an absolute home path. A surprise diff in
   one of these files is a tool's doing: revert it, do not commit it.
 - `herdr integration install claude`: `install.sh` runs it only before the
