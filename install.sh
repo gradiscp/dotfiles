@@ -313,8 +313,10 @@ Done. Manual steps still needed on this machine:
      panel) may need adjusting for a different panel. Use
      `omarchy hyprland monitor scaling <N>`, not a raw file edit - see
      CLAUDE.md for why. The external monitors keep their own literal scale.
-  3. SSH: copy the key into ~/.ssh (chmod 600 / 644), add the host alias to
-     ~/.ssh/config, then `git remote set-url origin` to it (CHEATSHEET).
+  3. SSH and git: one key per GitHub account into ~/.ssh (chmod 600), then
+     ~/.ssh/config and ~/.config/git/config.local as in the CHEATSHEET
+     ("Zwei GitHub-Konten"); switch this repo's origin to
+     git@github.com:gradiscp/dotfiles.git.
   4. Logins: `sudo tailscale up --accept-routes`, `gh auth login`, `claude`.
   5. Brave Origin: the hand-set items in CHEATSHEET.md (switch on uBlock
      Origin, Shields, zoom).

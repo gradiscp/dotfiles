@@ -53,7 +53,7 @@ these, in this order:
    (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
    point into the repo.
 3. Do the manual steps it prints at the end: log in again, laptop scale
-   for a different panel, SSH key and host alias, the Tailscale, GitHub and
+   for a different panel, SSH keys and config, the Tailscale, GitHub and
    Claude logins, the Brave hand-set items from the cheatsheet, and the
    untracked per-machine files (`~/.config/git/config.local` with the
    identity files it includes, `config/claude/rules/*.local.md`).

@@ -13,7 +13,7 @@ anhängen.
 | nach jedem Update (automatisch) | `bash ~/Projects/paulgradischnig/dotfiles/remove-unwanted-apps.sh` | Läuft als Hook nach `omarchy update`: entfernt, was das Update an unerwünschten Paketen, Launchern, Agent-Wrappern und Themes zurückgebracht hat. Von Hand jederzeit; `--check` zeigt nur an. |
 | alle paar Wochen | `docker pull <Basis-Images der Projekte>` | Docker-Basis-Images holen. Danach im jeweiligen Projektordner `docker compose build --pull`. |
 | alle paar Monate | `omarchy-update-firmware` | BIOS/SSD-Firmware über fwupd. Der erste Lauf installiert fwupd. |
-| bei jedem neuen Git-Repo | `git remote set-url origin git@<ssh-alias>:gradiscp/<repo>.git` | Remote auf den SSH-Host-Alias aus `~/.ssh/config` umstellen, damit der richtige Key greift. |
+| neues Repo klonen | `git clone git@github.com:<owner>/<repo>.git` oder `gh repo clone` | Key und Commit-Adresse wählt git selbst (Regeln in `~/.config/git/config.local`, siehe "Zwei GitHub-Konten"); kein `set-url` mehr nötig. |
 
 
 **Nicht** `sudo pacman -Syu` direkt: Omarchy blockt das mit einem pacman-Hook
@@ -83,5 +83,42 @@ Stand: `clamscan --version`. Kein `clamd`-Daemon (dauerhaft 1,6 GB+ RAM).
 
 | Wann | Befehl |
 | -------------- | --------------- |
-| Account switchen von gh | gh auth switch |
+| Account switchen von gh | `gh auth switch` (bei zwei Konten wechselt es zum anderen) |
+
+### Zwei GitHub-Konten (eigenes und Arbeit)
+
+Ein SSH-Key pro Konto (GitHub ordnet einen Key genau einem Konto zu). Beide
+Dateien sind lokal, nicht im Repo. `~/.ssh/config` (chmod 600):
+
+```
+Host github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+Host github-work
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_work
+  IdentitiesOnly yes
+```
+
+`~/.config/git/config.local` (von `config/git/config` eingebunden) leitet die
+Repos der Arbeits-Organisation auf den Arbeits-Key um und setzt dort die
+Arbeits-Adresse; `config-arbeit` enthält nur `[user]` mit `email = ...`:
+
+```
+[url "git@github-work:<org>/"]
+	insteadOf = git@github.com:<org>/
+	insteadOf = https://github.com/<org>/
+[includeIf "hasconfig:remote.*.url:git@github.com:<org>/**"]
+	path = ~/.config/git/config-arbeit
+[includeIf "hasconfig:remote.*.url:https://github.com/<org>/**"]
+	path = ~/.config/git/config-arbeit
+[includeIf "hasconfig:remote.*.url:git@github-work:*/**"]
+	path = ~/.config/git/config-arbeit
+```
+
+`**` gilt in `hasconfig` nur neben einem `/` als "beliebig tief", daher `*/**`
+beim Alias. Test: `ssh -T git@github-work` grüßt das Arbeitskonto.
 
