@@ -142,6 +142,7 @@ config/
     branding/          Screensaver text (gradiscp, in the style of Omarchy's logo)
   brave/               Policies (privacy, extensions) and launch flags
   omasnap/             Screenshots: no file per shot (copied, previewed, recents shelf)
+  systemd/             Lid/hibernate drop-ins; user unit for the 60 Hz laptop cap
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify
@@ -151,7 +152,8 @@ config/
 bin/                   ai-notify, window-close-guard, omarchy-drift-check,
                        security-audit (the cheatsheet's security checks, one or all),
                        git-all (status/fetch/pull/push over every repo below),
-                       git-tidy (deletes a repo's merged or gone local branches)
+                       git-tidy (deletes a repo's merged or gone local branches),
+                       power-profile-hz (laptop panel 60 Hz outside "performance")
 install.sh             Fresh-machine setup
 remove-unwanted-apps.sh  Removes unwanted packages and stock themes (--check
                        only reports); NoExtract keeps updates from restoring them

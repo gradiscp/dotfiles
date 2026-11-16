@@ -1,0 +1,19 @@
+#!/bin/bash
+# Reloads Hyprland whenever the power profile changes, so the refresh-rate cap
+# in config/hypr/monitors.lua runs again (laptop panel at 60 Hz outside the
+# "performance" profile). Runs as the user unit power-profile-hz.service
+# (config/systemd/user/), started with the graphical session; it reacts to any
+# switch: Omarchy's menu, the bar, or `powerprofilesctl set`.
+# Log: journalctl --user -u power-profile-hz
+set -uo pipefail
+
+gdbus monitor --system --dest org.freedesktop.UPower.PowerProfiles \
+  --object-path /org/freedesktop/UPower/PowerProfiles |
+  while read -r line; do
+    # Only the profile itself ('ActiveProfile'), not 'ActiveProfileHolds'.
+    [[ $line == *"'ActiveProfile'"* ]] || continue
+    # Give power-profiles-daemon a moment to write platform_profile.
+    sleep 0.5
+    echo "power profile now $(</sys/firmware/acpi/platform_profile), reloading Hyprland"
+    hyprctl reload >/dev/null || echo "hyprctl reload failed"
+  done

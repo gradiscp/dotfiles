@@ -1,6 +1,27 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 -- List current monitors and supported resolutions with: hyprctl monitors all
 
+-- Laptop panel at 60 Hz unless the power profile is "performance" (balanced
+-- and power-saver cap it, performance gets the panel's 120 Hz). This wraps
+-- hl.monitor instead of touching the eDP-1 line below, which belongs to
+-- `omarchy hyprland monitor scaling`; Omarchy's clamshell, lid and scaling
+-- scripts re-enable the panel through hl.monitor too, so they get the cap.
+-- bin/power-profile-hz reloads Hyprland on every profile change.
+local function laptop_capped()
+  local file = io.open("/sys/firmware/acpi/platform_profile", "r")
+  if not file then return false end
+  local profile = file:read("*l")
+  file:close()
+  return profile ~= nil and profile ~= "performance"
+end
+hl.monitor_uncapped = hl.monitor_uncapped or hl.monitor
+hl.monitor = function(rule)
+  if rule.output == "eDP-1" and not rule.disabled and laptop_capped() then
+    rule.mode = "2880x1920@60"
+  end
+  return hl.monitor_uncapped(rule)
+end
+
 local omarchy_gdk_scale = 2
 local omarchy_monitor_scale = 1
 

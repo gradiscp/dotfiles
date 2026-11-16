@@ -1,0 +1,13 @@
+[Unit]
+Description=Reload Hyprland on power-profile changes (laptop refresh-rate cap)
+Documentation=file://%h/.local/bin/power-profile-hz
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/power-profile-hz
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

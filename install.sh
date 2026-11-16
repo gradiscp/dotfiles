@@ -262,6 +262,12 @@ link "$REPO_DIR/bin/omarchy-drift-check" "$CONFIG_DIR/omarchy/hooks/post-update.
 # Runs before the drift check (hooks run in name order): takes out whatever an
 # update or a migration brought back, so the check after it sees the result.
 link "$REPO_DIR/remove-unwanted-apps.sh" "$CONFIG_DIR/omarchy/hooks/post-update.d/40-dotfiles-remove-unwanted"
+# Laptop panel at 60 Hz outside the "performance" power profile: the cap is in
+# config/hypr/monitors.lua, this user unit reloads Hyprland on a profile change.
+link "$REPO_DIR/bin/power-profile-hz" "$HOME/.local/bin/power-profile-hz"
+link "$REPO_DIR/config/systemd/user/power-profile-hz.service" "$CONFIG_DIR/systemd/user/power-profile-hz.service"
+systemctl --user daemon-reload
+systemctl --user enable --now power-profile-hz.service || echo "WARN: power-profile-hz.service not started (no graphical session?)"
 
 echo "== Claude Code =="
 # herdr's Claude hook: reports each session's id so herdr can `claude --resume`
