@@ -88,8 +88,12 @@ through Omarchy's menus.
   Tailscale, the display widget and a shield that runs the security
   checks in the background (`security-audit`: packages, project
   dependencies, virus scan; one or all, from quick up to the whole
-  computer) and lights up while the last ones found something. No
-  weather or menu button.
+  computer) and lights up while the last ones found something, and a
+  Framework panel (the gear logo, red for a too weak charger or heat):
+  battery and charger, the EC's battery care (charge limit, charge speed,
+  fingerprint LED; each change through pkexec, applied again at boot and
+  resume), the laptop panel's refresh rate, EC temperatures and fan,
+  expansion cards, firmware updates. No weather or menu button.
 - **Notifications:** stock. Claude Code and Codex permission requests and
   finished answers pop up with the agent's logo and jump back to their
   terminal on click.
@@ -136,13 +140,14 @@ config/
     shell.json         Bar layout, idle timing, plugin list
     shell.toml         Shell values over every theme: font size, thinner bar
     plugins/           gradiscp.* - close dialog, workspaces, AI status (Claude, Codex),
-                       security checks
+                       security checks, Framework panel
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
     branding/          Screensaver text (gradiscp, in the style of Omarchy's logo)
   brave/               Policies (privacy, extensions) and launch flags
   omasnap/             Screenshots: no file per shot (copied, previewed, recents shelf)
-  systemd/             Lid/hibernate drop-ins; user unit for the 60 Hz laptop cap
+  systemd/             Lid/hibernate drop-ins; user unit for the 60 Hz laptop cap;
+                       framework-ec.service (EC values at boot and resume)
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify
@@ -153,7 +158,9 @@ bin/                   ai-notify, window-close-guard, omarchy-drift-check,
                        security-audit (the cheatsheet's security checks, one or all),
                        git-all (status/fetch/pull/push over every repo below),
                        git-tidy (deletes a repo's merged or gone local branches),
-                       power-profile-hz (laptop panel 60 Hz outside "performance")
+                       power-profile-hz (laptop panel 60 Hz outside "performance"),
+                       framework-panel / framework-ec (the Framework panel's data
+                       and its root helper, a root-owned copy in /usr/local/bin)
 install.sh             Fresh-machine setup
 remove-unwanted-apps.sh  Removes unwanted packages and stock themes (--check
                        only reports); NoExtract keeps updates from restoring them
@@ -164,4 +171,7 @@ packages.txt           Packages added on top of Omarchy
 
 The wallpaper under `config/omarchy/backgrounds/` is not covered by this
 repo's MIT licence: it belongs to its owner and is kept here only as a
-personal desktop background.
+personal desktop background. The Framework logo in
+`config/omarchy/plugins/gradiscp.framework/FrameworkIcon.qml` (path data
+from Simple Icons, CC0) is a trademark of Framework Computer, used only as
+the icon of that panel.

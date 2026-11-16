@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.framework",
+  "name": "Framework",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "The Framework laptop at a glance: battery and charger (with a warning when the charger is too weak), the EC's battery care (charge limit, charge speed, fingerprint LED), the laptop panel's refresh rate, EC temperatures and fan, expansion cards and firmware updates.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Framework",
+    "description": "Laptop icon that turns to the bar's urgent colour when the charger is too weak or the EC reports heat; a click opens the panel.",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

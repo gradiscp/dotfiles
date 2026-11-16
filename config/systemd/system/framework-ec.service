@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply Framework EC settings (charge limit, charge rate, fingerprint LED)
+Documentation=file:///usr/local/bin/framework-ec
+ConditionPathExists=/etc/framework-ec.conf
+# Wanted by the sleep targets and ordered after them: runs after a resume.
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/framework-ec apply
+
+[Install]
+WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

@@ -93,6 +93,9 @@
         },
         {
           "id": "gradiscp.security"
+        },
+        {
+          "id": "gradiscp.framework"
         }
       ]
     },

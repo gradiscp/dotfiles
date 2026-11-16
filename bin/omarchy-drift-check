@@ -129,10 +129,18 @@ if "$OMARCHY_BIN/omarchy-hibernation-available" 2>/dev/null; then
     config/systemd/logind.conf.d/30-lid-suspend-then-hibernate.conf:/etc/systemd/logind.conf.d/30-lid-suspend-then-hibernate.conf
   )
 fi
+if [[ $(</sys/class/dmi/id/sys_vendor) == Framework ]]; then
+  copies+=(
+    bin/framework-ec:/usr/local/bin/framework-ec
+    config/systemd/system/framework-ec.service:/etc/systemd/system/framework-ec.service
+  )
+fi
 for copy in "${copies[@]}"; do
   src=${copy%%:*} dst=${copy#*:}
+  mode=644
+  [[ $dst == */bin/* ]] && mode=755
   if ! cmp -s "$REPO_DIR/$src" "$dst"; then
-    problem "$dst differs from the repo - sudo install -Dm644 $src $dst"
+    problem "$dst differs from the repo - sudo install -Dm$mode $src $dst"
   fi
 done
 

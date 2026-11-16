@@ -130,6 +130,9 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.workspaces" "$CONFIG_DIR/omarchy
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.ai-status" "$CONFIG_DIR/omarchy/plugins/gradiscp.ai-status"
 # Shield in the tray drawer that starts bin/security-audit.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.security" "$CONFIG_DIR/omarchy/plugins/gradiscp.security"
+# Framework laptop panel in the tray drawer (data from bin/framework-panel; the
+# root side is set up under "Framework laptop" below).
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.framework" "$CONFIG_DIR/omarchy/plugins/gradiscp.framework"
 # An own background for the stock Kanagawa theme. User backgrounds sort before
 # the theme's own, so it is the first one when Kanagawa is set. Directory
 # link: `omarchy theme bg install` adds files here, i.e. into the repo.
@@ -268,6 +271,21 @@ link "$REPO_DIR/bin/power-profile-hz" "$HOME/.local/bin/power-profile-hz"
 link "$REPO_DIR/config/systemd/user/power-profile-hz.service" "$CONFIG_DIR/systemd/user/power-profile-hz.service"
 systemctl --user daemon-reload
 systemctl --user enable --now power-profile-hz.service || echo "WARN: power-profile-hz.service not started (no graphical session?)"
+# Data for the Framework panel (gradiscp.framework), and its refresh-rate choice.
+link "$REPO_DIR/bin/framework-panel" "$HOME/.local/bin/framework-panel"
+
+echo "== Framework laptop =="
+# Root side of the Framework panel: framework-ec sets the EC's charge limit,
+# charge speed and fingerprint LED (the panel runs it through pkexec) and keeps
+# them in /etc/framework-ec.conf; the unit applies them at boot and after
+# resume. Root-owned copies, not links; the drift check compares them.
+if [[ $(</sys/class/dmi/id/sys_vendor) == Framework ]]; then
+  sudo pacman -S --needed --noconfirm framework-system
+  sudo install -Dm755 "$REPO_DIR/bin/framework-ec" /usr/local/bin/framework-ec
+  sudo install -Dm644 "$REPO_DIR/config/systemd/system/framework-ec.service" /etc/systemd/system/framework-ec.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable framework-ec.service
+fi
 
 echo "== Claude Code =="
 # herdr's Claude hook: reports each session's id so herdr can `claude --resume`

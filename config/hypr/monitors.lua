@@ -6,12 +6,23 @@
 -- hl.monitor instead of touching the eDP-1 line below, which belongs to
 -- `omarchy hyprland monitor scaling`; Omarchy's clamshell, lid and scaling
 -- scripts re-enable the panel through hl.monitor too, so they get the cap.
--- bin/power-profile-hz reloads Hyprland on every profile change.
-local function laptop_capped()
-  local file = io.open("/sys/firmware/acpi/platform_profile", "r")
-  if not file then return false end
-  local profile = file:read("*l")
+-- bin/power-profile-hz reloads Hyprland on every profile change. A fixed
+-- choice from the Framework panel (`framework-panel refresh-rate 60|120`,
+-- kept in $XDG_STATE_HOME/framework/refresh-rate) beats the profile; "auto"
+-- or no file follows it.
+local function first_line(path)
+  local file = io.open(path, "r")
+  if not file then return nil end
+  local line = file:read("*l")
   file:close()
+  return line
+end
+local function laptop_capped()
+  local state_home = os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")
+  local choice = first_line(state_home .. "/framework/refresh-rate")
+  if choice == "60" then return true end
+  if choice == "120" then return false end
+  local profile = first_line("/sys/firmware/acpi/platform_profile")
   return profile ~= nil and profile ~= "performance"
 end
 hl.monitor_uncapped = hl.monitor_uncapped or hl.monitor
