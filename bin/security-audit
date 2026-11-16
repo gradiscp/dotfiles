@@ -102,10 +102,10 @@ default_scope() {
 
 label() {
   case $1 in
-    packages) echo Pakete ;;
-    projects) echo Projekte ;;
-    viruses) echo Viren ;;
-    all) echo "Alles" ;;
+    packages) echo Packages ;;
+    projects) echo Projects ;;
+    viruses) echo Viruses ;;
+    all) echo "Everything" ;;
   esac
 }
 
@@ -164,10 +164,10 @@ system_dirs() {
 
 check_packages() {
   local scope=$1 fixable all n rest
-  heading packages "arch-audit, alle installierten Pakete"
+  heading packages "arch-audit, all installed packages"
   if ! fixable=$(arch-audit -u 2>&1); then
     printf '%s\n' "$fixable"
-    record packages "$scope" -1 "konnte nicht laufen"
+    record packages "$scope" -1 "could not run"
     return 1
   fi
   all=$(arch-audit 2>/dev/null)
@@ -175,19 +175,19 @@ check_packages() {
   rest=$(($(grep -c . <<<"$all") - n))
   if ((n > 0)); then
     printf '%s%s%s\n' "$red" "$fixable" "$off"
-    echo "Ein Update behebt sie: omarchy update"
+    echo "An update fixes them: omarchy update"
   else
-    printf '%sKeine Lücke, für die es schon ein Update gibt.%s\n' "$green" "$off"
+    printf '%sNo vulnerability that an update already fixes.%s\n' "$green" "$off"
   fi
   if [[ $scope == all ]] && ((rest > 0)); then
-    printf '\nAlle bekannten Lücken, auch ohne Fix bisher:\n%s%s%s\n' "$dim" "$all" "$off"
+    printf '\nAll known vulnerabilities, including those without a fix yet:\n%s%s%s\n' "$dim" "$all" "$off"
   elif ((rest > 0)); then
-    printf '%s%d weitere ohne Fix bisher (Option "Alle" zeigt sie).%s\n' "$dim" "$rest" "$off"
+    printf '%s%d more without a fix yet (the "All" option lists them).%s\n' "$dim" "$rest" "$off"
   fi
   if ((n > 0)); then
-    record packages "$scope" "$n" "$n mit Update"
+    record packages "$scope" "$n" "$n fixable by update"
   else
-    record packages "$scope" 0 "nichts zu tun"
+    record packages "$scope" 0 "nothing to do"
   fi
   return 0
 }
@@ -197,7 +197,7 @@ check_packages() {
 osv_table() {
   jq -r --arg root "$2" --arg home "$HOME" --arg red "$red" --arg off "$off" '
     [.results[] | .source.path as $path | .packages[] | select((.groups | length) > 0)
-      | {path: $path, line: "\(.package.name) \(.package.version)\t\(.groups | length) Lücke(n), max. \(([.groups[].max_severity | tonumber?] | max) // "?")"}]
+      | {path: $path, line: "\(.package.name) \(.package.version)\t\(.groups | length) vulnerabilit(y/ies), max. \(([.groups[].max_severity | tonumber?] | max) // "?")"}]
     | group_by(.path)[]
     | (.[0].path | if $root != "" then ltrimstr($root)
         elif startswith($home) then "~" + ltrimstr($home) else . end) as $file
@@ -216,11 +216,11 @@ check_projects() {
   case $scope in
     projects) targets=("$PROJECTS") strip="$PROJECTS/" what="~/Projects" ;;
     home) targets=("$HOME") what="~" ;;
-    images) targets=("$HOME") what="~ und Docker-Images" ;;
+    images) targets=("$HOME") what="~ and Docker images" ;;
     everything)
       mapfile -t targets < <(system_dirs)
       flags=(--no-ignore)
-      what="ganzer Rechner, auch git-ignorierte Ordner, und Docker-Images"
+      what="the whole computer, git-ignored folders too, and Docker images"
       ;;
   esac
   # Skipped: tool dirs and the ignore file's paths (exact directories).
@@ -234,7 +234,7 @@ check_projects() {
     done <"$IGNORE"
   fi
   heading projects "osv-scanner, $what"
-  echo "Schickt Paketnamen und Versionen an osv.dev, keinen Code."
+  echo "Sends package names and versions to osv.dev, no code."
   osv-scanner scan source -r "${flags[@]}" --format json --output-file "$json" "${targets[@]}" >/dev/null 2>"$err"
   code=$?
   case $code in
@@ -243,37 +243,37 @@ check_projects() {
       if ((n > 0)); then
         osv_table "$json" "$strip"
       else
-        printf '%sKeine bekannte Lücke in den Abhängigkeiten.%s\n' "$green" "$off"
+        printf '%sNo known vulnerability in the dependencies.%s\n' "$green" "$off"
       fi
       ;;
-    128) echo "Keine Lockfiles gefunden." ;;
+    128) echo "No lockfiles found." ;;
     *)
       tail -n 5 "$err"
-      record projects "$scope" -1 "konnte nicht laufen"
+      record projects "$scope" -1 "could not run"
       return 1
       ;;
   esac
 
   if [[ $scope == images || $scope == everything ]]; then
     if ! docker info >/dev/null 2>&1; then
-      echo "Docker läuft nicht, die Images sind übersprungen."
+      echo "Docker is not running, the images were skipped."
     else
-      printf '\n%sDocker-Images%s (Paket-Details: osv-scanner scan image <Image>)\n' "$bold" "$off"
+      printf '\n%sDocker images%s (package details: osv-scanner scan image <image>)\n' "$bold" "$off"
       while read -r image; do
         ijson=$STATE_DIR/image.json
         # </dev/null: the scanner must not eat the image list on stdin.
         osv-scanner scan image --format json --output-file "$ijson" "$image" </dev/null >/dev/null 2>"$err"
         code=$?
         if ((code > 1)); then
-          printf '  %s: konnte nicht geprüft werden\n' "$image"
+          printf '  %s: could not be checked\n' "$image"
           continue
         fi
         cnt=$(osv_count "$ijson")
         in_images=$((in_images + cnt))
         if ((cnt > 0)); then
-          printf '  %s%s: %d Paket(e) mit Lücke%s\n' "$red" "$image" "$cnt" "$off"
+          printf '  %s%s: %d vulnerable package(s)%s\n' "$red" "$image" "$cnt" "$off"
         else
-          printf '  %s%s: keine bekannte Lücke%s\n' "$green" "$image" "$off"
+          printf '  %s%s: no known vulnerability%s\n' "$green" "$image" "$off"
         fi
       done < <(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort -u)
       rm -f "$STATE_DIR/image.json"
@@ -282,9 +282,9 @@ check_projects() {
 
   n=$((n + in_images))
   if ((n > 0)); then
-    record projects "$scope" "$n" "$n Paket(e) mit Lücke$( ((in_images > 0)) && echo ", $in_images in Images")"
+    record projects "$scope" "$n" "$n vulnerable package(s)$( ((in_images > 0)) && echo ", $in_images in images")"
   else
-    record projects "$scope" 0 "keine bekannte Lücke"
+    record projects "$scope" 0 "no known vulnerability"
   fi
   return 0
 }
@@ -299,25 +299,25 @@ check_viruses() {
   mapfile -t -O "${#targets[@]}" targets < <(usb_sticks)
   heading viruses "clamscan: ${targets[*]/#$HOME/\~}"
   if ((${#targets[@]} == 0)); then
-    echo "Nichts zu prüfen."
-    record viruses "$scope" 0 "nichts zu prüfen"
+    echo "Nothing to check."
+    record viruses "$scope" 0 "nothing to check"
     return 0
   fi
-  echo "Lädt zuerst die Signaturen, das dauert einen Moment."
+  echo "Loading the signatures first, this takes a moment."
   clamscan -r -i "${targets[@]}" 2>"$err" | tee "$out"
   n=$(sed -n 's/^Infected files: //p' "$out")
   unreadable=$(grep -c . "$err")
   if [[ ! $n =~ ^[0-9]+$ ]]; then
     tail -n 5 "$err"
-    record viruses "$scope" -1 "konnte nicht laufen"
+    record viruses "$scope" -1 "could not run"
     return 1
   fi
-  ((unreadable > 0)) && printf '%s%d Dateien oder Ordner nicht lesbar (meist nur für root).%s\n' "$dim" "$unreadable" "$off"
+  ((unreadable > 0)) && printf '%s%d files or folders not readable (mostly root-only).%s\n' "$dim" "$unreadable" "$off"
   if ((n > 0)); then
-    printf '%sNichts gelöscht. In Quarantäne verschieben: clamscan -r -i --move=$HOME/quarantine <Pfad>%s\n' "$red" "$off"
-    record viruses "$scope" "$n" "$n Fund(e)"
+    printf '%sNothing deleted. To quarantine: clamscan -r -i --move=$HOME/quarantine <path>%s\n' "$red" "$off"
+    record viruses "$scope" "$n" "$n finding(s)"
   else
-    record viruses "$scope" 0 "nichts gefunden"
+    record viruses "$scope" 0 "nothing found"
   fi
   return 0
 }
@@ -343,7 +343,7 @@ run() {
   mkdir -p "$REPORTS"
   exec 9>"$LOCK"
   if ! flock -n 9; then
-    echo "Ein Sicherheits-Check läuft schon." >&2
+    echo "A security check is already running." >&2
     exit 1
   fi
   run_started=$(date +%s)
@@ -354,7 +354,7 @@ run() {
   finished=0
   # Cancelled or the terminal closed: no "running" left behind in the widget,
   # and the report so far stays in the list.
-  trap 'state_set ".running = null"; ((finished)) || { history_add aborted null; toast "Sicherheits-Check abgebrochen"; }' EXIT
+  trap 'state_set ".running = null"; ((finished)) || { history_add aborted null; toast "Security check cancelled"; }' EXIT
   trap 'exit 129' HUP
   trap 'exit 130' INT
   trap 'exit 143' TERM
@@ -368,13 +368,13 @@ run() {
   else
     plan=("$run_check:$run_scope")
   fi
-  printf '%sSicherheits-Check%s %s (%s), %s\n' "$bold" "$off" "$(label "$run_check")" "$run_scope" "$(date -d "@$run_started" '+%d.%m.%Y %H:%M')"
+  printf '%sSecurity check%s %s (%s), %s\n' "$bold" "$off" "$(label "$run_check")" "$run_scope" "$(date -d "@$run_started" '+%Y-%m-%d %H:%M')"
   for item in "${plan[@]}"; do
     state_set --arg p "${item%%:*}" '.running.part = $p'
     "check_${item%%:*}" "${item#*:}" || failed=1
   done
 
-  printf '\n%sErgebnis%s\n' "$bold" "$off"
+  printf '\n%sResult%s\n' "$bold" "$off"
   for item in "${plan[@]}"; do
     item=${item%%:*}
     line=$(jq -r --arg c "$item" '.checks[$c].summary // "?"' "$STATE")
@@ -385,17 +385,17 @@ run() {
   done
 
   if ((failed)); then
-    headline="Sicherheits-Check: nicht alles lief"
+    headline="Security check: not everything ran"
     history_add failed "$found"
   elif ((found > 0)); then
-    headline="Sicherheits-Check: $found Fund(e)"
+    headline="Security check: $found finding(s)"
     history_add "done" "$found"
   else
-    headline="Sicherheits-Check: alles sauber"
+    headline="Security check: all clean"
     history_add "done" 0
   fi
   finished=1
-  toast -u normal "$headline" "$(printf '%s\n' "${summary[@]}" "Klick öffnet den Bericht.")" --exec "$SELF" report "$run_report"
+  toast -u normal "$headline" "$(printf '%s\n' "${summary[@]}" "Click opens the report.")" --exec "$SELF" report "$run_report"
   exit "$failed"
 }
 
@@ -416,14 +416,14 @@ case ${1:-} in
     scope=${3:-$(default_scope "$check")}
     valid "$check" "$scope" || usage
     if systemctl --user -q is-active "$UNIT" || ! flock -n "$LOCK" true; then
-      toast "Sicherheits-Check läuft schon"
+      toast "A security check is already running"
       exit 0
     fi
     systemd-run --user --unit="$UNIT" --collect --quiet \
       -p Nice=19 -p IOSchedulingClass=idle -p CPUSchedulingPolicy=idle \
       -p StandardOutput=null -p StandardError=null \
       "$SELF" "$check" "$scope" || exit 1
-    toast -t 4000 "Sicherheits-Check läuft im Hintergrund" "$(label "$check"). Ein Toast kommt, wenn er fertig ist."
+    toast -t 4000 "Security check running in the background" "$(label "$check"). A toast follows when it is done."
     ;;
   stop)
     systemctl --user stop "$UNIT" 2>/dev/null
@@ -438,10 +438,10 @@ case ${1:-} in
       usage
     fi
     if [[ ! -s $path ]]; then
-      toast "Bericht nicht gefunden" "Aufgehoben werden die letzten $KEEP."
+      toast "Report not found" "The last $KEEP are kept."
       exit 0
     fi
-    exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.omarchy.terminal --title="Sicherheits-Bericht" -e less -R "$path"
+    exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.omarchy.terminal --title="Security report" -e less -R "$path"
     ;;
   packages | projects | viruses | all)
     scope=${2:-$(default_scope "$1")}

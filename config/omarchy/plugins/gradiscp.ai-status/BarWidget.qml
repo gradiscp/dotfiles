@@ -34,7 +34,7 @@ Panel {
   property bool quiet: false
   property bool silent: false
   property var sessions: []
-  // "seit 2 min" reads this instead of Date.now(), refreshed with each poll.
+  // "for 2 min" reads this instead of Date.now(), refreshed with each poll.
   property double nowMs: Date.now()
   // Keyboard cursor: a session row, or the toast switch at sessions.length.
   property int cursor: 0
@@ -85,11 +85,11 @@ Panel {
   }
 
   function statusWord(status) {
-    if (status === "blocked") return "wartet"
-    if (status === "working") return "arbeitet"
-    if (status === "idle") return "bereit"
-    if (status === "done") return "fertig"
-    return "unbekannt"
+    if (status === "blocked") return "waiting"
+    if (status === "working") return "working"
+    if (status === "idle") return "ready"
+    if (status === "done") return "done"
+    return "unknown"
   }
 
   function statusColor(status) {
@@ -100,9 +100,9 @@ Panel {
 
   function since(ms) {
     var minutes = Math.floor((root.nowMs - Number(ms)) / 60000)
-    if (!(minutes >= 1)) return "gerade eben"
-    if (minutes < 60) return "seit " + minutes + " min"
-    return "seit " + Math.floor(minutes / 60) + " h"
+    if (!(minutes >= 1)) return "just now"
+    if (minutes < 60) return "for " + minutes + " min"
+    return "for " + Math.floor(minutes / 60) + " h"
   }
 
   function applyStatus(text) {
@@ -176,11 +176,11 @@ Panel {
     // icon gone) - after an edit, check that the `text:` line still has it.
     text: "\uf489"
     foreground: root.waiting > 0 ? root.alertColor : root.idleColor
-    tooltipText: (root.waiting === 0 ? "Keine KI-Session wartet"
-      : (root.waiting === 1 ? "1 KI-Session wartet" : root.waiting + " KI-Sessions warten"))
-      + (root.quiet ? " · Benachrichtigungen aus (Rechtsklick: an)"
-                    : " · Rechtsklick: Benachrichtigungen aus")
-      + (root.silent ? " · Ton aus" : "")
+    tooltipText: (root.waiting === 0 ? "No AI session waiting"
+      : (root.waiting === 1 ? "1 AI session waiting" : root.waiting + " AI sessions waiting"))
+      + (root.quiet ? " · notifications off (right-click: on)"
+                    : " · right-click: notifications off")
+      + (root.silent ? " · sound off" : "")
     onPressed: function(button) {
       if (button === Qt.RightButton) root.setQuiet(!root.quiet)
       else root.toggle()
@@ -234,11 +234,11 @@ Panel {
           // ---------- Hero: glyph · Claude Code · how many wait ----------
           PanelHero {
             width: parent.width
-            title: "KI-Agenten"
-            meta: root.waitingSessions === 0 ? "Keine Session wartet"
-              : (root.waitingSessions === 1 ? "1 Session wartet" : root.waitingSessions + " Sessions warten")
+            title: "AI agents"
+            meta: root.waitingSessions === 0 ? "No session waiting"
+              : (root.waitingSessions === 1 ? "1 session waiting" : root.waitingSessions + " sessions waiting")
             detail: root.sessions.length === 0 ? ""
-              : (root.sessions.length === 1 ? "1 Session" : root.sessions.length + " Sessions")
+              : (root.sessions.length === 1 ? "1 session" : root.sessions.length + " sessions")
             foreground: root.foreground
             fontFamily: root.fontFamily
 
@@ -281,7 +281,7 @@ Panel {
               width: parent.width
               topPadding: Style.spacing.md
               bottomPadding: Style.spacing.md
-              text: "Keine KI-Session in herdr."
+              text: "No AI session in herdr."
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
@@ -306,9 +306,9 @@ Panel {
 
           Toggle {
             width: parent.width
-            label: "Benachrichtigungen"
-            description: root.quiet ? "Aus: kein Toast, das Symbol leuchtet weiter"
-                                    : "Toast, wenn eine KI wartet oder fertig ist"
+            label: "Notifications"
+            description: root.quiet ? "Off: no toast, the icon still lights up"
+                                    : "A toast when an AI waits or is done"
             checked: !root.quiet
             hasCursor: root.cursorActive && root.cursor === root.sessions.length
             foreground: root.foreground
@@ -323,9 +323,9 @@ Panel {
 
           Toggle {
             width: parent.width
-            label: "Ton"
-            description: root.silent ? "Aus: kein Ton bei Genehmigung und wenn eine KI fertig ist"
-                                     : "Bei Genehmigung und wenn eine KI fertig ist"
+            label: "Sound"
+            description: root.silent ? "Off: no sound for permissions or when an AI is done"
+                                     : "For permissions and when an AI is done"
             checked: !root.silent
             hasCursor: root.cursorActive && root.cursor === root.sessions.length + 1
             foreground: root.foreground
@@ -356,7 +356,7 @@ Panel {
       if (blocked) {
         var ask = String(session.ask || "")
         var when = session.asked_ms > 0 ? root.since(session.asked_ms) : ""
-        if (ask === "") return "Wartet auf eine Antwort" + (when !== "" ? " · " + when : "")
+        if (ask === "") return "Waiting for an answer" + (when !== "" ? " · " + when : "")
         return ask + (when !== "" ? " · " + when : "")
       }
       return root.statusWord(status)

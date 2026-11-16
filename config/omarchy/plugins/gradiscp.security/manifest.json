@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "gradiscp.security",
-  "name": "Sicherheit",
+  "name": "Security",
   "version": "1.0.0",
   "author": "gradiscp",
   "description": "Runs the security checks of security-audit in the background (installed packages, project dependencies and Docker images, virus scan), one or all, each from quick up to the whole computer, and shows the last result of each.",
@@ -12,7 +12,7 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "Sicherheit",
+    "displayName": "Security",
     "description": "Shield that lights up in the bar's urgent colour while the last checks found something; a click opens the panel to choose and start them.",
     "category": "System",
     "allowMultiple": false

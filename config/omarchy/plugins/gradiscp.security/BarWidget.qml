@@ -8,7 +8,7 @@ import qs.Ui
 
 // A shield (meant for the tray drawer) that starts the checks of
 // `security-audit` in the background: all of them, or one, each with a choice
-// of how far it reaches (chips), up to "Komplett" = the whole computer. The
+// of how far it reaches (chips), up to "Full" = the whole computer. The
 // row's play button starts it, the same button stops a running one; the
 // script sends a toast when done.
 // The shield lights up (bar.urgent) while a last result holds a finding and
@@ -42,28 +42,28 @@ Panel {
   readonly property string statePath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/security-audit/state.json"
   readonly property string runningCheck: running && running.check ? String(running.check) : ""
   readonly property var rows: [
-    { id: "all", title: "Alles prüfen", tools: ["arch-audit", "osv-scanner", "clamscan"],
+    { id: "all", title: "Check everything", tools: ["arch-audit", "osv-scanner", "clamscan"],
       tests: "", options: [
-      { value: "quick", label: "Schnell", what: "Pakete, ~/Projects, Downloads und USB-Sticks" },
-      { value: "full", label: "Komplett", what: "Alle Pakete, ganzer PC, Docker-Images" }
+      { value: "quick", label: "Quick", what: "Packages, ~/Projects, Downloads and USB sticks" },
+      { value: "full", label: "Full", what: "All packages, the whole computer, Docker images" }
     ] },
-    { id: "packages", title: "Pakete", tools: ["arch-audit"],
-      tests: "Lücken in installierten Systempaketen", options: [
-      { value: "fixable", label: "Mit Update", what: "Pakete mit Lücke, die ein Update behebt" },
-      { value: "all", label: "Alle", what: "Auch Lücken ohne Fix bisher auflisten" }
+    { id: "packages", title: "Packages", tools: ["arch-audit"],
+      tests: "Vulnerabilities in installed system packages", options: [
+      { value: "fixable", label: "Fixable", what: "Vulnerable packages an update fixes" },
+      { value: "all", label: "All", what: "Also list vulnerabilities without a fix yet" }
     ] },
-    { id: "projects", title: "Projekte", tools: ["osv-scanner"],
-      tests: "Lücken in Abhängigkeiten (osv.dev)", options: [
-      { value: "projects", label: "Projekte", what: "Lockfiles unter ~/Projects" },
-      { value: "home", label: "Home", what: "Ganz ~, auch per mise installierte Tools" },
-      { value: "images", label: "+ Images", what: "Home und alle lokalen Docker-Images" },
-      { value: "everything", label: "Alles", what: "Ganzer PC, auch node_modules, + Images" }
+    { id: "projects", title: "Projects", tools: ["osv-scanner"],
+      tests: "Vulnerabilities in dependencies (osv.dev)", options: [
+      { value: "projects", label: "Projects", what: "Lockfiles under ~/Projects" },
+      { value: "home", label: "Home", what: "All of ~, tools installed with mise too" },
+      { value: "images", label: "+ Images", what: "Home and every local Docker image" },
+      { value: "everything", label: "Everything", what: "The whole computer, node_modules too, + images" }
     ] },
-    { id: "viruses", title: "Viren", tools: ["clamscan"],
-      tests: "Schadsoftware in Dateien (ClamAV)", options: [
-      { value: "downloads", label: "Downloads", what: "Downloads und eingesteckte USB-Sticks" },
-      { value: "home", label: "Home", what: "Der ganze Home-Ordner und USB-Sticks" },
-      { value: "computer", label: "Ganzer PC", what: "Alles Lesbare auf dem Rechner, dauert lange" }
+    { id: "viruses", title: "Viruses", tools: ["clamscan"],
+      tests: "Malware in files (ClamAV)", options: [
+      { value: "downloads", label: "Downloads", what: "Downloads and plugged-in USB sticks" },
+      { value: "home", label: "Home", what: "The whole home folder and USB sticks" },
+      { value: "computer", label: "Whole computer", what: "Everything readable on the computer, takes long" }
     ] }
   ]
   // Findings not marked as dealt with: these light up the shield.
@@ -104,21 +104,21 @@ Panel {
     return null
   }
 
-  function ago(t, prefix) {
+  // mode "for": "for 5 min" (still running); "ago": "5 min ago".
+  function ago(t, mode) {
     var minutes = Math.floor((root.nowS - Number(t)) / 60)
-    if (!(minutes >= 1)) return prefix === "seit" ? "gerade gestartet" : "gerade eben"
-    if (minutes < 60) return prefix + " " + minutes + " min"
+    if (!(minutes >= 1)) return mode === "for" ? "just started" : "just now"
     var hours = Math.floor(minutes / 60)
-    if (hours < 48) return prefix + " " + hours + " h"
-    return prefix + " " + Math.floor(hours / 24) + " Tagen"
+    var amount = minutes < 60 ? minutes + " min" : (hours < 48 ? hours + " h" : Math.floor(hours / 24) + " days")
+    return mode === "for" ? "for " + amount : amount + " ago"
   }
 
   function result(id) {
-    if (root.runningCheck === id) return "läuft, " + root.ago(root.running.since, "seit")
+    if (root.runningCheck === id) return "running, " + root.ago(root.running.since, "for")
     if (id === "all") return ""
     var c = root.checks[id]
-    if (!c) return "noch nie geprüft"
-    return String(c.summary) + (c.acked ? " · erledigt" : "") + " · " + root.ago(c.time, "vor")
+    if (!c) return "never checked"
+    return String(c.summary) + (c.acked ? " · dealt with" : "") + " · " + root.ago(c.time, "ago")
   }
 
   // A check with findings nobody has marked as dealt with; "all": any of them.
@@ -174,17 +174,17 @@ Panel {
     root.close()
   }
 
-  // "Alles prüfen · Komplett", "Viren · Ganzer PC"
+  // "Check everything · Full", "Viruses · Whole computer"
   function runName(entry) {
     var scope = root.option(entry.check, entry.scope)
     return root.title(entry.check) + (scope ? " · " + scope.label : "")
   }
 
   function runOutcome(entry) {
-    if (entry.status === "aborted") return "abgebrochen"
-    if (entry.status === "failed") return "nicht alles lief"
-    if (entry.found > 0) return entry.found + " Fund(e)"
-    return "nichts gefunden"
+    if (entry.status === "aborted") return "aborted"
+    if (entry.status === "failed") return "not everything ran"
+    if (entry.found > 0) return entry.found + " finding(s)"
+    return "nothing found"
   }
 
   // Cursor: the check cards first, then the reports.
@@ -243,8 +243,8 @@ Panel {
     // nf-fa-shield as \uf132, written as an escape so an edit cannot drop it.
     text: "\uf132"
     foreground: root.findings > 0 ? root.alertColor : (root.runningCheck !== "" ? root.foreground : root.idleColor)
-    tooltipText: root.runningCheck !== "" ? "Sicherheits-Check läuft: " + root.title(root.runningCheck)
-      : (root.findings > 0 ? "Sicherheits-Check: " + root.findings + " Fund(e)" : "Sicherheits-Checks")
+    tooltipText: root.runningCheck !== "" ? "Security check running: " + root.title(root.runningCheck)
+      : (root.findings > 0 ? "Security check: " + root.findings + " finding(s)" : "Security checks")
     onPressed: function(button) { root.toggle() }
   }
 
@@ -288,12 +288,12 @@ Panel {
 
         PanelHero {
           width: parent.width
-          title: "Sicherheit"
+          title: "Security"
           meta: root.runningCheck !== ""
-            ? "Läuft im Hintergrund: " + root.title(root.running.part ? String(root.running.part) : root.runningCheck)
-            : (root.findings > 0 ? root.findings + " Fund(e) beim letzten Check"
-              : (root.lastRun > 0 ? "Nichts gefunden" : "Noch nicht geprüft"))
-          detail: root.lastRun > 0 ? "Zuletzt " + root.ago(root.lastRun, "vor") : ""
+            ? "Running in the background: " + root.title(root.running.part ? String(root.running.part) : root.runningCheck)
+            : (root.findings > 0 ? root.findings + " finding(s) in the last check"
+              : (root.lastRun > 0 ? "Nothing found" : "Not checked yet"))
+          detail: root.lastRun > 0 ? "Last run " + root.ago(root.lastRun, "ago") : ""
           foreground: root.foreground
           fontFamily: root.fontFamily
 
@@ -317,7 +317,7 @@ Panel {
 
           PanelSectionHeader {
             width: parent.width
-            text: "PRÜFEN"
+            text: "CHECKS"
             foreground: root.foreground
             fontFamily: root.fontFamily
           }
@@ -344,7 +344,7 @@ Panel {
 
           PanelSectionHeader {
             width: parent.width
-            text: "BERICHTE"
+            text: "REPORTS"
             foreground: root.foreground
             fontFamily: root.fontFamily
           }
@@ -354,7 +354,7 @@ Panel {
             width: parent.width
             topPadding: Style.spacing.md
             bottomPadding: Style.spacing.md
-            text: "Noch kein Bericht. Aufgehoben werden die letzten 20."
+            text: "No report yet. The last 20 are kept."
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -418,7 +418,7 @@ Panel {
         textFormat: Text.PlainText
         anchors.left: parent.left
         anchors.top: nameText.bottom
-        text: report.entry ? Qt.formatDateTime(new Date(report.entry.time * 1000), "dd.MM.yyyy HH:mm") : ""
+        text: report.entry ? Qt.formatDateTime(new Date(report.entry.time * 1000), "yyyy-MM-dd HH:mm") : ""
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
@@ -448,7 +448,7 @@ Panel {
     }
   }
 
-  // One check as a card: title and last result (or "läuft"), the tool as a
+  // One check as a card: title and last result (or "running"), the tool as a
   // badge and what it looks for, what the chosen scope covers, the scope
   // chips, and a play button (stop while it runs).
   component CheckRow: CursorSurface {
@@ -483,7 +483,7 @@ Panel {
       anchors.rightMargin: Style.spacing.md
       spacing: Style.spacing.xs
 
-      // Title on the left, the last result (or "läuft") on the right.
+      // Title on the left, the last result (or "running") on the right.
       Item {
         width: parent.width
         implicitHeight: titleText.implicitHeight
@@ -586,7 +586,7 @@ Panel {
       anchors.right: playButton.left
       anchors.verticalCenter: parent.verticalCenter
       iconText: "\uf00c"
-      tooltipText: row.checkId === "all" ? "Alle Funde als erledigt markieren" : "Als erledigt markieren"
+      tooltipText: row.checkId === "all" ? "Mark all findings as dealt with" : "Mark as dealt with"
       foreground: root.alertColor
       fontFamily: root.fontFamily
       onClicked: root.ack(row.checkId)
@@ -599,7 +599,7 @@ Panel {
       anchors.verticalCenter: parent.verticalCenter
       // nf-fa-stop / nf-fa-play
       iconText: row.runningHere ? "\uf04d" : "\uf04b"
-      tooltipText: row.runningHere ? "Abbrechen" : "Im Hintergrund starten"
+      tooltipText: row.runningHere ? "Stop" : "Start in the background"
       foreground: row.runningHere ? root.alertColor : root.foreground
       fontFamily: root.fontFamily
       onClicked: root.startOrStop(row.checkId)

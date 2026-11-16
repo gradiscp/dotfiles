@@ -24,7 +24,7 @@ Item {
 
   property bool opened: false
   property string process: ""
-  // 0 = Abbrechen, 1 = Schließen.
+  // 0 = Cancel, 1 = Close.
   property int selected: 0
 
   readonly property string guard: Quickshell.env("HOME") + "/.local/bin/window-close-guard"
@@ -39,7 +39,7 @@ Item {
     var payload = ({})
     try { payload = JSON.parse(payloadJson || "{}") } catch (e) { payload = ({}) }
     root.process = payload.process || ""
-    // Start on "Abbrechen", so a stray Enter keeps the window.
+    // Start on "Cancel", so a stray Enter keeps the window.
     root.selected = 0
     pointerGate.reset()
     root.opened = true
@@ -53,8 +53,8 @@ Item {
   // Hover selects a button only after the pointer has actually moved. Qt
   // delivers a synthetic hover when the strip appears under a resting
   // cursor (see LockView.pointerMoved for the same effect), and with a bare
-  // onEntered that could put "Schließen" under a stray Enter - exactly what
-  // preselecting "Abbrechen" is meant to prevent. Same stock gate the menu
+  // onEntered that could put "Close" under a stray Enter - exactly what
+  // preselecting "Cancel" is meant to prevent. Same stock gate the menu
   // and clipboard use.
   PointerMoveGate {
     id: pointerGate
@@ -145,7 +145,7 @@ Item {
 
           Text {
             textFormat: Text.PlainText
-            text: root.process || "etwas"
+            text: root.process || "something"
             color: root.brightInk
             font.family: root.fontFamily
             font.pixelSize: Style.font.subtitle
@@ -153,7 +153,7 @@ Item {
           }
           Text {
             textFormat: Text.PlainText
-            text: "läuft noch. Schließen?"
+            text: "is still running. Close?"
             color: root.ink
             font.family: root.fontFamily
             font.pixelSize: Style.font.subtitle
@@ -165,7 +165,7 @@ Item {
           spacing: Style.space(8)
 
           Repeater {
-            model: ["Abbrechen", "Schließen"]
+            model: ["Cancel", "Close"]
 
             Rectangle {
               required property int index

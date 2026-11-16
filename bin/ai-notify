@@ -8,7 +8,7 @@
 # matcher "permission_prompt" (the original; arrives later, so it is only a
 # fallback - skipped when a PermissionRequest toast for the same terminal went
 # up in the last 20s). A third hook, Stop, plays the done sound and puts up a
-# "Claude ist fertig" toast with the first line of the answer (below).
+# "Claude is done" toast with the first line of the answer (below).
 # Two kinds of terminal:
 #
 # - Inside herdr: the hook inherits HERDR_PANE_ID from the pane Claude runs
@@ -45,7 +45,7 @@
 # `status` feeds that widget's panel: one JSON document with every herdr
 # agent (waiting ones first, with what they ask for), the plain terminal that
 # asked, and the quiet flag. What a session asks
-# for ("Braucht eine Genehmigung: Bash") is kept in <key>.ask next to the
+# for ("Needs permission: Bash") is kept in <key>.ask next to the
 # toast state and dropped by `count` once herdr no longer reports the pane
 # blocked, so a prompt that arrived without a hook never shows a stale ask.
 #
@@ -342,7 +342,7 @@ input=$(cat)
 event=$(jq -r '.hook_event_name // empty' <<<"$input")
 message=$(jq -r '.message // empty' <<<"$input")
 [[ $event == PermissionRequest ]] &&
-  message="Braucht eine Genehmigung: $(jq -r '.tool_name // "Tool"' <<<"$input")"
+  message="Needs permission: $(jq -r '.tool_name // "Tool"' <<<"$input")"
 # HERDR_PANE_ID alone proves little: a terminal window opened from a shell
 # inside herdr inherits it too. Trust it only with herdr up the process tree.
 pane=
@@ -385,8 +385,8 @@ if [[ $event == Stop ]]; then
   answer=$(jq -r '.last_assistant_message // empty' <<<"$input" | first_line)
   [[ -n $answer ]] || answer=$(last_answer "$(jq -r '.transcript_path // empty' <<<"$input")")
   "$OMARCHY_BIN/omarchy-notification-send" --app-name "$app" "${icon[@]}" \
-    -g $'\U000F012C' -u normal -t "$TOAST_MS" "$name ist fertig${title:+: $title}" \
-    "${answer:-Die Antwort ist da}" --exec "$SELF" "${click[@]}" >/dev/null 2>&1
+    -g $'\U000F012C' -u normal -t "$TOAST_MS" "$name is done${title:+: $title}" \
+    "${answer:-The answer is in}" --exec "$SELF" "${click[@]}" >/dev/null 2>&1
   exit 0
 fi
 
@@ -424,7 +424,7 @@ fi
 
 # The headline doubles as the handle for dismissing the toast later, so it
 # carries the terminal's title to tell two waiting sessions apart.
-headline="$name wartet${title:+: $title}"
+headline="$name is waiting${title:+: $title}"
 
 if [[ -e $QUIET ]]; then
   log "quiet ($key, ${event:-?}): $headline"
@@ -442,7 +442,7 @@ token="$$.$(now_ms)"
 printf '%s\n%s\n' "$token" "$headline" >"$RUN_DIR/$key"
 
 "$OMARCHY_BIN/omarchy-notification-send" --app-name "$app" "${icon[@]}" \
-  -g $'\U000F06A9' -u critical "$headline" "${message:-Braucht eine Genehmigung}" \
+  -g $'\U000F06A9' -u critical "$headline" "${message:-Needs permission}" \
   --exec "$SELF" "${click[@]}" >/dev/null 2>&1
 
 # Fully detached, so the hook returns at once and Claude is not held up.
