@@ -224,6 +224,14 @@ echo "== Environment =="
 # the next login.
 link "$REPO_DIR/config/environment.d/10-omarchy-fcitx.conf" "$CONFIG_DIR/environment.d/10-omarchy-fcitx.conf"
 
+echo "== Audio =="
+# WirePlumber rules: Bluetooth devices auto-connect their music and hands-free
+# profiles (a headset keeps its mic); the KEF LSX II LT USB speaker never
+# suspends. Read at WirePlumber's start. The Framework mic rule is linked in
+# the Framework block below.
+link "$REPO_DIR/config/wireplumber/wireplumber.conf.d/bluetooth-a2dp-autoconnect.conf" "$CONFIG_DIR/wireplumber/wireplumber.conf.d/bluetooth-a2dp-autoconnect.conf"
+link "$REPO_DIR/config/wireplumber/wireplumber.conf.d/kef-lsx-no-suspend.conf" "$CONFIG_DIR/wireplumber/wireplumber.conf.d/kef-lsx-no-suspend.conf"
+
 echo "== herdr, git, mise, default apps =="
 link "$REPO_DIR/config/herdr/config.toml" "$CONFIG_DIR/herdr/config.toml"
 link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"

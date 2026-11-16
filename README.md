@@ -149,7 +149,8 @@ config/
   systemd/             Lid/hibernate drop-ins; user unit for the 60 Hz laptop cap;
                        framework-ec.service (EC values at boot and resume)
   environment.d/       Masks Omarchy's fcitx input-method variables
-  wireplumber/         Framework only: internal mic without UCM (UCM picks an unwired card)
+  wireplumber/         Audio rules: Bluetooth auto-connect with the headset mic, KEF
+                       speaker never suspends; Framework only: internal mic without UCM
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify
   nvim/                One plugin on top of Omarchy's LazyVim: Markdown rendering
