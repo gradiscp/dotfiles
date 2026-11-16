@@ -49,12 +49,14 @@ o.bind("SUPER + H", "Toggle workspace layout", "omarchy-hyprland-workspace-layou
 -- Screenshot on SUPER+SHIFT+S instead of the PRINT key.
 -- Was: PRINT -> Screenshot, SUPER+SHIFT+S -> Google Maps (that webapp
 -- shortcut was removed earlier anyway, so nothing lost there).
--- "copy" mode: clipboard only, no file written to ~/Pictures every time.
--- Default "slurp" mode does both - use `omarchy capture screenshot smart save`
--- manually on the rare occasion a file is actually wanted.
+-- Plain `omasnap`, the same as the launcher: its picker shows the recents
+-- shelf (last five captures, click one to reopen it). The quick-output
+-- `omarchy-capture-screenshot smart copy` used before skipped the shelf.
+-- Still no file per shot: config/omasnap/omasnap.conf turns autosave off, so
+-- a capture is copied and previewed; Edit -> Save when a file is wanted.
 hl.unbind("PRINT")
 hl.unbind("SUPER + SHIFT + S")
-o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot smart copy")
+o.bind("SUPER + SHIFT + S", "Screenshot", "omasnap")
 
 -- SUPER+P: jump to the Claude session (herdr pane or plain terminal) that is
 -- waiting for a permission, else to the one that finished last - the keyboard

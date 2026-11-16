@@ -104,6 +104,9 @@ echo "== Hyprland config =="
 for f in "$REPO_DIR"/config/hypr/*.lua; do
   link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
 done
+# Screenshots (SUPER+SHIFT+S runs plain omasnap): no file per shot, the
+# capture is copied and previewed and kept on the recents shelf.
+link "$REPO_DIR/config/omasnap/omasnap.conf" "$CONFIG_DIR/omasnap/omasnap.conf"
 # Touchscreen off: a touch event while the locked panel was waking up crashed
 # Hyprland 0.56.2 (incidents repo, 2026-10-27). Omarchy's own toggle keeps the
 # device name in ~/.local/state and re-applies it on every reload; it needs a

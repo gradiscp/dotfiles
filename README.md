@@ -114,7 +114,7 @@ through Omarchy's menus.
 | `SUPER+H` | Toggle workspace layout (was on `SUPER+L`) |
 | `SUPER+P` | Jump to the Claude or Codex session waiting for a permission, else the one that finished last |
 | `SUPER+W` | Close window - asks first if a terminal still runs something (stock `SUPER+Q` unbound) |
-| `SUPER+SHIFT+S` | Screenshot to clipboard (was `PRINT`) |
+| `SUPER+SHIFT+S` | Screenshot (Omasnap with the recents shelf) to clipboard, no file per shot (was `PRINT`) |
 | `ALT+SHIFT+1` / `2` | Focus the monitor to the left / right (stock `CTRL+ALT+TAB` still cycles) |
 | `CTRL+SHIFT+ESC` | Shutdown |
 | `SUPER+CTRL+SHIFT+R` | Reboot |
@@ -141,6 +141,7 @@ config/
     backgrounds/       Own background for the stock Kanagawa theme
     branding/          Screensaver text (gradiscp, in the style of Omarchy's logo)
   brave/               Policies (privacy, extensions) and launch flags
+  omasnap/             Screenshots: no file per shot (copied, previewed, recents shelf)
   environment.d/       Masks Omarchy's fcitx input-method variables
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify
