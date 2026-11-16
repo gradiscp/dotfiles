@@ -89,9 +89,12 @@ check_link() {
 for f in "$REPO_DIR"/config/hypr/*.lua; do
   check_link "$f" "$CONFIG_DIR/hypr/$(basename "$f")"
 done
+framework=false
+[[ $(</sys/class/dmi/id/sys_vendor) == Framework ]] && framework=true
 while IFS= read -r line; do
   # shellcheck disable=SC2016  # literal: skip the loop line that uses "$f"
   [[ $line == *'"$f"'* ]] && continue
+  [[ $line == *'# framework-only' ]] && ! $framework && continue
   # The eval below expands this repo's own install.sh, run by this user anyway;
   # still, an unattended hook must not run a command substitution from it.
   # shellcheck disable=SC2016  # literal patterns
@@ -129,7 +132,7 @@ if "$OMARCHY_BIN/omarchy-hibernation-available" 2>/dev/null; then
     config/systemd/logind.conf.d/30-lid-suspend-then-hibernate.conf:/etc/systemd/logind.conf.d/30-lid-suspend-then-hibernate.conf
   )
 fi
-if [[ $(</sys/class/dmi/id/sys_vendor) == Framework ]]; then
+if $framework; then
   copies+=(
     bin/framework-ec:/usr/local/bin/framework-ec
     config/systemd/system/framework-ec.service:/etc/systemd/system/framework-ec.service

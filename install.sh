@@ -15,6 +15,7 @@ OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 
 # Every `link` call stays on one line: omarchy-drift-check parses them (plus
 # the config/hypr/*.lua loop) as the one list of what must point into the repo.
+# A line ending in `# framework-only` it checks only on a Framework.
 link() {
   local src="$1" dst="$2"
   mkdir -p "$(dirname "$dst")"
@@ -285,6 +286,9 @@ if [[ $(</sys/class/dmi/id/sys_vendor) == Framework ]]; then
   sudo install -Dm644 "$REPO_DIR/config/systemd/system/framework-ec.service" /etc/systemd/system/framework-ec.service
   sudo systemctl daemon-reload
   sudo systemctl enable framework-ec.service
+  # Internal mic: the Laptop 13 AI 300's UCM routes it to an unwired card
+  # (the rule's header has the details); takes effect at the next login.
+  link "$REPO_DIR/config/wireplumber/wireplumber.conf.d/framework-mic-no-ucm.conf" "$CONFIG_DIR/wireplumber/wireplumber.conf.d/framework-mic-no-ucm.conf" # framework-only
 fi
 
 echo "== Claude Code =="
