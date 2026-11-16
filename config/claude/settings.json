@@ -91,5 +91,8 @@
       "effortLevel": "xhigh"
     }
   },
-  "theme": "custom:omarchy"
+  "theme": "custom:omarchy",
+  "enabledPlugins": {
+    "frontend-design@anthropic-plugin-directory": true
+  }
 }
