@@ -113,9 +113,10 @@ firmware() {
   while read -r l; do
     [[ $l == "RW version:"* ]] && ec=${l#RW version:}
   done </sys/class/chromeos/cros_ec/version 2>/dev/null
-  jq -cn --arg product "$(line /sys/class/dmi/id/product_name)" \
+  jq -cn --arg vendor "$(line /sys/class/dmi/id/sys_vendor)" \
+    --arg product "$(line /sys/class/dmi/id/product_name)" \
     --arg bios "$(line /sys/class/dmi/id/bios_version)" --arg ec "${ec// /}" \
-    '{product: $product, bios: $bios, ec: $ec}'
+    '{vendor: $vendor, product: $product, bios: $bios, ec: $ec}'
 }
 
 # fwupd from its local metadata: devices with an update, and when the LVFS

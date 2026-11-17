@@ -23,11 +23,15 @@ import qs.Ui
 // 45 W (too little to run the laptop and charge at 0.3C; the stock battery
 // icon then shows "Threshold") or an EC sensor reaches the EC's own warning
 // level.
+//
+// On any other laptop (shell.json is shared) the icon stays hidden and
+// polling stops after the first answer.
 Panel {
   id: root
   moduleName: "gradiscp.framework"
   // Panel's own IpcHandler: `omarchy-shell gradiscp.framework toggle`.
   ipcTarget: "gradiscp.framework"
+  visible: isFramework
 
   property var info: null
   property var fwupd: null
@@ -51,6 +55,7 @@ Panel {
   readonly property var ec: info && info.ec ? info.ec : null
   readonly property var lcd: info && info.display ? info.display : null
   readonly property var firmware: info && info.firmware ? info.firmware : null
+  readonly property bool isFramework: firmware !== null && firmware.vendor === "Framework"
   readonly property var temps: info && info.temps instanceof Array ? info.temps : []
   readonly property var cards: info && info.cards instanceof Array ? info.cards : []
   readonly property bool helperReady: ec !== null && ec.helper === true
@@ -278,7 +283,7 @@ Panel {
 
   Timer {
     interval: root.opened ? 2000 : 30000
-    running: true
+    running: root.info === null || root.isFramework
     repeat: true
     triggeredOnStart: true
     onTriggered: root.refresh()
