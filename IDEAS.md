@@ -12,7 +12,7 @@ Erledigtes fliegt hier raus und steht dann in der README.
   gepushte Git-Repos; `~/.ssh`, Dokumente, die KeePassXC-Datenbank wären bei
   einem SSD-Defekt weg. Vorschlag: `restic` (offizielles Repo, verschlüsselt)
   mit einem systemd-User-Timer. Offen: das Ziel (USB-Platte, Rechner im
-  Homelab über Tailscale, Cloud-Speicher). Kopia hätte eine GUI, gibt es aber
+  Homelab über Twingate, Cloud-Speicher). Kopia hätte eine GUI, gibt es aber
   nur über AUR/mise.
 - [ ] **GitHub Actions auf Commit-SHAs pinnen**, in den eigenen Repos, die
   noch Tags nutzen (`@v4`). Im März 2026 wurden bei `trivy-action` 76 von 77
@@ -30,7 +30,7 @@ Erledigtes fliegt hier raus und steht dann in der README.
   kommen sich nie in die Quere, `git-tidy` räumt danach auf. (`claude
   --worktree --tmux` bräuchte tmux, das hier entfernt ist.)
 - [ ] **Agenten auf einem anderen Rechner:** `herdr machine add` /
-  `herdr --remote` über Tailscale. Die Agenten belasten den Laptop nicht mehr
+  `herdr --remote` über Twingate. Die Agenten belasten den Laptop nicht mehr
   (systemd-oomd hat bei parallelen Agenten schon das Terminal beendet) und
   laufen weiter, wenn er schläft. Braucht einen Rechner, der immer läuft.
 - [ ] **Hooks als harte Leitplanke statt nur Regeln:** ein
@@ -104,7 +104,7 @@ Erledigtes fliegt hier raus und steht dann in der README.
   braucht im Leerlauf laut einem Vergleich etwa 350 MB (minikube ~1 GB),
   wichtig bei 30 GB RAM. Lernpfad: eine eigene App mit Helm-Chart in k3d,
   dann GitOps mit Flux oder Argo CD, später k3s in einer Proxmox-VM, erreichbar
-  über den Tailscale-Operator.
+  über Twingate.
 
 ## Bewusst nicht
 

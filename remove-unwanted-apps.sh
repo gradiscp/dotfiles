@@ -38,6 +38,8 @@ unwanted=(
   yt-dlp webkit2gtk-4.1 frei0r-plugins
   qemu-user-static qemu-user-static-binfmt
   cups cups-filters cups-pk-helper system-config-printer
+  # Twingate (packages.txt) replaced it; logged out and stopped first, below
+  tailscale
 )
 # Chromium only once Brave Origin is there, so a failed browser install never
 # leaves the machine without any browser.
@@ -99,6 +101,14 @@ fi
 
 if (( ${#installed[@]} > 0 )); then
   echo "Removing: ${installed[*]}"
+  # Tailscale: log the machine out of the tailnet first, so no valid node key
+  # stays behind in /var/lib/tailscale, and stop what pacman would leave
+  # running (as Omarchy's own `omarchy remove service tailscale` does).
+  if [[ " ${installed[*]} " == *" tailscale "* ]]; then
+    sudo tailscale logout 2>/dev/null || true
+    systemctl --user disable --now omarchy-tailscale-receive.service 2>/dev/null || true
+    sudo systemctl disable --now tailscaled.service 2>/dev/null || true
+  fi
   # omarchy-pkg-drop filters the list down to what is actually installed, then
   # `sudo pacman -Rns --noconfirm` (dependencies nothing else needs go too).
   # A refused transaction (a new dependency on one of these) must not abort

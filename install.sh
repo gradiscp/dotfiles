@@ -68,14 +68,12 @@ sudo systemctl start clamav-freshclam-once.service || echo "WARN: ClamAV signatu
 # the Copy-URL, yt-dlp and WhatsApp-slim extensions are not wanted.
 link "$REPO_DIR/config/brave/brave-origin-flags.conf" "$CONFIG_DIR/brave-origin-flags.conf"
 
-echo "== Tailscale =="
-# The service and the operator right only (the operator lets the bar widget
-# in shell.json connect and switch without sudo); `sudo tailscale up` (the
-# login) is interactive and stays a manual step. Shields up: this laptop
-# offers nothing to the tailnet (no SSH, no Taildrop receive), so incoming
-# tailnet connections are refused; outgoing ones work as before.
-sudo systemctl enable --now tailscaled.service
-sudo tailscale set --operator="$USER" --shields-up || echo "WARN: tailscale not set up - run: sudo tailscale set --operator=$USER --shields-up"
+echo "== Twingate =="
+# The client comes from packages.txt (AUR). `twingate setup` (network name,
+# then the sign-in in the browser) is interactive and stays a manual step; it
+# also asks whether the service starts at boot. Tailscale is gone:
+# remove-unwanted-apps.sh logs a machine out and removes it.
+command -v twingate >/dev/null || echo "WARN: twingate not installed (AUR) - the tray widget stays hidden"
 
 echo "== DNS (Cloudflare) =="
 # Omarchy's own command: Cloudflare on every Wi-Fi and wired connection, DNS
@@ -132,8 +130,10 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.ai-status" "$CONFIG_DIR/omarchy/
 # Shield in the tray drawer that starts bin/security-audit.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.security" "$CONFIG_DIR/omarchy/plugins/gradiscp.security"
 # Framework laptop panel in the tray drawer (data from bin/framework-panel; the
-# root side is set up under "Framework laptop" below).
+# root side is set up under "Framework laptop" below). Hidden on other laptops.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.framework" "$CONFIG_DIR/omarchy/plugins/gradiscp.framework"
+# Twingate in the tray drawer: state, connect/disconnect (pkexec), resources.
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.twingate" "$CONFIG_DIR/omarchy/plugins/gradiscp.twingate"
 # An own background for the stock Kanagawa theme. User backgrounds sort before
 # the theme's own, so it is the first one when Kanagawa is set. Directory
 # link: `omarchy theme bg install` adds files here, i.e. into the repo.
@@ -375,7 +375,8 @@ Done. Manual steps still needed on this machine:
      ~/.ssh/config and ~/.config/git/config.local as in the CHEATSHEET
      ("GitHub: zwei Konten"); switch this repo's origin to
      git@github.com:gradiscp/dotfiles.git.
-  4. Logins: `sudo tailscale up --accept-routes`, `gh auth login`, `claude`.
+  4. Logins: `twingate setup` (network name, then the browser sign-in),
+     `gh auth login`, `claude`.
   5. Brave Origin: the hand-set items in CHEATSHEET.md (switch on uBlock
      Origin, Shields, zoom).
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra

@@ -116,3 +116,18 @@ Arbeits-Adresse; `config-arbeit` enthält nur `[user]` mit `email = ...`:
 `**` gilt in `hasconfig` nur neben einem `/` als "beliebig tief", daher `*/**`
 beim Alias. Test: `ssh -T git@github-work` grüßt das Arbeitskonto.
 
+### Twingate (statt Tailscale, seit 2026-11-17)
+
+| Wann | Befehl | Was es tut |
+|---|---|---|
+| einmal pro Laptop | `twingate setup` | Netzwerkname, dann Anmeldung im Browser; fragt, ob der Dienst beim Booten startet. Das Paket kommt aus `packages.txt` (AUR). |
+| Stand ansehen | `twingate status`, `twingate resources` | `online`, `offline`, `authenticating`, ... und die erreichbaren Ressourcen mit Adresse. Beides zeigt auch das Twingate-Widget im Tray-Drawer (Klick auf eine Ressource kopiert die Adresse). |
+| verbinden / trennen | Power-Knopf im Widget | `systemctl start` / `stop twingate` über pkexec (Fingerabdruck). Im Terminal `twingate start` / `twingate stop`. |
+
+SSH zu einer Ressource: `HostName` in `~/.ssh/config` ist ihre Adresse (oder
+ihr Alias) aus `twingate resources`. Tailscale-Adressen (`100.64.0.0/10`,
+`*.ts.net`) gehen nicht mehr. `~/.ssh/config` bleibt lokal und kommt nie ins
+Repo (Adressen, Hostnamen); auf einen anderen Laptop von Hand kopieren.
+Prüfen ohne die Adressen anzuzeigen:
+`grep -ciE 'ts\.net|hostname +100\.' ~/.ssh/config` (0 = nichts mehr über
+Tailscale).

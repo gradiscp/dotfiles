@@ -53,7 +53,7 @@ these, in this order:
    (`remove-unwanted-apps.sh`), sets Tokyo Night, and checks that all links
    point into the repo.
 3. Do the manual steps it prints at the end: log in again, laptop scale
-   for a different panel, SSH keys and config, the Tailscale, GitHub and
+   for a different panel, SSH keys and config, the Twingate, GitHub and
    Claude logins, the Brave hand-set items from the cheatsheet, and the
    untracked per-machine files (`~/.config/git/config.local` with the
    identity files it includes, `config/claude/rules/*.local.md`).
@@ -85,12 +85,13 @@ through Omarchy's menus.
   permission, with a sessions panel and toast/sound switches on click;
   media controls while something plays, microphone mute; night light,
   stay-awake and do-not-disturb next to the clock. The tray drawer holds
-  Tailscale, the display widget and a shield that runs the security
-  checks in the background (`security-audit`: packages, project
+  Twingate (state, connect and disconnect through pkexec, the resources
+  with their address to copy), the display widget, a shield that runs the
+  security checks in the background (`security-audit`: packages, project
   dependencies, virus scan; one or all, from quick up to the whole
-  computer) and lights up while the last ones found something, and a
-  Framework panel (the gear logo, red for a too weak charger or heat):
-  battery and charger, the EC's battery care (charge limit, charge speed,
+  computer) and lights up while the last ones found something, and on a
+  Framework laptop a Framework panel (the gear logo, red for a too weak
+  charger or heat): battery and charger, the EC's battery care (charge limit, charge speed,
   fingerprint LED; each change through pkexec, applied again at boot and
   resume), the laptop panel's refresh rate, EC temperatures and fan,
   expansion cards, firmware updates. No weather or menu button.
@@ -140,7 +141,7 @@ config/
     shell.json         Bar layout, idle timing, plugin list
     shell.toml         Shell values over every theme: font size, thinner bar
     plugins/           gradiscp.* - close dialog, workspaces, AI status (Claude, Codex),
-                       security checks, Framework panel
+                       security checks, Framework panel, Twingate
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
     branding/          Screensaver text (gradiscp, in the style of Omarchy's logo)

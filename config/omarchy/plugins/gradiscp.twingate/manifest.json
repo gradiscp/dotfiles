@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.twingate",
+  "name": "Twingate",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "Twingate client at a glance: connection state, connect and disconnect (through pkexec), and the resources this account can reach, with their address one click from the clipboard.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Twingate",
+    "description": "VPN icon that is bright while connected, dim while off and in the bar's urgent colour while a sign-in is pending or the client reports an error; a click opens the panel.",
+    "category": "Network",
+    "allowMultiple": false
+  }
+}

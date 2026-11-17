@@ -4,7 +4,6 @@
 # `omarchy install browser`, not from here).
 
 # Official repos (pacman)
-tailscale
 shellcheck
 code
 azure-cli
@@ -22,3 +21,6 @@ clamav
 
 [aur]
 pandoc-bin
+# Twingate client (replaced Tailscale): Twingate's own Arch
+# package from binaries.twingate.com, repackaged with a pinned checksum
+twingate
