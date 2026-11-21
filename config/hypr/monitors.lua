@@ -9,7 +9,9 @@
 -- bin/power-profile-hz reloads Hyprland on every profile change. A fixed
 -- choice from the Framework panel (`framework-panel refresh-rate 60|120`,
 -- kept in $XDG_STATE_HOME/framework/refresh-rate) beats the profile; "auto"
--- or no file follows it.
+-- or no file follows it. Framework only: the mode below is that panel's, and
+-- forcing it on another laptop (1920x1080 panel) gave a small 3:2 picture
+-- with black bars left and right.
 local function first_line(path)
   local file = io.open(path, "r")
   if not file then return nil end
@@ -25,9 +27,10 @@ local function laptop_capped()
   local profile = first_line("/sys/firmware/acpi/platform_profile")
   return profile ~= nil and profile ~= "performance"
 end
+local is_framework = first_line("/sys/class/dmi/id/sys_vendor") == "Framework"
 hl.monitor_uncapped = hl.monitor_uncapped or hl.monitor
 hl.monitor = function(rule)
-  if rule.output == "eDP-1" and not rule.disabled and laptop_capped() then
+  if is_framework and rule.output == "eDP-1" and not rule.disabled and laptop_capped() then
     rule.mode = "2880x1920@60"
   end
   return hl.monitor_uncapped(rule)
