@@ -1,0 +1,16 @@
+# ~/.ssh/config links here (install.sh). Public repo: the work account, hosts
+# and addresses live in ~/.ssh/config.local (untracked), included first so its
+# values win (ssh takes the first value it finds).
+Include config.local
+
+# GitHub, private account. Which repos use the work account's host alias is
+# decided in ~/.config/git/config.local (url.insteadOf).
+Host github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+# Unlocked keys go into the per-login ssh-agent on first use and stay until
+# logout (config/environment.d/20-ssh-agent.conf).
+Host *
+  AddKeysToAgent yes

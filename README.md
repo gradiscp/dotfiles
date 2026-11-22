@@ -149,9 +149,12 @@ config/
   omasnap/             Screenshots: no file per shot (copied, previewed, recents shelf)
   systemd/             Lid/hibernate drop-ins; user unit for the 60 Hz laptop cap;
                        framework-ec.service (EC values at boot and resume)
-  environment.d/       Masks Omarchy's fcitx input-method variables
-  wireplumber/         Audio rules: Bluetooth auto-connect with the headset mic, KEF
-                       speaker never suspends; Framework only: internal mic without UCM
+  environment.d/       Masks Omarchy's fcitx input-method variables; SSH_AUTH_SOCK
+                       for the per-login ssh-agent
+  wireplumber/         Audio rules: Bluetooth auto-connect with the headset mic;
+                       Framework only: internal mic without UCM
+  ssh/                 Public part of ~/.ssh/config (agent, own GitHub account);
+                       work account and hosts: ~/.ssh/config.local, untracked
   claude/              Claude Code settings (hooks), global rules, own skills
   codex/               Codex hooks: the same toasts through ai-notify
   nvim/                One plugin on top of Omarchy's LazyVim: Markdown rendering

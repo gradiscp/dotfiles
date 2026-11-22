@@ -15,7 +15,9 @@ reproducible) are in `README.md`; apply them to every suggestion.
   other machines, credentials, private e-mail addresses, absolute home
   paths (`$HOME`, `%h`, `~` instead), employer or private project names.
   Machine-specific things go in untracked files: `~/.config/git/config.local`
-  (extra git identities, pulled in by a plain `[include]`) and
+  (extra git identities, pulled in by a plain `[include]`),
+  `~/.ssh/config.local` (work account, hosts with addresses, pulled in by
+  `Include` from `config/ssh/config`) and
   `config/claude/rules/*.local.md` (gitignored, still loaded through the
   `~/.claude/rules` link).
 - **Git identity is the global one** (`Paul Gradischnig` /

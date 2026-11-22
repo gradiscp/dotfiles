@@ -223,18 +223,21 @@ echo "== Environment =="
 # A user file of the same name masks it (empty on purpose). Takes effect at
 # the next login.
 link "$REPO_DIR/config/environment.d/10-omarchy-fcitx.conf" "$CONFIG_DIR/environment.d/10-omarchy-fcitx.conf"
+# One ssh-agent per login (openssh's user socket); SSH_AUTH_SOCK points at it.
+link "$REPO_DIR/config/environment.d/20-ssh-agent.conf" "$CONFIG_DIR/environment.d/20-ssh-agent.conf"
+systemctl --user enable --now ssh-agent.socket || echo "WARN: ssh-agent.socket not started (no graphical session?)"
 
 echo "== Audio =="
 # WirePlumber rules: Bluetooth devices auto-connect their music and hands-free
-# profiles (a headset keeps its mic); the KEF LSX II LT USB speaker never
-# suspends. Read at WirePlumber's start. The Framework mic rule is linked in
-# the Framework block below.
+# profiles (a headset keeps its mic). Read at WirePlumber's start. The
+# Framework mic rule is linked in the Framework block below.
 link "$REPO_DIR/config/wireplumber/wireplumber.conf.d/bluetooth-a2dp-autoconnect.conf" "$CONFIG_DIR/wireplumber/wireplumber.conf.d/bluetooth-a2dp-autoconnect.conf"
-link "$REPO_DIR/config/wireplumber/wireplumber.conf.d/kef-lsx-no-suspend.conf" "$CONFIG_DIR/wireplumber/wireplumber.conf.d/kef-lsx-no-suspend.conf"
 
 echo "== herdr, git, mise, default apps =="
 link "$REPO_DIR/config/herdr/config.toml" "$CONFIG_DIR/herdr/config.toml"
 link "$REPO_DIR/config/git/config" "$CONFIG_DIR/git/config"
+# Public part of the ssh config; the private part is ~/.ssh/config.local.
+link "$REPO_DIR/config/ssh/config" "$HOME/.ssh/config"
 link "$REPO_DIR/config/git/ignore" "$CONFIG_DIR/git/ignore"
 # Tool versions for claude, codex, gh and node (plus upgrade.auto_prune = false,
 # which Omarchy sets for a reason: `mise up` must not prune the Claude binary
@@ -372,7 +375,7 @@ Done. Manual steps still needed on this machine:
      `omarchy hyprland monitor scaling <N>`, not a raw file edit - see
      CLAUDE.md for why. The external monitors keep their own literal scale.
   3. SSH and git: one key per GitHub account into ~/.ssh (chmod 600), then
-     ~/.ssh/config and ~/.config/git/config.local as in the CHEATSHEET
+     ~/.ssh/config.local and ~/.config/git/config.local as in the CHEATSHEET
      ("GitHub: zwei Konten"); switch this repo's origin to
      git@github.com:gradiscp/dotfiles.git.
   4. Logins: `twingate setup` (network name, then the browser sign-in),
@@ -380,8 +383,9 @@ Done. Manual steps still needed on this machine:
   5. Brave Origin: the hand-set items in CHEATSHEET.md (switch on uBlock
      Origin, Shields, zoom).
   6. Machine-specific, untracked files: ~/.config/git/config.local (extra
-     git identities and their include files) and
-     config/claude/rules/*.local.md (private rules).
+     git identities and their include files), ~/.ssh/config.local (work
+     account, hosts with addresses) and config/claude/rules/*.local.md
+     (private rules).
   7. Fingerprint: `omarchy-setup-security-fingerprint` (enrolls a finger;
      sudo, polkit and lock screen) if libfprint supports the reader.
   8. Firmware setup (F2 at boot): battery charge limit 80 % (the kernel

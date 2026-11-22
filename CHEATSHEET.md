@@ -81,21 +81,22 @@ Stand: `clamscan --version`. Kein `clamd`-Daemon (dauerhaft 1,6 GB+ RAM).
 
 ### GitHub: zwei Konten (eigenes und Arbeit)
 
-`gh auth switch` wechselt zwischen den beiden angemeldeten Konten. Ein SSH-Key pro Konto (GitHub ordnet einen Key genau einem Konto zu). Beide
-Dateien sind lokal, nicht im Repo. `~/.ssh/config` (chmod 600):
+`gh auth switch` wechselt zwischen den beiden angemeldeten Konten. Ein SSH-Key pro Konto (GitHub ordnet einen Key genau einem Konto zu).
+`~/.ssh/config` ist ein Link auf `config/ssh/config` (eigenes Konto, ssh-agent);
+das Arbeitskonto und alle Hosts mit Adressen stehen in `~/.ssh/config.local`
+(lokal, nie im Repo, chmod 600), das sie zuerst einbindet:
 
 ```
-Host github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519
-  IdentitiesOnly yes
-
 Host github-work
   HostName github.com
   User git
   IdentityFile ~/.ssh/id_ed25519_work
   IdentitiesOnly yes
 ```
+
+Der ssh-agent läuft einmal pro Login (`ssh-agent.socket`, eingeschaltet von
+`install.sh`); ein Key kommt beim ersten Gebrauch hinein und bleibt bis zum
+Abmelden. Ansehen: `ssh-add -l`, leeren: `ssh-add -D`.
 
 `~/.config/git/config.local` (von `config/git/config` eingebunden) leitet die
 Repos der Arbeits-Organisation auf den Arbeits-Key um und setzt dort die
@@ -124,10 +125,11 @@ beim Alias. Test: `ssh -T git@github-work` grüßt das Arbeitskonto.
 | Stand ansehen | `twingate status`, `twingate resources` | `online`, `offline`, `authenticating`, ... und die erreichbaren Ressourcen mit Adresse. Beides zeigt auch das Twingate-Widget im Tray-Drawer (Klick auf eine Ressource kopiert die Adresse). |
 | verbinden / trennen | Power-Knopf im Widget | `systemctl start` / `stop twingate` über pkexec (Fingerabdruck). Im Terminal `twingate start` / `twingate stop`. |
 
-SSH zu einer Ressource: `HostName` in `~/.ssh/config` ist ihre Adresse (oder
-ihr Alias) aus `twingate resources`. Tailscale-Adressen (`100.64.0.0/10`,
-`*.ts.net`) gehen nicht mehr. `~/.ssh/config` bleibt lokal und kommt nie ins
-Repo (Adressen, Hostnamen); auf einen anderen Laptop von Hand kopieren.
-Prüfen ohne die Adressen anzuzeigen:
-`grep -ciE 'ts\.net|hostname +100\.' ~/.ssh/config` (0 = nichts mehr über
+SSH zu einer Ressource: `HostName` in `~/.ssh/config.local` ist ihre Adresse
+(oder ihr Alias) aus `twingate resources`. Tailscale-Adressen (`100.64.0.0/10`,
+`*.ts.net`) gehen nicht mehr. `~/.ssh/config.local` bleibt lokal und kommt nie
+ins Repo (Adressen, Hostnamen); auf einen anderen Laptop von Hand kopieren.
+Neue Hosts immer dort eintragen, nie in `~/.ssh/config` (Link ins öffentliche
+Repo). Prüfen ohne die Adressen anzuzeigen:
+`grep -ciE 'ts\.net|hostname +100\.' ~/.ssh/config.local` (0 = nichts mehr über
 Tailscale).
