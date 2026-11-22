@@ -164,6 +164,7 @@ bin/                   ai-notify, window-close-guard, omarchy-drift-check,
                        security-audit (the cheatsheet's security checks, one or all),
                        git-all (status/fetch/pull/push over every repo below),
                        git-tidy (deletes a repo's merged or gone local branches),
+                       dns-home-networks (home Wi-Fi uses its own DNS, rest Cloudflare),
                        power-profile-hz (laptop panel 60 Hz outside "performance"),
                        framework-panel / framework-ec (the Framework panel's data
                        and its root helper, a root-owned copy in /usr/local/bin)

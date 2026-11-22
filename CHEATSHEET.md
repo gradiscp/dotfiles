@@ -43,6 +43,12 @@ verschlüsselt, wo das Netz es zulässt, Quad9 als Ersatz). Der DNS des Netzes
 wird dabei ignoriert: Wenn interne Namen (Firma, Hotel-Login) nicht gehen,
 `omarchy dns DHCP`, danach wieder `omarchy dns Cloudflare`.
 
+Ausnahme: Heimnetze aus `~/.config/dns-home-networks.local` (nicht im Repo,
+ein Verbindungsname pro Zeile) nutzen den DNS des Netzes, z. B. einen
+Werbeblocker im Heimnetz. Das setzt `dns-home-networks`. `omarchy dns …` und
+die DNS-Knöpfe im Netzwerk-Panel heben das auf (das Panel zeigt trotzdem
+„Cloudflare“): danach `dns-home-networks` erneut ausführen.
+
 Standardbrowser ist Brave Origin schon über Omarchy (`omarchy default browser
 brave-origin`). Braves eigener "Als Standard festlegen"-Knopf (Willkommensseite,
 `brave://settings/getStarted`) brachte Brave Origin 1.99 zum Absturz (2026-11-12):

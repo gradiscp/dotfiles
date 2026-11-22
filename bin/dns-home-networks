@@ -1,0 +1,54 @@
+#!/bin/bash
+# Home networks use their own DNS (e.g. a local ad-blocking resolver handed
+# out by the router); every other network keeps `omarchy dns Cloudflare`.
+#
+# The network names are private, so they live in an untracked file, one
+# NetworkManager connection name per line (# comments allowed):
+#   ~/.config/dns-home-networks.local
+# Without that file the script does nothing.
+#
+# Per listed connection: DNS from DHCP/router advertisements, dns-priority -10
+# (only this connection's DNS servers are used, so systemd-resolved does not
+# also ask the global Cloudflare servers and undo the blocking), no DNS over
+# TLS (home resolvers rarely speak it).
+#
+# Omarchy's NetworkManager drop-in with a [global-dns] section overrides the
+# DNS of every connection, so it is removed (sudo). The Cloudflare servers in
+# resolved.conf and on all other connections stay; `omarchy dns` still
+# reports Cloudflare, so install.sh leaves them alone.
+#
+# `omarchy dns ...` and the DNS buttons in the network panel rewrite every
+# connection and undo this. Run `dns-home-networks` again afterwards.
+
+set -euo pipefail
+
+list="$HOME/.config/dns-home-networks.local"
+nm_global_dns=/etc/NetworkManager/conf.d/20-omarchy-dns.conf
+
+[[ -f $list ]] || { echo "dns-home-networks: no $list, nothing to do"; exit 0; }
+mapfile -t names < <(grep -v -E '^[[:space:]]*(#|$)' "$list" || true)
+(( ${#names[@]} )) || { echo "dns-home-networks: $list is empty, nothing to do"; exit 0; }
+
+for name in "${names[@]}"; do
+  if ! nmcli connection show "$name" >/dev/null 2>&1; then
+    echo "WARN: no NetworkManager connection named '$name'" >&2
+    continue
+  fi
+  nmcli connection modify "$name" \
+    ipv4.ignore-auto-dns no ipv4.dns "" ipv4.dns-priority -10 \
+    ipv6.ignore-auto-dns no ipv6.dns "" ipv6.dns-priority -10 \
+    connection.dns-over-tls no
+  echo "dns-home-networks: '$name' uses the network's DNS"
+done
+
+if [[ -f $nm_global_dns ]]; then
+  sudo rm "$nm_global_dns"
+  sudo nmcli general reload conf
+fi
+
+# Apply now to a listed connection that is up.
+for name in "${names[@]}"; do
+  [[ $(nmcli -g GENERAL.STATE connection show "$name" 2>/dev/null) == activated ]] || continue
+  device=$(nmcli -g GENERAL.DEVICES connection show "$name")
+  nmcli device reapply "$device" >/dev/null
+done

@@ -81,6 +81,10 @@ echo "== DNS (Cloudflare) =="
 # network's own DNS, so names only a local network knows (company, hotel
 # login page) need `omarchy dns DHCP` for that while.
 [[ $(omarchy dns 2>/dev/null) == Cloudflare ]] || omarchy dns Cloudflare || echo "WARN: DNS not set - run: omarchy dns Cloudflare"
+# Except the home networks listed in the untracked
+# ~/.config/dns-home-networks.local: they use the network's DNS (see the
+# script's header). Does nothing without that file.
+"$REPO_DIR/bin/dns-home-networks" || echo "WARN: home-network DNS not set - run: dns-home-networks"
 
 echo "== Power profile on battery =="
 # Omarchy remembers one profile for AC and one for battery and switches on
@@ -269,6 +273,8 @@ link "$REPO_DIR/bin/security-audit" "$HOME/.local/bin/security-audit"
 link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
 # In one repo: git tidy deletes the local branches that are merged or gone on origin.
 link "$REPO_DIR/bin/git-tidy" "$HOME/.local/bin/git-tidy"
+# Home networks keep their own DNS; run again after `omarchy dns ...`.
+link "$REPO_DIR/bin/dns-home-networks" "$HOME/.local/bin/dns-home-networks"
 # Repairs links Omarchy's tools turned into plain files, and reports the rest
 # (returned packages and launchers, the Brave policy copy). Linked a second
 # time into the post-update hook dir, so it runs after every `omarchy update`.
