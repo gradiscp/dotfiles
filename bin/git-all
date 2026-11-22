@@ -8,9 +8,8 @@
 #   git-all push       push every branch that has an upstream and is ahead of it;
 #                      branches without upstream are only listed (push -u by hand)
 #
-# Status never talks to the network. fetch/pull/push do, and every repo asks
-# for the SSH key passphrase unless an ssh-agent holds it - to type it once:
-#   eval "$(ssh-agent)" && ssh-add
+# Status never talks to the network. fetch/pull/push do; the per-login
+# ssh-agent asks for each key's passphrase once (config/environment.d/).
 #
 # Usage: git-all [status|fetch|pull|push] [root]
 
@@ -22,10 +21,6 @@ root="${2:-$PWD}"
 red=$'\e[31m' yellow=$'\e[33m' green=$'\e[32m' dim=$'\e[2m' reset=$'\e[0m'
 [[ -t 1 ]] || { red=''; yellow=''; green=''; dim=''; reset=''; }   # plain output when piped
 open=0 total=0
-
-if [[ $action != status && -z ${SSH_AUTH_SOCK:-} ]]; then
-  echo "${dim}no ssh-agent - each repo will ask for the key passphrase (eval \"\$(ssh-agent)\" && ssh-add to type it once)${reset}"
-fi
 
 # status lines for one repo, one per line, empty when clean
 status_notes() {
