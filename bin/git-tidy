@@ -8,8 +8,8 @@
 #   git-tidy        (or: git tidy)  list, ask, delete
 #   git-tidy -y     delete without asking
 #
-# The fetch talks to the network and asks for the SSH key passphrase unless an
-# ssh-agent holds it (eval "$(ssh-agent)" && ssh-add).
+# The fetch talks to the network; the per-login ssh-agent asks for each key's
+# passphrase once (config/environment.d/).
 
 set -uo pipefail
 yes=false
