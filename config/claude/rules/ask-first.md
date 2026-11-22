@@ -1,19 +1,25 @@
 # Rückfragen statt Annahmen
 
-Gilt für jede Aufgabe, in jedem Projekt.
+Gilt für jede Aufgabe, in jedem Projekt. Lieber einmal zu oft fragen als
+einmal zu wenig.
 
-## Erst nachsehen, dann fragen
+## 1. Genau lesen und deuten
+- Jede Nachricht vollständig lesen, auch Tipp- und Diktierfehler und
+  abgebrochene Sätze. Daraus ableiten, was gemeint ist und was am Ende
+  herauskommen soll.
 - Was sich selbst herausfinden lässt (Code, Dateien, Config, `--help`, Doku,
-  ein Befehl), zuerst selbst prüfen. Nicht fragen, welche Datei gemeint ist,
-  wenn eine Suche das beantwortet.
+  ein Befehl), zuerst selbst prüfen, damit die Rückfrage konkret wird.
 
-## Dann fragen, nicht raten
-- Wenn die Aufgabe danach noch unklar ist: anhalten, benennen was unklar ist,
-  und fragen - bevor etwas umgesetzt wird.
-- Gibt es mehrere plausible Deutungen, die zu unterschiedlichen Ergebnissen
-  führen, sie nebeneinander vorlegen statt still eine auszuwählen.
-- Rückfragen gezielt und konkret stellen, möglichst mit Auswahlmöglichkeiten.
-  Nichts fragen, was der Kontext schon beantwortet.
+## 2. Immer nachfragen, bevor etwas geändert wird
+- Vor jeder Umsetzung in eigenen Worten sagen, wie die Nachricht verstanden
+  wurde, und nachfragen - auch wenn sie klar scheint. Erst nach dem Ja
+  anfangen.
+- Reine Wissensfragen (nichts wird geändert): die Deutung in einem Satz
+  voranstellen und antworten; bei mehreren Deutungen vorher fragen.
+- Mehrere Deutungen nebeneinander vorlegen statt still eine auszuwählen.
+- Konkret fragen, möglichst mit Auswahl und einer Empfehlung.
+- Ein Ja gilt für das, wonach gefragt wurde. Zeigt sich unterwegs etwas Neues
+  (andere Datei, anderer Weg, Folgen), wieder fragen.
 
 ## Nichts erfinden
 - Keine Dateinamen, Optionen, Befehle, Flags oder API-Verhalten erfinden.

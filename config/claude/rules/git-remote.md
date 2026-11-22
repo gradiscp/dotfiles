@@ -2,13 +2,15 @@
 
 Gilt in jedem Projekt.
 
-## Git über SSH: geht nicht
+## Git über SSH: Sache des Nutzers
 
-Geprüft am 2026-09-13: Remotes laufen über SSH (`git@github.com:...`), der
-Key `~/.ssh/id_ed25519` hat eine Passphrase, die Claude nicht kennt, und es
-läuft kein ssh-agent (`SSH_AUTH_SOCK` leer). `git push`, `git pull`,
-`git fetch` und alles andere über SSH endet deshalb mit
-`Permission denied (publickey)`.
+Remotes laufen über SSH (`git@github.com:...`), die Keys haben eine
+Passphrase, die Claude nicht kennt. Seit 2026-11-22 läuft ein ssh-agent pro
+Login (systemd `ssh-agent.socket`, `SSH_AUTH_SOCK` aus `~/.bashrc`, Keys
+kommen per `AddKeysToAgent` beim ersten Gebrauch hinein). Hat der Nutzer
+seinen Key schon entsperrt, würde `git push` aus einer Claude-Sitzung
+technisch funktionieren; sonst endet es mit `Permission denied (publickey)`.
+Das ändert nichts an den Regeln unten.
 
 - Nicht versuchen, nicht wiederholen, nicht anbieten, es selbst zu tun.
   Stattdessen am Ende sagen, was zu pushen ist (Branch, Anzahl Commits) -
