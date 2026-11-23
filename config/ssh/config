@@ -10,7 +10,8 @@ Host github.com
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 
-# Unlocked keys go into the per-login ssh-agent on first use and stay until
-# logout (config/environment.d/20-ssh-agent.conf).
+# Unlocked keys go into the per-login ssh-agent on first use and stay for an
+# hour (config/environment.d/20-ssh-agent.conf), then ssh asks for the
+# passphrase again. Not until logout: agent sessions can use a loaded key.
 Host *
-  AddKeysToAgent yes
+  AddKeysToAgent 1h
