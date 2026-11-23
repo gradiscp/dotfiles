@@ -37,7 +37,20 @@
       "Read(**/*.p12)",
       "Read(**/*.kdbx)",
       "Read(**/.env)",
-      "Read(**/.env.*)"
+      "Read(**/.env.*)",
+      "Read(//**/*.pem)",
+      "Read(//**/*.key)",
+      "Read(//**/*.pfx)",
+      "Read(//**/*.p12)",
+      "Read(//**/*.kdbx)",
+      "Read(//**/.env)",
+      "Read(//**/.env.*)",
+      "Read(//**/.dev.vars)",
+      "Read(~/.config/.wrangler/**)",
+      "Read(~/.config/git/leak-patterns)",
+      "Read(~/.config/dns-home-networks.local)",
+      "Bash(git push *)",
+      "Bash(ssh *)"
     ]
   },
   "model": "opus",
