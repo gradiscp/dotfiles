@@ -96,6 +96,12 @@ hl.unbind("SUPER + CTRL + PRINT")
 -- tmux is removed (herdr does the job): its terminal launcher and help menu.
 hl.unbind("SUPER + ALT + RETURN")
 hl.unbind("SUPER + ALT + K")
+-- fcitx5 is removed: its two language keys do nothing, and stock's CTRL+SPACE
+-- bind ran a blocking `fcitx5-remote` call in the compositor on every herdr
+-- prefix (default/hypr/bindings/input-method.lua). herdr still gets the key.
+hl.unbind("SUPER + I")
+hl.unbind("SUPER + SHIFT + I")
+hl.unbind("CTRL + SPACE")
 -- lazydocker and gpu-screen-recorder are removed.
 hl.unbind("SUPER + SHIFT + D")
 hl.unbind("ALT + PRINT")
