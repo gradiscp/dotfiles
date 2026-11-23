@@ -14,7 +14,8 @@
 #           and an action for `ops-status run`
 #   homelab the checks of a Gatus instance, {state, checks: [{name, ok}]}.
 #           Only with GATUS_URL=<base url> in ~/.config/ops-status.local
-#           (untracked: this repo is public). Gatus here sits behind Twingate,
+#           (untracked: this repo is public). The same file maps a check to
+#           the device's own page, one `LINK <check name>=<url>` per line. Gatus here sits behind Twingate,
 #           so with the client offline nothing is asked and the state says so.
 #           One request a minute at most, however many widgets poll.
 #   now     when this was collected, epoch seconds
@@ -26,8 +27,9 @@
 #        ops-status run <action>  what a click in the panel starts, each in a
 #                                 terminal: update (omarchy update), pacdiff
 #                                 (sudo pacdiff), firmware
-#                                 (omarchy-update-firmware); gatus opens its
-#                                 page in the browser
+#                                 (omarchy-update-firmware); `check <name>`
+#                                 opens that device's page in the browser,
+#                                 or Gatus for a check without a LINK
 
 set -uo pipefail
 OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
@@ -38,13 +40,16 @@ now=$(date +%s)
 cache="$XDG_RUNTIME_DIR/ops-status"
 mkdir -p "$cache"
 
-# Only a plain http(s) base URL is taken from the local file; it is read, not
+# Only plain http(s) URLs are taken from the local file; it is read, not
 # sourced.
+declare -A links=()
 gatus_url=
 local_conf="${XDG_CONFIG_HOME:-$HOME/.config}/ops-status.local"
 if [[ -r $local_conf ]]; then
   while IFS='=' read -r key value; do
-    [[ $key == GATUS_URL && $value =~ ^https?://[A-Za-z0-9.:/_-]+$ ]] && gatus_url=${value%/}
+    [[ $value =~ ^https?://[A-Za-z0-9.:/_-]+$ ]] || continue
+    [[ $key == GATUS_URL ]] && gatus_url=${value%/}
+    [[ $key == "LINK "?* ]] && links[${key#LINK }]=$value
   done <"$local_conf"
 fi
 
@@ -59,9 +64,12 @@ if [[ ${1:-} == run ]]; then
     rm -f "$cache/firmware"
     exec omarchy-launch-floating-terminal-with-presentation omarchy-update-firmware
     ;;
-  gatus) [[ -n $gatus_url ]] && exec xdg-open "$gatus_url" ;;
+  check)
+    url=${links[${3:-}]:-$gatus_url}
+    [[ -n $url ]] && exec xdg-open "$url"
+    ;;
   esac
-  echo "usage: ops-status run update|pacdiff|firmware|gatus" >&2
+  echo "usage: ops-status run update|pacdiff|firmware|check <name>" >&2
   exit 2
 fi
 root="${1:-$HOME/Projects}"

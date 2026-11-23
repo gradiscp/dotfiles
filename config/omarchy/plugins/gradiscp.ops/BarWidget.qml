@@ -20,7 +20,8 @@ import qs.Ui
 // sharing state. "Unpushed" is measured against the last fetch.
 //
 // Clicks: a repo opens a terminal there (nothing is pushed), a chore starts
-// in a floating terminal, a homelab check opens Gatus (`ops-status run`).
+// in a floating terminal, a homelab check opens that device's page, or Gatus
+// where ops-status knows no page for it (`ops-status run`).
 // The panel opens on the focused monitor with
 // `omarchy-shell shell toggle gradiscp.ops`.
 Panel {
@@ -134,12 +135,14 @@ Panel {
     if (root.homelab.state === "offline") return "Twingate is offline, so the checks cannot be read."
     if (root.homelab.state !== "ok") return "Gatus is not reachable."
     var total = root.homelab.checks.length
-    return (total - root.failing) + " of " + total + " checks pass. Click one to open Gatus."
+    return (total - root.failing) + " of " + total + " checks pass. Click one to open the device."
   }
 
-  function run(action) {
+  function run(action, name) {
     if (!action) return
-    Quickshell.execDetached([root.script, "run", String(action)])
+    var command = [root.script, "run", String(action)]
+    if (name !== undefined) command.push(String(name))
+    Quickshell.execDetached(command)
     root.close()
   }
 
@@ -399,7 +402,7 @@ Panel {
   }
 
   // A homelab check on the left, its last result on the right; a click opens
-  // Gatus in the browser.
+  // the device's page in the browser.
   component CheckRow: Item {
     id: checkRow
     property var check: ({})
@@ -434,7 +437,7 @@ Panel {
       anchors.fill: parent
       hoverEnabled: true
       cursorShape: Qt.PointingHandCursor
-      onClicked: root.run("gatus")
+      onClicked: root.run("check", checkRow.check.name)
     }
   }
 
