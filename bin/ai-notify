@@ -83,6 +83,11 @@ QUIET="$RUN_DIR/quiet"
 SOUND_OFF="$RUN_DIR/sound-off"
 SOUND_DIR="$HOME/.local/share/ai-notify/sounds"
 mkdir -p "$RUN_DIR"
+# Rewritten when a hook run ends: the bar widget watches this file and polls
+# at once instead of waiting for its next slow poll. Created here so the
+# watch has something to hold on to after a reboot (tmpfs).
+POKE="$RUN_DIR/poke"
+[[ -e $POKE ]] || : >"$POKE"
 # Only these shapes ever reach a hyprctl dispatch or become a file name:
 # a Hyprland window address, and a herdr pane id (w<N>:p<N> as observed in
 # `herdr agent list`; not a documented contract).
@@ -339,6 +344,9 @@ jump)
 esac
 
 input=$(cat)
+# On every way out of a hook run, after its state files are written. The
+# detached watcher below is a subshell and does not inherit the trap.
+trap 'now_ms >"$POKE"' EXIT
 event=$(jq -r '.hook_event_name // empty' <<<"$input")
 message=$(jq -r '.message // empty' <<<"$input")
 [[ $event == PermissionRequest ]] &&

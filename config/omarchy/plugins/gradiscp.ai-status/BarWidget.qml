@@ -22,7 +22,7 @@ import qs.Ui
 // there; the toast switch (the same flag as the right-click) and the sound
 // switch (`ai-notify sound on|off`). The panel polls `ai-notify status`
 // once a second only while it is open - the glyph's `count` poll runs
-// regardless. Same bones as the stock agents/tailscale panels: Panel root,
+// regardless (slower while nothing waits). Same bones as the stock agents/tailscale panels: Panel root,
 // BarIconButton, KeyboardPanel with j/k, Enter, Esc.
 Panel {
   id: root
@@ -31,6 +31,9 @@ Panel {
   ipcTarget: "gradiscp.ai-status"
 
   property int waiting: 0
+  // Fast polls left after a poke, and whether the poke file is watched yet.
+  property int burst: 0
+  property bool pokeWatched: false
   property bool quiet: false
   property bool silent: false
   property var sessions: []
@@ -133,6 +136,12 @@ Panel {
         root.waiting = isFinite(n) && n > 0 ? n : 0
         root.quiet = lines.indexOf("quiet") > 0
         root.silent = lines.indexOf("silent") > 0
+        // The first count creates the poke file after a reboot; watch it
+        // from then on.
+        if (!root.pokeWatched) {
+          root.pokeWatched = true
+          pokeFile.reload()
+        }
       }
     }
   }
@@ -146,16 +155,35 @@ Panel {
     }
   }
 
-  // herdr offers no push event for agent state, so poll. One second
-  // (2026-10-21, was five): the glyph stayed lit for seconds after a prompt
-  // was answered, and with toasts muted it is the only visual signal. A poll
-  // is about 12 ms (bash, herdr, jq; hyprctl only while a plain terminal waits).
+  // herdr offers no push event for agent state, so poll: every second while
+  // something waits (2026-10-21: the glyph stayed lit for seconds after a
+  // prompt was answered, and with toasts muted it is the only visual signal),
+  // every five seconds otherwise. A poll is bash, herdr and jq, and it runs
+  // once per monitor, so the idle rate matters on battery. A new prompt does
+  // not wait for the slow poll: the ai-notify hook rewrites the poke file,
+  // and a few fast polls follow because herdr may report "blocked" a moment
+  // after the hook ran.
+  FileView {
+    id: pokeFile
+    path: Quickshell.env("XDG_RUNTIME_DIR") + "/ai-notify/poke"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: {
+      reload()
+      root.burst = 5
+      if (!countProc.running) countProc.running = true
+    }
+  }
+
   Timer {
-    interval: 1000
+    interval: root.waiting > 0 || root.burst > 0 ? 1000 : 5000
     running: true
     repeat: true
     triggeredOnStart: true
-    onTriggered: if (!countProc.running) countProc.running = true
+    onTriggered: {
+      if (root.burst > 0) root.burst--
+      if (!countProc.running) countProc.running = true
+    }
   }
 
   // The panel's own poll, about 20 ms, only while it is open.
