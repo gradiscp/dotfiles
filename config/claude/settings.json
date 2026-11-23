@@ -53,7 +53,7 @@
       "Bash(ssh *)"
     ]
   },
-  "model": "opus",
+  "model": "fable",
   "hooks": {
     "PermissionRequest": [
       {
@@ -99,13 +99,13 @@
       }
     ]
   },
+  "enabledPlugins": {
+    "frontend-design@anthropic-plugin-directory": true
+  },
   "modelSettings": {
     "claude-opus-5-5": {
       "effortLevel": "xhigh"
     }
   },
-  "theme": "custom:omarchy",
-  "enabledPlugins": {
-    "frontend-design@anthropic-plugin-directory": true
-  }
+  "theme": "custom:omarchy"
 }
