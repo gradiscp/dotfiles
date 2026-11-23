@@ -4,7 +4,7 @@
 #
 # Why this exists: Omarchy's own tools replace symlinks with plain files when
 # they write (omarchy-shell-config mv's a temp file over shell.json,
-# omarchy-hyprland-monitor-scaling runs sed -i without --follow-symlinks).
+# `omarchy display text size` over shell.toml).
 # That bit this machine in 2026-09 and was only noticed by accident.
 #
 # Runs after every `omarchy update` (linked into
@@ -49,8 +49,11 @@ fixed() { repaired+=("$1"); say "REPAIRED $1"; }
 # inside; the variables are ours, so evaluating them is safe. install.sh's one
 # loop (the hypr .lua files, `link "$f" ...`) is expanded here by hand.
 check_link() {
-  local src=$1 dst=$2
-  if [[ -L $dst && $(readlink -f "$dst") == "$REPO_DIR"/* ]]; then
+  local src=$1 dst=$2 newer
+  [[ -e $src ]] || { problem "install.sh links $src, which is not in the repo"; return; }
+  # -e as well: readlink -f also resolves a link whose target is gone, so a
+  # dangling link, or one to another repo file, used to pass as fine.
+  if [[ -L $dst && -e $dst && $(readlink -f "$dst") == "$(readlink -f "$src")" ]]; then
     return
   fi
   if [[ ! -e $dst ]]; then
@@ -119,8 +122,14 @@ grep -qF 'usr/share/plymouth/themes/omarchy/*' /etc/pacman.conf && problem "harm
 # Packages, launchers and stock themes from remove-unwanted-apps.sh's lists
 # (one place). A package can come back through any `pacman -S`, typed or
 # clicked in Omarchy's Install menu (LibreOffice, 2026-09-24, incidents repo).
-drift=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>/dev/null | tr '\n' ' ')
-[[ -n $drift ]] && problem "removal list not in effect: ${drift}- run remove-unwanted-apps.sh (missing-theme: sudo pacman -S omarchy)"
+# Exit 0 is clean and 1 lists what is back; anything else means the check
+# itself broke, which must not read as "clean".
+drift=$("$REPO_DIR/remove-unwanted-apps.sh" --check 2>&1)
+case $? in
+0) ;;
+1) problem "removal list not in effect: ${drift//$'\n'/ } - run remove-unwanted-apps.sh (missing-theme: sudo pacman -S omarchy)" ;;
+*) problem "remove-unwanted-apps.sh --check failed: ${drift//$'\n'/ }" ;;
+esac
 # Root-owned copies in /etc, not links; install.sh refreshes them.
 copies=(
   config/brave/privacy.json:/etc/brave/policies/managed/privacy.json

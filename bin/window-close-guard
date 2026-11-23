@@ -75,7 +75,11 @@ if [[ $(fresh_pending) == "$address" ]]; then
   exit 0
 fi
 
-if [[ $class =~ $TERMINALS ]] && busy=$(busy_in "$pid") && [[ -n $busy ]]; then
+# Only the output counts, not busy_in's exit status: under pipefail it fails
+# when the last child shell is idle, even though an earlier one is busy.
+busy=
+[[ $class =~ $TERMINALS ]] && busy=$(busy_in "$pid")
+if [[ -n $busy ]]; then
   mkdir -p "$(dirname "$PENDING")"
   echo "$address" >"$PENDING"
   "$OMARCHY_BIN/omarchy-shell" shell summon "$DIALOG" \

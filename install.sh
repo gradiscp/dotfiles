@@ -32,8 +32,8 @@ echo "== Packages =="
 # the AUR list. -S without -y: a plain -Sy refreshes the database without
 # upgrading, which is the partial-upgrade trap on Arch; run `omarchy update`
 # first on an installation that is more than a few days old.
-mapfile -t PACMAN_PKGS < <(sed -n '/^\[aur\]/q; s/\s*#.*//; s/\s+$//; /^\s*$/d; p' "$REPO_DIR/packages.txt")
-mapfile -t AUR_PKGS < <(sed -n '/^\[aur\]/,$ { /^\[aur\]/d; s/\s*#.*//; s/\s+$//; /^\s*$/d; p }' "$REPO_DIR/packages.txt")
+mapfile -t PACMAN_PKGS < <(sed -n '/^\[aur\]/q; s/\s*#.*//; s/\s*$//; /^\s*$/d; p' "$REPO_DIR/packages.txt")
+mapfile -t AUR_PKGS < <(sed -n '/^\[aur\]/,$ { /^\[aur\]/d; s/\s*#.*//; s/\s*$//; /^\s*$/d; p }' "$REPO_DIR/packages.txt")
 sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
 if (( ${#AUR_PKGS[@]} > 0 )); then
   if command -v yay >/dev/null; then
