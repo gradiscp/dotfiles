@@ -10,8 +10,8 @@ import qs.Ui
 // (/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml): the same
 // per-monitor workspace logic and layout mode, an own look (dots instead of
 // numbers, the shown one as a capsule turned to its layout, a click never
-// cycles the layout). A clone gets no stock fixes: diff it against that file
-// after an Omarchy update.
+// cycles the layout), and the monitor found by name (see `monitor`). A clone
+// gets no stock fixes: diff it against that file after an Omarchy update.
 BarWidget {
   id: root
   moduleName: "omarchy.workspaces"
@@ -22,10 +22,20 @@ BarWidget {
   // block, and the one that monitor shows, whichever monitor has focus.
   readonly property int slots: 10
 
+  // Looked up by name in Hyprland.monitors, not with monitorFor(): that answers
+  // once, and when the monitors change (unplugged, a dock reset) the bar can ask
+  // before Quickshell knows the monitor again. The row then stayed dead (no
+  // capsule, clicks and scrolling did nothing) until a shell restart. The list
+  // notifies, so this catches up as soon as Hyprland reports the monitor.
   readonly property var monitor: {
     var window = root.QsWindow.window
     var screen = window ? window.screen : null
-    return screen ? Hyprland.monitorFor(screen) : Hyprland.focusedMonitor
+    if (!screen) return Hyprland.focusedMonitor
+    var values = Hyprland.monitors.values
+    for (var i = 0; i < values.length; i++) {
+      if (values[i].name === screen.name) return values[i]
+    }
+    return null
   }
   readonly property string monitorName: root.monitor ? root.monitor.name : ""
 
