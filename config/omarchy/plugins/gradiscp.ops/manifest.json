@@ -4,7 +4,7 @@
   "name": "Ops",
   "version": "1.0.0",
   "author": "gradiscp",
-  "description": "What needs attention: git repos with uncommitted or unpushed work, and recurring chores that are due. Read-only; a click on a repo opens a terminal there.",
+  "description": "What needs attention: git repos with uncommitted or unpushed work, recurring chores that are due, and failing homelab checks. A click on a repo opens a terminal there, on a chore runs it in a terminal.",
   "kinds": [
     "bar-widget"
   ],

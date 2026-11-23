@@ -11,14 +11,16 @@ import qs.Ui
 // recurring chore is due (system update, .pacnew merges, firmware), and
 // in the bar's urgent colour once unpushed commits are older than `staleHours`
 // (bar entry setting, default 24): with pushes done by hand, that work exists
-// on this laptop only. The count is in the tooltip, like gradiscp.ai-status.
+// on this laptop only. Urgent too while a homelab check fails (Gatus, shown
+// only when ops-status has its address; "not reachable" is no alarm). The count is in the tooltip, like gradiscp.ai-status.
 //
 // Data comes from bin/ops-status (JSON, about 0.15 s for six repos, no
 // network; which chores exist and when they are due is decided there), once a minute and every five seconds while the panel is open.
 // Each monitor's widget polls for itself; at this rate that is cheaper than
 // sharing state. "Unpushed" is measured against the last fetch.
 //
-// Read-only: a click on a repo opens a terminal there, nothing is pushed.
+// Clicks: a repo opens a terminal there (nothing is pushed), a chore starts
+// in a floating terminal, a homelab check opens Gatus (`ops-status run`).
 // The panel opens on the focused monitor with
 // `omarchy-shell shell toggle gradiscp.ops`.
 Panel {
@@ -29,6 +31,8 @@ Panel {
   property var repos: []
   // Recurring chores, each {label, text, due}.
   property var due: []
+  // null without a Gatus address, else {state: ok|offline|unreachable, checks}.
+  property var homelab: null
   property double nowS: 0
   // "" not read yet, "ok", or "failed" (script missing or its output unreadable)
   property string health: ""
@@ -53,6 +57,13 @@ Panel {
     for (var i = 0; i < due.length; i++) if (due[i].due === true) n++
     return n
   }
+  readonly property int failing: {
+    var n = 0
+    var checks = homelab && homelab.checks instanceof Array ? homelab.checks : []
+    for (var i = 0; i < checks.length; i++) if (checks[i].ok !== true) n++
+    return n
+  }
+  readonly property bool alert: stale || failing > 0 || health === "failed"
   readonly property bool stale: {
     for (var i = 0; i < repos.length; i++) if (root.isStale(repos[i])) return true
     return false
@@ -74,6 +85,7 @@ Panel {
     if (root.health === "failed") return "ops-status failed"
     if (root.health === "") return "Checking…"
     var parts = []
+    if (root.failing > 0) parts.push(root.failing + (root.failing === 1 ? " check" : " checks") + " failing")
     if (root.openCount > 0) parts.push(root.openCount + (root.openCount === 1 ? " repo" : " repos") + " open")
     if (root.dueCount > 0) parts.push(root.dueCount + " due")
     return parts.length > 0 ? parts.join(" · ") : "Nothing open, nothing due"
@@ -108,12 +120,27 @@ Panel {
     if (!data || !(data.repos instanceof Array)) { root.health = "failed"; return }
     root.repos = data.repos
     root.due = data.due instanceof Array ? data.due : []
+    root.homelab = data.homelab && typeof data.homelab === "object" ? data.homelab : null
     root.nowS = Number(data.now) || Date.now() / 1000
     root.health = "ok"
   }
 
   function refresh() {
     if (!statusProc.running) statusProc.running = true
+  }
+
+  function homelabText() {
+    if (!root.homelab) return ""
+    if (root.homelab.state === "offline") return "Twingate is offline, so the checks cannot be read."
+    if (root.homelab.state !== "ok") return "Gatus is not reachable."
+    var total = root.homelab.checks.length
+    return (total - root.failing) + " of " + total + " checks pass. Click one to open Gatus."
+  }
+
+  function run(action) {
+    if (!action) return
+    Quickshell.execDetached([root.script, "run", String(action)])
+    root.close()
   }
 
   function openTerminal(repo) {
@@ -145,7 +172,7 @@ Panel {
     anchors.fill: parent
     bar: root.bar
     text: root.glyph
-    foreground: root.stale || root.health === "failed" ? root.alertColor
+    foreground: root.alert ? root.alertColor
       : (root.openCount > 0 || root.dueCount > 0 ? root.foreground : root.idleColor)
     tooltipText: "Ops: " + root.summary()
     onPressed: function(button) { root.toggle() }
@@ -194,7 +221,7 @@ Panel {
           iconComponent: Component {
             Text {
               text: root.glyph
-              color: root.stale || root.health === "failed" ? root.alertColor : root.foreground
+              color: root.alert ? root.alertColor : root.foreground
               font.family: root.fontFamily
               font.pixelSize: Style.font.display
             }
@@ -239,6 +266,32 @@ Panel {
               required property var modelData
               entry: modelData
             }
+          }
+
+          Note { text: "Click one to run it in a terminal." }
+        }
+
+        PanelSeparator {
+          foreground: root.foreground
+          visible: root.homelab !== null
+        }
+
+        Section {
+          title: "HOMELAB"
+          visible: root.homelab !== null
+
+          Repeater {
+            model: root.homelab && root.homelab.checks instanceof Array ? root.homelab.checks : []
+
+            CheckRow {
+              required property var modelData
+              check: modelData
+            }
+          }
+
+          Note {
+            alert: root.failing > 0
+            text: root.homelabText()
           }
         }
       }
@@ -317,7 +370,7 @@ Panel {
       width: Math.min(implicitWidth, parent.width * 0.45)
       textFormat: Text.PlainText
       text: String(dueRow.entry.label || "")
-      color: dueRow.isDue ? root.foreground : root.dim
+      color: dueRow.isDue || dueMouse.containsMouse ? root.foreground : root.dim
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall
       elide: Text.ElideRight
@@ -334,6 +387,54 @@ Panel {
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall
       elide: Text.ElideLeft
+    }
+
+    MouseArea {
+      id: dueMouse
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: root.run(dueRow.entry.action)
+    }
+  }
+
+  // A homelab check on the left, its last result on the right; a click opens
+  // Gatus in the browser.
+  component CheckRow: Item {
+    id: checkRow
+    property var check: ({})
+    readonly property bool ok: check.ok === true
+    width: parent ? parent.width : 0
+    implicitHeight: Math.max(checkName.implicitHeight, checkState.implicitHeight)
+
+    Text {
+      id: checkName
+      anchors.left: parent.left
+      width: Math.min(implicitWidth, parent.width * 0.7)
+      textFormat: Text.PlainText
+      text: String(checkRow.check.name || "")
+      color: !checkRow.ok ? root.alertColor : (checkMouse.containsMouse ? root.foreground : root.dim)
+      font.family: root.fontFamily
+      font.pixelSize: Style.font.bodySmall
+      elide: Text.ElideRight
+    }
+
+    Text {
+      id: checkState
+      anchors.right: parent.right
+      textFormat: Text.PlainText
+      text: checkRow.ok ? "ok" : "failing"
+      color: checkRow.ok ? root.dim : root.alertColor
+      font.family: root.fontFamily
+      font.pixelSize: Style.font.bodySmall
+    }
+
+    MouseArea {
+      id: checkMouse
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: root.run("gatus")
     }
   }
 

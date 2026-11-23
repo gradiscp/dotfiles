@@ -11,21 +11,60 @@
 #           the last full system upgrade (due after a week), .pacnew files in
 #           /etc, and firmware updates fwupd already knows of (from
 #           `framework-panel`, no download; asked every six hours at most)
+#           and an action for `ops-status run`
+#   homelab the checks of a Gatus instance, {state, checks: [{name, ok}]}.
+#           Only with GATUS_URL=<base url> in ~/.config/ops-status.local
+#           (untracked: this repo is public). Gatus here sits behind Twingate,
+#           so with the client offline nothing is asked and the state says so.
+#           One request a minute at most, however many widgets poll.
 #   now     when this was collected, epoch seconds
 #
-# No network anywhere. Dependabot PRs are not in here: they would need `gh`
-# with the right one of two accounts per repo.
+# Apart from that one Gatus request there is no network. Dependabot PRs are
+# not in here: they would need `gh` with the right one of two accounts.
 #
-# Usage: ops-status [root]   (root defaults to ~/Projects)
+# Usage: ops-status [root]        (root defaults to ~/Projects)
+#        ops-status run <action>  what a click in the panel starts, each in a
+#                                 terminal: update (omarchy update), pacdiff
+#                                 (sudo pacdiff), firmware
+#                                 (omarchy-update-firmware); gatus opens its
+#                                 page in the browser
 
 set -uo pipefail
-root="${1:-$HOME/Projects}"
+OMARCHY_BIN="${OMARCHY_PATH:-/usr/share/omarchy}/bin"
 # The neighbours in the repo; ~/.local/bin holds links to them.
 bin="$(dirname "$(readlink -f "$0")")"
 now=$(date +%s)
 : "${XDG_RUNTIME_DIR:?ops-status: XDG_RUNTIME_DIR unset}"
 cache="$XDG_RUNTIME_DIR/ops-status"
 mkdir -p "$cache"
+
+# Only a plain http(s) base URL is taken from the local file; it is read, not
+# sourced.
+gatus_url=
+local_conf="${XDG_CONFIG_HOME:-$HOME/.config}/ops-status.local"
+if [[ -r $local_conf ]]; then
+  while IFS='=' read -r key value; do
+    [[ $key == GATUS_URL && $value =~ ^https?://[A-Za-z0-9.:/_-]+$ ]] && gatus_url=${value%/}
+  done <"$local_conf"
+fi
+
+if [[ ${1:-} == run ]]; then
+  # The launcher is the one Omarchy's own update widget uses: a floating
+  # terminal that waits for a key at the end. It needs Omarchy's bin on PATH.
+  export PATH="$OMARCHY_BIN:$PATH"
+  case ${2:-} in
+  update) exec omarchy-launch-floating-terminal-with-presentation omarchy-update ;;
+  pacdiff) exec omarchy-launch-floating-terminal-with-presentation sudo pacdiff ;;
+  firmware)
+    rm -f "$cache/firmware"
+    exec omarchy-launch-floating-terminal-with-presentation omarchy-update-firmware
+    ;;
+  gatus) [[ -n $gatus_url ]] && exec xdg-open "$gatus_url" ;;
+  esac
+  echo "usage: ops-status run update|pacdiff|firmware|gatus" >&2
+  exit 2
+fi
+root="${1:-$HOME/Projects}"
 
 # cached <name> <seconds> <command...>: the command's output, kept that long.
 # One widget per monitor polls, so the temp name carries the PID.
@@ -38,7 +77,10 @@ cached() {
   cat "$file" 2>/dev/null
 }
 
-item() { jq -cn --arg label "$1" --arg text "$2" --argjson due "$3" '{label: $label, text: $text, due: $due}'; }
+item() {
+  jq -cn --arg label "$1" --arg text "$2" --argjson due "$3" --arg action "$4" \
+    '{label: $label, text: $text, due: $due, action: $action}'
+}
 
 due_items() {
   local stamp days n updates
@@ -47,32 +89,50 @@ due_items() {
   if stamp=$(date -d "$stamp" +%s 2>/dev/null) && [[ -n $stamp ]]; then
     days=$(((now - stamp) / 86400))
     case $days in
-    0) item "System update" "today" false ;;
-    1) item "System update" "yesterday" false ;;
-    *) item "System update" "$days days ago" "$( ((days >= 7)) && echo true || echo false)" ;;
+    0) item "System update" "today" false update ;;
+    1) item "System update" "yesterday" false update ;;
+    *) item "System update" "$days days ago" "$( ((days >= 7)) && echo true || echo false)" update ;;
     esac
   else
-    item "System update" "no upgrade in pacman.log" false
+    item "System update" "no upgrade in pacman.log" false update
   fi
 
   n=$(find /etc -name '*.pacnew' 2>/dev/null | wc -l)
   if ((n > 0)); then
-    item "Config merges" "$n .pacnew - sudo pacdiff" true
+    item "Config merges" "$n .pacnew" true pacdiff
   else
-    item "Config merges" "none" false
+    item "Config merges" "none" false pacdiff
   fi
 
   updates=$(cached firmware 21600 "$bin/framework-panel" status --firmware |
     jq -r 'if .fwupd == null then empty else [.fwupd.updates[] | select(.update != null)] | length end' 2>/dev/null)
   if [[ $updates =~ ^[0-9]+$ ]]; then
     if ((updates > 0)); then
-      item "Firmware" "$updates pending - omarchy-update-firmware" true
+      item "Firmware" "$updates pending" true firmware
     else
-      item "Firmware" "up to date" false
+      item "Firmware" "up to date" false firmware
     fi
   fi
 }
 
+# Always prints a document, also on failure, so that a failure is cached for
+# the minute too instead of running into the timeout on every poll.
+gatus() {
+  local body
+  if command -v twingate >/dev/null && [[ $(timeout 5 twingate -d status 2>/dev/null | head -n 1) != online ]]; then
+    echo '{"state": "offline", "checks": []}'
+  elif body=$(curl -fsS -m 4 "$gatus_url/api/v1/endpoints/statuses?page=1&pageSize=1" 2>/dev/null) &&
+    jq -ce '{state: "ok", checks: [.[] | {name, ok: (.results[-1].success == true)}]}' <<<"$body" 2>/dev/null; then
+    :
+  else
+    echo '{"state": "unreachable", "checks": []}'
+  fi
+}
+
+homelab=null
+[[ -n $gatus_url ]] && homelab=$(cached gatus 60 gatus)
+
 repos=$("$bin/git-all" json "$root") || exit 1
-jq -n --argjson repos "$repos" --argjson due "$(due_items | jq -cs .)" --argjson now "$now" \
-  '{now: $now, repos: $repos, due: $due}'
+jq -n --argjson repos "$repos" --argjson due "$(due_items | jq -cs .)" \
+  --argjson homelab "${homelab:-null}" --argjson now "$now" \
+  '{now: $now, repos: $repos, due: $due, homelab: $homelab}'

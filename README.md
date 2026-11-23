@@ -88,7 +88,8 @@ through Omarchy's menus.
   Twingate (state, connect and disconnect through pkexec, the resources
   with their address to copy), a checklist that lights up while a repo
   under `~/Projects` has uncommitted or unpushed work or a chore is due
-  (`ops-status`: system update, `.pacnew`, firmware), the display widget, a shield that runs the
+  (`ops-status`: system update, `.pacnew`, firmware; a click runs it) or a
+  homelab check fails (Gatus, address in an untracked file), the display widget, a shield that runs the
   security checks in the background (`security-audit`: packages, project
   dependencies, virus scan; one or all, from quick up to the whole
   computer) and lights up while the last ones found something, and on a
