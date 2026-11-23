@@ -104,7 +104,7 @@ through Omarchy's menus.
 - **Apps:** Brave Origin as the only browser, with privacy defaults as
   managed policies (`config/brave/privacy.json`), Bitwarden and uBlock
   Origin's filter lists by policy (`config/brave/extensions.json`); trimmed
-  stock set (no LibreOffice, Obsidian, Disks, CJK input, tmux,
+  stock set (no Obsidian, Disks, CJK input, tmux,
   lazydocker, lazygit, screen recorder, Monologue, Hype, Gliff, vi,
   Evince: PDFs open in Papers);
   anything heavier runs in a

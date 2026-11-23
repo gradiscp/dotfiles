@@ -34,7 +34,7 @@ unwanted=(
   fcitx5-mozc fcitx5-hangul fcitx5-chinese-addons fcitx5-chewing fcitx5-table-extra
   # 2026-09-13 audit: nothing else depends on these (pacman -Rs --print dry run:
   # 90 packages, ~1.8 GiB, nothing from Omarchy, Hyprland, the shell or the boot chain)
-  libreoffice-fresh clang llvm dotnet-runtime ruby tobi-try mariadb-libs postgresql-libs
+  clang llvm dotnet-runtime ruby tobi-try mariadb-libs postgresql-libs
   yt-dlp webkit2gtk-4.1 frei0r-plugins
   qemu-user-static qemu-user-static-binfmt
   cups cups-filters cups-pk-helper system-config-printer
