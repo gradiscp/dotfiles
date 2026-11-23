@@ -6,7 +6,7 @@ Gilt in jedem Projekt.
 
 Remotes laufen über SSH (`git@github.com:...`), die Keys haben eine
 Passphrase, die Claude nicht kennt. Seit 2026-11-22 läuft ein ssh-agent pro
-Login (systemd `ssh-agent.socket`, `SSH_AUTH_SOCK` aus `~/.bashrc`, Keys
+Login (systemd `ssh-agent.socket`, `SSH_AUTH_SOCK` aus `environment.d`, Keys
 kommen per `AddKeysToAgent` beim ersten Gebrauch hinein). Hat der Nutzer
 seinen Key schon entsperrt, würde `git push` aus einer Claude-Sitzung
 technisch funktionieren; sonst endet es mit `Permission denied (publickey)`.

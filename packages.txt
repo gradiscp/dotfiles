@@ -11,6 +11,8 @@ keepassxc
 pnpm
 uv
 typst
+# Homelab playbook (separate repo)
+ansible
 # Image viewer: opens the whole folder and preloads neighbours (imv does not)
 loupe
 # Security, all on demand, no daemon: known CVEs in installed packages,

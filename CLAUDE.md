@@ -40,8 +40,7 @@ reproducible) are in `README.md`; apply them to every suggestion.
 
 Omarchy's tools sometimes replace a link with a plain file when they write
 (`omarchy-shell-config` `mv`s over `shell.json`, `omarchy display text
-size` over `shell.toml`, `omarchy-hyprland-monitor-scaling` runs `sed -i` without
-`--follow-symlinks`). Then the repo file changes nothing live, and
+size` over `shell.toml`). Then the repo file changes nothing live, and
 `hyprctl reload` still reports success. Others write *through* the link,
 straight into the repo, which the drift check cannot see:
 
@@ -58,7 +57,7 @@ straight into the repo, which the drift check cannot see:
   `omarchy default agent`) into `mise/config.toml`; Omarchy's browser
   installer and two migrations into `brave-origin-flags.conf`; the
   default-browser menu into `mimeapps.list`; `omarchy branding screensaver`
-  into `screensaver.txt`; `herdr integration install
+  into `screensaver.txt`; monitor scaling into `monitors.lua`; `herdr integration install
   claude` into `settings.json` with an absolute home path. A surprise diff in
   one of these files is a tool's doing: revert it, do not commit it.
 - `herdr integration install claude`: `install.sh` runs it only before the
