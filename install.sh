@@ -138,7 +138,7 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.security" "$CONFIG_DIR/omarchy/p
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.framework" "$CONFIG_DIR/omarchy/plugins/gradiscp.framework"
 # Twingate in the tray drawer: state, connect/disconnect (pkexec), resources.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.twingate" "$CONFIG_DIR/omarchy/plugins/gradiscp.twingate"
-# Ops in the bar: repos with uncommitted or unpushed work (bin/ops-status).
+# Ops in the tray drawer: repos with open work and due chores (bin/ops-status).
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.ops" "$CONFIG_DIR/omarchy/plugins/gradiscp.ops"
 # An own background for the stock Kanagawa theme. User backgrounds sort before
 # the theme's own, so it is the first one when Kanagawa is set. Directory

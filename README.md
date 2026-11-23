@@ -82,14 +82,13 @@ through Omarchy's menus.
   capsule turned to its layout (lying for tiles, long and low for
   scrolling, upright for floating) in the theme's urgent colour; a
   terminal icon that lights up while Claude Code sessions wait for a
-  permission, with a sessions panel and toast/sound switches on click; a
-  checklist icon that lights up while a repo under `~/Projects` has
-  uncommitted or unpushed work (`ops-status`), urgent once unpushed commits
-  are older than a day;
+  permission, with a sessions panel and toast/sound switches on click;
   media controls while something plays, microphone mute; night light,
   stay-awake and do-not-disturb next to the clock. The tray drawer holds
   Twingate (state, connect and disconnect through pkexec, the resources
-  with their address to copy), the display widget, a shield that runs the
+  with their address to copy), a checklist that lights up while a repo
+  under `~/Projects` has uncommitted or unpushed work or a chore is due
+  (`ops-status`: system update, `.pacnew`, firmware), the display widget, a shield that runs the
   security checks in the background (`security-audit`: packages, project
   dependencies, virus scan; one or all, from quick up to the whole
   computer) and lights up while the last ones found something, and on a

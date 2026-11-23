@@ -7,13 +7,14 @@ import qs.Commons as Commons
 import qs.Ui
 
 // One icon for "is there anything I have to take care of?". Dim while
-// nothing is open, bright while a repo has uncommitted or unpushed work, and
+// nothing is open, bright while a repo has uncommitted or unpushed work or a
+// recurring chore is due (system update, .pacnew merges, firmware), and
 // in the bar's urgent colour once unpushed commits are older than `staleHours`
 // (bar entry setting, default 24): with pushes done by hand, that work exists
 // on this laptop only. The count is in the tooltip, like gradiscp.ai-status.
 //
-// Data comes from bin/ops-status (JSON, about 0.1 s for six repos, no
-// network), once a minute and every five seconds while the panel is open.
+// Data comes from bin/ops-status (JSON, about 0.15 s for six repos, no
+// network; which chores exist and when they are due is decided there), once a minute and every five seconds while the panel is open.
 // Each monitor's widget polls for itself; at this rate that is cheaper than
 // sharing state. "Unpushed" is measured against the last fetch.
 //
@@ -26,6 +27,8 @@ Panel {
   ipcTarget: "gradiscp.ops"
 
   property var repos: []
+  // Recurring chores, each {label, text, due}.
+  property var due: []
   property double nowS: 0
   // "" not read yet, "ok", or "failed" (script missing or its output unreadable)
   property string health: ""
@@ -43,6 +46,11 @@ Panel {
   readonly property int openCount: {
     var n = 0
     for (var i = 0; i < repos.length; i++) if (root.isOpen(repos[i])) n++
+    return n
+  }
+  readonly property int dueCount: {
+    var n = 0
+    for (var i = 0; i < due.length; i++) if (due[i].due === true) n++
     return n
   }
   readonly property bool stale: {
@@ -65,8 +73,10 @@ Panel {
   function summary() {
     if (root.health === "failed") return "ops-status failed"
     if (root.health === "") return "Checking…"
-    if (root.openCount === 0) return "Everything committed and pushed"
-    return root.openCount + (root.openCount === 1 ? " repo" : " repos") + " with open work"
+    var parts = []
+    if (root.openCount > 0) parts.push(root.openCount + (root.openCount === 1 ? " repo" : " repos") + " open")
+    if (root.dueCount > 0) parts.push(root.dueCount + " due")
+    return parts.length > 0 ? parts.join(" · ") : "Nothing open, nothing due"
   }
 
   function repoText(repo) {
@@ -97,6 +107,7 @@ Panel {
     // A failed poll keeps the last good list and only marks the state.
     if (!data || !(data.repos instanceof Array)) { root.health = "failed"; return }
     root.repos = data.repos
+    root.due = data.due instanceof Array ? data.due : []
     root.nowS = Number(data.now) || Date.now() / 1000
     root.health = "ok"
   }
@@ -135,7 +146,7 @@ Panel {
     bar: root.bar
     text: root.glyph
     foreground: root.stale || root.health === "failed" ? root.alertColor
-      : (root.openCount > 0 ? root.foreground : root.idleColor)
+      : (root.openCount > 0 || root.dueCount > 0 ? root.foreground : root.idleColor)
     tooltipText: "Ops: " + root.summary()
     onPressed: function(button) { root.toggle() }
   }
@@ -211,6 +222,25 @@ Panel {
               : "Unpushed is measured against the last fetch. Click a repo to open a terminal there."
           }
         }
+
+        PanelSeparator {
+          foreground: root.foreground
+          visible: root.due.length > 0
+        }
+
+        Section {
+          title: "DUE"
+          visible: root.due.length > 0
+
+          Repeater {
+            model: root.due
+
+            DueRow {
+              required property var modelData
+              entry: modelData
+            }
+          }
+        }
       }
       }
     }
@@ -270,6 +300,40 @@ Panel {
       hoverEnabled: true
       cursorShape: Qt.PointingHandCursor
       onClicked: root.openTerminal(row.repo)
+    }
+  }
+
+  // A chore on the left, its state on the right; bright while it is due.
+  component DueRow: Item {
+    id: dueRow
+    property var entry: ({})
+    readonly property bool isDue: entry.due === true
+    width: parent ? parent.width : 0
+    implicitHeight: Math.max(dueLabel.implicitHeight, dueText.implicitHeight)
+
+    Text {
+      id: dueLabel
+      anchors.left: parent.left
+      width: Math.min(implicitWidth, parent.width * 0.45)
+      textFormat: Text.PlainText
+      text: String(dueRow.entry.label || "")
+      color: dueRow.isDue ? root.foreground : root.dim
+      font.family: root.fontFamily
+      font.pixelSize: Style.font.bodySmall
+      elide: Text.ElideRight
+    }
+
+    Text {
+      id: dueText
+      anchors.right: parent.right
+      width: Math.min(implicitWidth, parent.width - dueLabel.width - Style.spacing.xl)
+      horizontalAlignment: Text.AlignRight
+      textFormat: Text.PlainText
+      text: String(dueRow.entry.text || "")
+      color: dueRow.isDue ? root.foreground : root.dim
+      font.family: root.fontFamily
+      font.pixelSize: Style.font.bodySmall
+      elide: Text.ElideLeft
     }
   }
 

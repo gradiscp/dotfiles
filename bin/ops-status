@@ -7,14 +7,72 @@
 #           files, unpushed commits, branches without upstream, stashes
 #           (from `git-all json`; local only, no fetch - "unpushed" is measured
 #           against what the last fetch saw)
+#   due     the recurring chores from CHEATSHEET.md, each {label, text, due}:
+#           the last full system upgrade (due after a week), .pacnew files in
+#           /etc, and firmware updates fwupd already knows of (from
+#           `framework-panel`, no download; asked every six hours at most)
 #   now     when this was collected, epoch seconds
+#
+# No network anywhere. Dependabot PRs are not in here: they would need `gh`
+# with the right one of two accounts per repo.
 #
 # Usage: ops-status [root]   (root defaults to ~/Projects)
 
 set -uo pipefail
 root="${1:-$HOME/Projects}"
-# git-all is this script's neighbour in the repo; ~/.local/bin holds links.
-git_all="$(dirname "$(readlink -f "$0")")/git-all"
+# The neighbours in the repo; ~/.local/bin holds links to them.
+bin="$(dirname "$(readlink -f "$0")")"
+now=$(date +%s)
+: "${XDG_RUNTIME_DIR:?ops-status: XDG_RUNTIME_DIR unset}"
+cache="$XDG_RUNTIME_DIR/ops-status"
+mkdir -p "$cache"
 
-repos=$("$git_all" json "$root") || exit 1
-jq -n --argjson repos "$repos" '{now: (now | floor), repos: $repos}'
+# cached <name> <seconds> <command...>: the command's output, kept that long.
+# One widget per monitor polls, so the temp name carries the PID.
+cached() {
+  local file="$cache/$1" ttl=$2
+  shift 2
+  if [[ ! -s $file ]] || (( now - $(stat -c %Y "$file") >= ttl )); then
+    if "$@" >"$file.$$" 2>/dev/null; then mv "$file.$$" "$file"; else rm -f "$file.$$"; fi
+  fi
+  cat "$file" 2>/dev/null
+}
+
+item() { jq -cn --arg label "$1" --arg text "$2" --argjson due "$3" '{label: $label, text: $text, due: $due}'; }
+
+due_items() {
+  local stamp days n updates
+  # Weekly per the cheatsheet. pacman logs the upgrade `omarchy update` runs.
+  stamp=$(tac /var/log/pacman.log 2>/dev/null | grep -m 1 'starting full system upgrade' | cut -c2-25)
+  if stamp=$(date -d "$stamp" +%s 2>/dev/null) && [[ -n $stamp ]]; then
+    days=$(((now - stamp) / 86400))
+    case $days in
+    0) item "System update" "today" false ;;
+    1) item "System update" "yesterday" false ;;
+    *) item "System update" "$days days ago" "$( ((days >= 7)) && echo true || echo false)" ;;
+    esac
+  else
+    item "System update" "no upgrade in pacman.log" false
+  fi
+
+  n=$(find /etc -name '*.pacnew' 2>/dev/null | wc -l)
+  if ((n > 0)); then
+    item "Config merges" "$n .pacnew - sudo pacdiff" true
+  else
+    item "Config merges" "none" false
+  fi
+
+  updates=$(cached firmware 21600 "$bin/framework-panel" status --firmware |
+    jq -r 'if .fwupd == null then empty else [.fwupd.updates[] | select(.update != null)] | length end' 2>/dev/null)
+  if [[ $updates =~ ^[0-9]+$ ]]; then
+    if ((updates > 0)); then
+      item "Firmware" "$updates pending - omarchy-update-firmware" true
+    else
+      item "Firmware" "up to date" false
+    fi
+  fi
+}
+
+repos=$("$bin/git-all" json "$root") || exit 1
+jq -n --argjson repos "$repos" --argjson due "$(due_items | jq -cs .)" --argjson now "$now" \
+  '{now: $now, repos: $repos, due: $due}'
