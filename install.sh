@@ -138,6 +138,8 @@ link "$REPO_DIR/config/omarchy/plugins/gradiscp.security" "$CONFIG_DIR/omarchy/p
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.framework" "$CONFIG_DIR/omarchy/plugins/gradiscp.framework"
 # Twingate in the tray drawer: state, connect/disconnect (pkexec), resources.
 link "$REPO_DIR/config/omarchy/plugins/gradiscp.twingate" "$CONFIG_DIR/omarchy/plugins/gradiscp.twingate"
+# Ops in the bar: repos with uncommitted or unpushed work (bin/ops-status).
+link "$REPO_DIR/config/omarchy/plugins/gradiscp.ops" "$CONFIG_DIR/omarchy/plugins/gradiscp.ops"
 # An own background for the stock Kanagawa theme. User backgrounds sort before
 # the theme's own, so it is the first one when Kanagawa is set. Directory
 # link: `omarchy theme bg install` adds files here, i.e. into the repo.
@@ -271,6 +273,8 @@ link "$REPO_DIR/bin/window-close-guard" "$HOME/.local/bin/window-close-guard"
 link "$REPO_DIR/bin/security-audit" "$HOME/.local/bin/security-audit"
 # Run from ~/Projects: git-all [status|fetch|pull|push] over every repo below.
 link "$REPO_DIR/bin/git-all" "$HOME/.local/bin/git-all"
+# What needs attention, as JSON for the gradiscp.ops widget (uses git-all json).
+link "$REPO_DIR/bin/ops-status" "$HOME/.local/bin/ops-status"
 # In one repo: git tidy deletes the local branches that are merged or gone on origin.
 link "$REPO_DIR/bin/git-tidy" "$HOME/.local/bin/git-tidy"
 # Home networks keep their own DNS; run again after `omarchy dns ...`.

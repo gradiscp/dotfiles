@@ -82,7 +82,10 @@ through Omarchy's menus.
   capsule turned to its layout (lying for tiles, long and low for
   scrolling, upright for floating) in the theme's urgent colour; a
   terminal icon that lights up while Claude Code sessions wait for a
-  permission, with a sessions panel and toast/sound switches on click;
+  permission, with a sessions panel and toast/sound switches on click; a
+  checklist icon that lights up while a repo under `~/Projects` has
+  uncommitted or unpushed work (`ops-status`), urgent once unpushed commits
+  are older than a day;
   media controls while something plays, microphone mute; night light,
   stay-awake and do-not-disturb next to the clock. The tray drawer holds
   Twingate (state, connect and disconnect through pkexec, the resources
@@ -141,7 +144,7 @@ config/
     shell.json         Bar layout, idle timing, plugin list
     shell.toml         Shell values over every theme: font size, thinner bar
     plugins/           gradiscp.* - close dialog, workspaces, AI status (Claude, Codex),
-                       security checks, Framework panel, Twingate
+                       security checks, Framework panel, Twingate, Ops (open repos)
     extensions/        Menu override (Share hidden, needs localsend)
     backgrounds/       Own background for the stock Kanagawa theme
     branding/          Screensaver text (gradiscp, in the style of Omarchy's logo)

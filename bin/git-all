@@ -7,15 +7,16 @@
 #   git-all pull       git pull --ff-only on the current branch; dirty repos are skipped
 #   git-all push       push every branch that has an upstream and is ahead of it;
 #                      branches without upstream are only listed (push -u by hand)
+#   git-all json       the status as one JSON array, for bin/ops-status
 #
-# Status never talks to the network. fetch/pull/push do; the per-login
+# Status and json never talk to the network. fetch/pull/push do; the per-login
 # ssh-agent asks for each key's passphrase once (config/environment.d/).
 #
-# Usage: git-all [status|fetch|pull|push] [root]
+# Usage: git-all [status|fetch|pull|push|json] [root]
 
 set -uo pipefail
 action="${1:-status}"
-case $action in status|fetch|pull|push) ;; *) echo "usage: git-all [status|fetch|pull|push] [root]" >&2; exit 2 ;; esac
+case $action in status|fetch|pull|push|json) ;; *) echo "usage: git-all [status|fetch|pull|push|json] [root]" >&2; exit 2 ;; esac
 root="${2:-$PWD}"
 
 red=$'\e[31m' yellow=$'\e[33m' green=$'\e[32m' dim=$'\e[2m' reset=$'\e[0m'
@@ -38,6 +39,45 @@ status_notes() {
   s=$(git -C "$repo" stash list 2>/dev/null | wc -l)
   ((s > 0)) && echo "${dim}${s} stash${reset}"
 }
+
+# One tab-separated line for a repo: name, path, current branch, then counts
+# of uncommitted files, unpushed commits, branches without upstream, branches
+# whose upstream is gone, stashes, and the commit time of the oldest unpushed
+# commit (0 when there is none).
+json_row() {
+  local repo=$1 name=$2 branch upstream track t
+  local dirty unpushed=0 no_upstream=0 gone=0 stash oldest=0
+  dirty=$(git -C "$repo" status --porcelain 2>/dev/null | wc -l)
+  # %1f (unit separator), not a tab: read would fold an empty field away.
+  while IFS=$'\x1f' read -r branch upstream track; do
+    if [[ -z $upstream ]]; then
+      no_upstream=$((no_upstream + 1))
+    elif [[ $track == *gone* ]]; then
+      gone=$((gone + 1))
+    elif [[ $track =~ ahead\ ([0-9]+) ]]; then
+      unpushed=$((unpushed + BASH_REMATCH[1]))
+      t=$(git -C "$repo" log --format=%ct "$upstream..$branch" 2>/dev/null | tail -n 1)
+      [[ $t =~ ^[0-9]+$ ]] && ((oldest == 0 || t < oldest)) && oldest=$t
+    fi
+  done < <(git -C "$repo" for-each-ref --format='%(refname:short)%1f%(upstream:short)%1f%(upstream:track)' refs/heads)
+  stash=$(git -C "$repo" stash list 2>/dev/null | wc -l)
+  printf '%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n' "$name" "$repo" \
+    "$(git -C "$repo" branch --show-current 2>/dev/null)" \
+    "$dirty" "$unpushed" "$no_upstream" "$gone" "$stash" "$oldest"
+}
+
+if [[ $action == json ]]; then
+  while IFS= read -r gitdir; do
+    json_row "${gitdir%/.git}" "$(basename "${gitdir%/.git}")"
+  done < <(find "$root" -maxdepth 5 -type d -name .git 2>/dev/null | sort) |
+    jq -Rn '[inputs | split("\t") | {
+      name: .[0], path: .[1], branch: .[2],
+      dirty: (.[3] | tonumber), unpushed: (.[4] | tonumber),
+      noUpstream: (.[5] | tonumber), gone: (.[6] | tonumber),
+      stash: (.[7] | tonumber), oldestUnpushed: (.[8] | tonumber)
+    }]'
+  exit
+fi
 
 # fetch / pull / push for one repo; prints result lines
 act() {

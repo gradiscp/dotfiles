@@ -1,0 +1,20 @@
+#!/bin/bash
+# What needs attention right now, as one JSON document for the gradiscp.ops
+# bar widget (config/omarchy/plugins/gradiscp.ops) - and readable by hand:
+# `ops-status | jq`.
+#
+#   repos   every git repo below the root with its open work: uncommitted
+#           files, unpushed commits, branches without upstream, stashes
+#           (from `git-all json`; local only, no fetch - "unpushed" is measured
+#           against what the last fetch saw)
+#   now     when this was collected, epoch seconds
+#
+# Usage: ops-status [root]   (root defaults to ~/Projects)
+
+set -uo pipefail
+root="${1:-$HOME/Projects}"
+# git-all is this script's neighbour in the repo; ~/.local/bin holds links.
+git_all="$(dirname "$(readlink -f "$0")")/git-all"
+
+repos=$("$git_all" json "$root") || exit 1
+jq -n --argjson repos "$repos" '{now: (now | floor), repos: $repos}'

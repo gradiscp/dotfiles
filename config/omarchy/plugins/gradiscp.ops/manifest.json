@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gradiscp.ops",
+  "name": "Ops",
+  "version": "1.0.0",
+  "author": "gradiscp",
+  "description": "What needs attention: git repos with uncommitted or unpushed work. Read-only; a click on a repo opens a terminal there.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Ops",
+    "description": "Checklist icon that is dim while every repo is clean and pushed, bright while work is open, and in the bar's urgent colour once unpushed commits are older than a day; a click opens the panel.",
+    "category": "Development",
+    "allowMultiple": false
+  }
+}
