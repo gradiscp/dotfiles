@@ -1,0 +1,33 @@
+#!/bin/bash
+# Keep a local folder and an rclone remote in step, without ever deleting:
+# copy what is new or newer up, then what is new or newer down. Run hourly by
+# docs-sync.timer, or by hand.
+#
+#   docs-sync             both directions
+#   docs-sync --dry-run   show what would be copied
+#
+# Folder and remote come from ~/.config/docs-sync.conf (untracked, written by
+# the homelab playbook together with the rclone config):
+#   DOCS_SYNC_DIR=...      local folder
+#   DOCS_SYNC_REMOTE=...   rclone remote, e.g. name:
+# Without that file this does nothing, so the timer is harmless on a machine
+# that is not set up.
+#
+# Nothing is deleted on either side, so a file removed or renamed in one place
+# comes back from the other on the next run: remove or rename it in both.
+# When a file changed on both sides, the newer one wins (--update).
+
+set -euo pipefail
+
+conf=${XDG_CONFIG_HOME:-$HOME/.config}/docs-sync.conf
+[[ -r $conf ]] || { echo "docs-sync: $conf missing, nothing to do"; exit 0; }
+# shellcheck source=/dev/null
+. "$conf"
+: "${DOCS_SYNC_DIR:?not set in $conf}" "${DOCS_SYNC_REMOTE:?not set in $conf}"
+
+command -v rclone >/dev/null || { echo "docs-sync: rclone is not installed" >&2; exit 1; }
+# A missing folder is an error, not a reason to download everything again.
+[[ -d $DOCS_SYNC_DIR ]] || { echo "docs-sync: $DOCS_SYNC_DIR does not exist" >&2; exit 1; }
+
+rclone copy --update "$@" "$DOCS_SYNC_DIR" "$DOCS_SYNC_REMOTE"
+rclone copy --update "$@" "$DOCS_SYNC_REMOTE" "$DOCS_SYNC_DIR"

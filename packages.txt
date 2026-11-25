@@ -13,6 +13,8 @@ uv
 typst
 # Homelab playbook (separate repo)
 ansible
+# Encrypted copy of a documents folder in cloud storage (bin/docs-sync)
+rclone
 # Image viewer: opens the whole folder and preloads neighbours (imv does not)
 loupe
 # Security, all on demand, no daemon: known CVEs in installed packages,

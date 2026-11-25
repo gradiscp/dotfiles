@@ -293,6 +293,13 @@ link "$REPO_DIR/bin/power-profile-hz" "$HOME/.local/bin/power-profile-hz"
 link "$REPO_DIR/config/systemd/user/power-profile-hz.service" "$CONFIG_DIR/systemd/user/power-profile-hz.service"
 systemctl --user daemon-reload
 systemctl --user enable --now power-profile-hz.service || echo "WARN: power-profile-hz.service not started (no graphical session?)"
+# Hourly two-way copy of a documents folder to an rclone remote; does nothing
+# until ~/.config/docs-sync.conf exists (untracked, see the script header).
+link "$REPO_DIR/bin/docs-sync" "$HOME/.local/bin/docs-sync"
+link "$REPO_DIR/config/systemd/user/docs-sync.service" "$CONFIG_DIR/systemd/user/docs-sync.service"
+link "$REPO_DIR/config/systemd/user/docs-sync.timer" "$CONFIG_DIR/systemd/user/docs-sync.timer"
+systemctl --user daemon-reload
+systemctl --user enable --now docs-sync.timer || echo "WARN: docs-sync.timer not started"
 # Data for the Framework panel (gradiscp.framework), and its refresh-rate choice.
 link "$REPO_DIR/bin/framework-panel" "$HOME/.local/bin/framework-panel"
 

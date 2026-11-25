@@ -169,6 +169,7 @@ bin/                   ai-notify, window-close-guard, omarchy-drift-check,
                        git-tidy (deletes a repo's merged or gone local branches),
                        dns-home-networks (home Wi-Fi uses its own DNS, rest Cloudflare),
                        power-profile-hz (laptop panel 60 Hz outside "performance"),
+                       docs-sync (hourly two-way copy of a folder to an rclone remote),
                        framework-panel / framework-ec (the Framework panel's data
                        and its root helper, a root-owned copy in /usr/local/bin)
 install.sh             Fresh-machine setup

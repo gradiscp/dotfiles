@@ -1,0 +1,7 @@
+[Unit]
+Description=Copy new documents between the local folder and the rclone remote
+Documentation=file://%h/.local/bin/docs-sync
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/docs-sync

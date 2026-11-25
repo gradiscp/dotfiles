@@ -1,0 +1,12 @@
+[Unit]
+Description=Hourly docs-sync
+Documentation=file://%h/.local/bin/docs-sync
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5min
+# Catch up after the laptop was off or asleep.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
